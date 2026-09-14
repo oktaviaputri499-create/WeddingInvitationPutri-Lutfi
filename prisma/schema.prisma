@@ -1,0 +1,38 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  // Using sqlite for out-of-the-box running. Change to "postgresql" for production.
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Guest {
+  id        String   @id @default(uuid())
+  name      String
+  token     String   @unique
+  rsvp      Rsvp?
+  wishes    Wish[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Rsvp {
+  id             String   @id @default(uuid())
+  guestId        String   @unique
+  guest          Guest    @relation(fields: [guestId], references: [id], onDelete: Cascade)
+  status         String   // "attending", "not_attending", "pending"
+  numberOfGuests Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Wish {
+  id        String   @id @default(uuid())
+  guestId   String
+  guest     Guest    @relation(fields: [guestId], references: [id], onDelete: Cascade)
+  message   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
