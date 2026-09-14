@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma'
 import { addGuest, deleteGuest, resetRsvp } from '@/actions/admin'
 import AdminClient from './AdminClient'
 
+export const dynamic = "force-dynamic"
 export default async function AdminDashboard() {
   const guests = await prisma.guest.findMany({
     include: { rsvp: true },
