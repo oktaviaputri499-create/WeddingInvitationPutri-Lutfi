@@ -6,9 +6,15 @@ import InvitationIntro from './InvitationIntro'
 import ScrollReveal from './ScrollReveal'
 import { MapPin, Calendar, Clock, Gift, CreditCard, Leaf } from 'lucide-react'
 
-export default async function InvitationPage({ params }: { params: { token: string } }) {
+export default async function InvitationPage({ 
+  params 
+}: { 
+  params: Promise<{ token: string }> 
+}) {
+  const resolvedParams = await params
+
   const guest = await prisma.guest.findUnique({
-    where: { token: params.token },
+    where: { token: resolvedParams.token },
     include: { rsvp: true }
   })
 
@@ -61,42 +67,56 @@ export default async function InvitationPage({ params }: { params: { token: stri
           <section className="relative min-h-screen flex flex-col items-center justify-center p-8 text-center overflow-hidden">
             <div className="relative z-10 w-full max-w-md mx-auto flex flex-col items-center">
 
-              <div className="relative bg-white/60 backdrop-blur-sm rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.15)] border border-white/70 w-full animate-reveal-up overflow-hidden" style={{ animationDelay: '0.2s' }}>
+              {/* Kotak Utama dengan Frame & Ornamen Sudut */}
+              <div className="relative bg-white/60 backdrop-blur-sm rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.15)] border-2 border-gold/40 p-3 w-full animate-reveal-up overflow-hidden">
+                
+                {/* Border dalam tipis untuk kesan klasik */}
+                <div className="relative border border-gold/30 rounded-xl overflow-hidden">
+                  
+                  {/* Ornamen Sudut Kiri Atas */}
+                  <div className="absolute top-2 left-2 w-4 h-4 border-t-2 border-l-2 border-gold pointer-events-none"></div>
+                  {/* Ornamen Sudut Kanan Atas */}
+                  <div className="absolute top-2 right-2 w-4 h-4 border-t-2 border-r-2 border-gold pointer-events-none"></div>
+                  {/* Ornamen Sudut Kiri Bawah */}
+                  <div className="absolute bottom-2 left-2 w-4 h-4 border-b-2 border-l-2 border-gold pointer-events-none"></div>
+                  {/* Ornamen Sudut Kanan Bawah */}
+                  <div className="absolute bottom-2 right-2 w-4 h-4 border-b-2 border-r-2 border-gold pointer-events-none"></div>
 
-                <div className="absolute inset-0 bg-gradient-to-br from-white/50 via-transparent to-transparent pointer-events-none"></div>
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/50 via-transparent to-transparent pointer-events-none"></div>
 
-                <div className="relative px-8 pt-12 pb-6">
-                  <p className="text-sm tracking-[0.3em] uppercase mb-4 text-dark-brown font-semibold">
-                    The Wedding Of
-                  </p>
-                  <h1 className="text-6xl md:text-7xl text-gold" style={{ fontFamily: "'Edwardian Script ITC', 'Lucida Calligraphy', 'Baskerville', cursive" }}>
-                    Lutfi <span className="text-4xl md:text-5xl text-gold/80">&</span> Putri
-                  </h1>
+                  <div className="relative px-8 pt-12 pb-6">
+                    <p className="text-sm tracking-[0.3em] uppercase mb-4 text-dark-brown font-semibold">
+                      The Wedding Of
+                    </p>
+                    <h1 className="text-6xl md:text-7xl text-gold" style={{ fontFamily: "'Edwardian Script ITC', 'Lucida Calligraphy', 'Baskerville', cursive" }}>
+                      Lutfi <span className="text-4xl md:text-5xl text-gold/80">&</span> Putri
+                    </h1>
+                  </div>
+
+                  <div className="relative h-px bg-stone-400/40 mx-8"></div>
+
+                  <div className="relative px-8 py-6">
+                    <p className="text-sm mb-2 text-dark-brown font-medium">
+                      To Our Beloved Guest,
+                    </p>
+                    <p
+                      className="text-4xl text-gold"
+                      style={{ fontFamily: "'Monotype Corsiva', 'Snell Roundhand', 'Apple Chancery', cursive" }}
+                    >
+                      {guest.name}
+                    </p>
+                  </div>
+
+                  <div className="relative h-px bg-stone-400/40 mx-8"></div>
+
+                  <div className="relative px-8 pt-6 pb-12">
+                    <p className="text-sm text-dark-brown font-medium italic mb-2">
+                      We would love to celebrate this special day with you
+                    </p>
+                    <Leaf className="mx-auto text-gold" size={20} strokeWidth={1.5} fill="none" />
+                  </div>
+
                 </div>
-
-                <div className="relative h-px bg-stone-400/40 mx-8"></div>
-
-                <div className="relative px-8 py-6">
-                  <p className="text-sm mb-2 text-dark-brown font-medium">
-                    To Our Beloved Guest,
-                  </p>
-                  <p
-                    className="text-4xl text-gold"
-                    style={{ fontFamily: "'Monotype Corsiva', 'Snell Roundhand', 'Apple Chancery', cursive" }}
-                  >
-                    {guest.name}
-                  </p>
-                </div>
-
-                <div className="relative h-px bg-stone-400/40 mx-8"></div>
-
-                <div className="relative px-8 pt-6 pb-12">
-                  <p className="text-sm text-dark-brown font-medium italic mb-2">
-                    We would love to celebrate this special day with you
-                  </p>
-                  <Leaf className="mx-auto text-gold" size={20} strokeWidth={1.5} fill="none" />
-                </div>
-
               </div>
 
             </div>
