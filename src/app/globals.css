@@ -107,3 +107,8 @@
     transform: none !important;
   }
 }
+/* ===== Start animations only when scrolled into view ===== */
+.letter-rise { animation-play-state: paused; }
+.letter-rise.is-visible { animation-play-state: running; }
+.line-grow { animation-play-state: paused; }
+.line-grow.is-visible { animation-play-state: running; }

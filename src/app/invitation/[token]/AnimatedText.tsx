@@ -1,4 +1,6 @@
-import { Fragment } from 'react'
+'use client'
+
+import { Fragment, useEffect, useRef, useState } from 'react'
 
 export default function AnimatedText({
   text,
@@ -9,11 +11,30 @@ export default function AnimatedText({
   startDelay?: number
   step?: number
 }) {
+  const ref = useRef<HTMLSpanElement>(null)
+  const [visible, setVisible] = useState(false)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true)
+          io.disconnect()
+        }
+      },
+      { threshold: 0.3 }
+    )
+    io.observe(el)
+    return () => io.disconnect()
+  }, [])
+
   let index = 0
   const words = text.split(' ')
 
   return (
-    <span aria-label={text}>
+    <span ref={ref} aria-label={text}>
       {words.map((word, w) => (
         <Fragment key={w}>
           <span aria-hidden="true" className="inline-block whitespace-nowrap">
@@ -22,7 +43,7 @@ export default function AnimatedText({
               return (
                 <span
                   key={i}
-                  className="letter-rise"
+                  className={`letter-rise ${visible ? 'is-visible' : ''}`}
                   style={{ animationDelay: `${delay}s` }}
                 >
                   {ch}

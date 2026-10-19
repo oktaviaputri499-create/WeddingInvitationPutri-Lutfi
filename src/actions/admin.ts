@@ -7,12 +7,13 @@ function generateToken() {
   return Math.random().toString(36).substring(2, 10).toUpperCase()
 }
 
-export async function addGuest(name: string) {
+export async function addGuest(name: string, phone?: string) {
   const token = generateToken()
   await prisma.guest.create({
-    data: { 
-      name, 
+    data: {
+      name,
       token,
+      phone: phone && phone.trim() ? phone.trim() : null,
       rsvp: {
         create: { status: 'pending', numberOfGuests: 0 }
       }

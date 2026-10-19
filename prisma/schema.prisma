@@ -11,6 +11,7 @@ model Guest {
   id           String    @id @default(uuid())
   name         String
   token        String    @unique
+  phone        String?
   rsvp         Rsvp?
   wishes       Wish[]
   checkedInAt  DateTime?

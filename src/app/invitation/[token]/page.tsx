@@ -6,6 +6,7 @@ import InvitationIntro from './InvitationIntro'
 import ScrollReveal from './ScrollReveal'
 import GuestQrCode from './GuestQrCode'
 import AnimatedText from './AnimatedText'
+import GrowLine from './GrowLine'
 import { MapPin, Calendar, Clock, Gift, CreditCard, Leaf, CalendarPlus } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
@@ -101,18 +102,15 @@ export default async function InvitationPage({ params }: { params: { token: stri
                   <h1 className="text-6xl md:text-7xl text-gold" style={{ fontFamily: "'Edwardian Script ITC', 'Lucida Calligraphy', 'Baskerville', cursive" }}>
                     <AnimatedText text={groomFirst} startDelay={groomDelay} step={letterStep} />
                     {' '}
-                    <span
-                      className="letter-rise text-4xl md:text-5xl text-gold/80"
-                      style={{ animationDelay: `${ampDelay}s` }}
-                    >
-                      &
+                    <span className="text-4xl md:text-5xl text-gold/80">
+                      <AnimatedText text="&" startDelay={ampDelay} step={letterStep} />
                     </span>
                     {' '}
                     <AnimatedText text={brideFirst} startDelay={brideDelay} step={letterStep} />
                   </h1>
                 </div>
 
-                <div className="line-grow relative h-px bg-stone-400/40 mx-8"></div>
+                <GrowLine />
 
                 <div className="relative px-8 py-6">
                   <p className="text-sm mb-2 text-dark-brown font-medium">
@@ -126,7 +124,7 @@ export default async function InvitationPage({ params }: { params: { token: stri
                   </p>
                 </div>
 
-                <div className="line-grow relative h-px bg-stone-400/40 mx-8"></div>
+                <GrowLine />
 
                 <div className="relative px-8 pt-6 pb-12">
                   <p className="text-sm text-dark-brown font-medium italic mb-2">
@@ -148,13 +146,17 @@ export default async function InvitationPage({ params }: { params: { token: stri
                 <div className="absolute inset-0 bg-gradient-to-br from-white/50 via-transparent to-transparent pointer-events-none"></div>
 
                 <div className="relative px-8 pt-10 pb-6">
-                  <h2 className="text-2xl font-serif italic text-gold">The Groom & The Bride</h2>
+                  <h2 className="text-2xl font-serif italic text-gold">
+                    <AnimatedText text="The Groom & The Bride" startDelay={0.2} step={0.06} />
+                  </h2>
                 </div>
 
-                <div className="relative h-px bg-stone-400/40 mx-8"></div>
+                <GrowLine />
 
                 <div className="relative px-8 py-8">
-                  <h3 className="font-serif text-3xl font-bold text-dark-brown mb-3">{settings?.groomName}</h3>
+                  <h3 className="font-serif text-3xl font-bold text-dark-brown mb-3">
+                    <AnimatedText text={settings?.groomName || ''} startDelay={0.3} step={0.05} />
+                  </h3>
                   <p className="text-sm text-stone-700 mb-1">Putra dari:</p>
                   <p className="text-sm text-stone-700">{settings?.groomParents}</p>
                 </div>
@@ -162,7 +164,9 @@ export default async function InvitationPage({ params }: { params: { token: stri
                 <div className="relative text-xl text-gold font-serif">&</div>
 
                 <div className="relative px-8 py-8">
-                  <h3 className="font-serif text-3xl font-bold text-dark-brown mb-3">{settings?.brideName}</h3>
+                  <h3 className="font-serif text-3xl font-bold text-dark-brown mb-3">
+                    <AnimatedText text={settings?.brideName || ''} startDelay={0.3} step={0.05} />
+                  </h3>
                   <p className="text-sm text-stone-700 mb-1">Putri dari:</p>
                   <p className="text-sm text-stone-700">{settings?.brideParents}</p>
                 </div>
@@ -179,13 +183,17 @@ export default async function InvitationPage({ params }: { params: { token: stri
                 <div className="absolute inset-0 bg-gradient-to-br from-white/50 via-transparent to-transparent pointer-events-none"></div>
 
                 <div className="relative px-8 pt-10 pb-6">
-                  <h2 className="text-2xl font-serif italic text-gold">Wedding Event</h2>
+                  <h2 className="text-2xl font-serif italic text-gold">
+                    <AnimatedText text="Wedding Event" startDelay={0.2} step={0.06} />
+                  </h2>
                 </div>
 
-                <div className="relative h-px bg-stone-400/40 mx-8"></div>
+                <GrowLine />
 
                 <div className="relative px-8 py-8">
-                  <h3 className="text-xl font-serif mb-4 text-dark-brown text-center">Akad Nikah</h3>
+                  <h3 className="text-xl font-serif mb-4 text-dark-brown text-center">
+                    <AnimatedText text="Akad Nikah" startDelay={0.3} step={0.06} />
+                  </h3>
 
                   <div className="inline-flex flex-col items-start gap-2 text-sm text-dark-brown mb-6">
                     <div className="flex items-center gap-2">
@@ -235,10 +243,12 @@ export default async function InvitationPage({ params }: { params: { token: stri
                 <div className="absolute inset-0 bg-gradient-to-br from-white/50 via-transparent to-transparent pointer-events-none"></div>
 
                 <div className="relative px-8 pt-10 pb-6">
-                  <h2 className="text-2xl font-serif italic text-gold">Gift & Support</h2>
+                  <h2 className="text-2xl font-serif italic text-gold">
+                    <AnimatedText text="Gift & Support" startDelay={0.2} step={0.06} />
+                  </h2>
                 </div>
 
-                <div className="relative h-px bg-stone-400/40 mx-8"></div>
+                <GrowLine />
 
                 <div className="relative px-8 py-8">
                   <div className="flex justify-center mb-4">
@@ -280,10 +290,12 @@ export default async function InvitationPage({ params }: { params: { token: stri
                 <div className="absolute inset-0 bg-gradient-to-br from-white/50 via-transparent to-transparent pointer-events-none"></div>
 
                 <div className="relative px-8 pt-10 pb-6">
-                  <h2 className="text-2xl font-serif italic text-gold">RSVP</h2>
+                  <h2 className="text-2xl font-serif italic text-gold">
+                    <AnimatedText text="RSVP" startDelay={0.2} step={0.1} />
+                  </h2>
                 </div>
 
-                <div className="relative h-px bg-stone-400/40 mx-8"></div>
+                <GrowLine />
 
                 <div className="relative px-8 py-8">
                   <RsvpForm token={guest.token} initialRsvp={guest.rsvp} guestName={guest.name} />
@@ -308,10 +320,12 @@ export default async function InvitationPage({ params }: { params: { token: stri
                 <div className="absolute inset-0 bg-gradient-to-br from-white/50 via-transparent to-transparent pointer-events-none"></div>
 
                 <div className="relative px-8 pt-10 pb-6 text-center">
-                  <h2 className="text-2xl font-serif italic text-gold">Ucapan & Doa</h2>
+                  <h2 className="text-2xl font-serif italic text-gold">
+                    <AnimatedText text="Ucapan & Doa" startDelay={0.2} step={0.06} />
+                  </h2>
                 </div>
 
-                <div className="relative h-px bg-stone-400/40 mx-8"></div>
+                <GrowLine />
 
                 <div className="relative px-8 py-8">
                   <WishForm token={guest.token} guestName={guest.name} />
