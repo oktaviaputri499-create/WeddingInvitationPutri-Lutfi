@@ -62,3 +62,48 @@
   animation: reveal-up 0.8s ease-out forwards;
   opacity: 0;
 }
+/* ===== Hero animations ===== */
+@keyframes letter-rise {
+  from { opacity: 0; transform: translateY(14px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes line-grow {
+  from { transform: scaleX(0); opacity: 0; }
+  to   { transform: scaleX(1); opacity: 1; }
+}
+@keyframes leaf-sway {
+  0%, 100% { transform: rotate(-6deg); }
+  50%      { transform: rotate(6deg); }
+}
+@keyframes float-soft {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
+}
+
+.letter-rise {
+  display: inline-block;
+  opacity: 0;
+  animation: letter-rise 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.line-grow {
+  transform-origin: center;
+  animation: line-grow 1.2s ease-out 0.8s both;
+}
+.leaf-sway {
+  transform-origin: 50% 100%;
+  animation: leaf-sway 4s ease-in-out infinite;
+}
+.float-soft {
+  animation: float-soft 3.5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .letter-rise,
+  .line-grow,
+  .leaf-sway,
+  .float-soft {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
