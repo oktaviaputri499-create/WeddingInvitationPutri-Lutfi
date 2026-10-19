@@ -3,7 +3,18 @@ import { addGuest, deleteGuest, resetRsvp } from '@/actions/admin'
 import AdminClient from './AdminClient'
 
 export const dynamic = "force-dynamic"
-export default async function AdminDashboard() {
+
+export default async function AdminDashboard({
+  searchParams,
+}: {
+  searchParams: { secret?: string }
+}) {
+  // Carry the secret from the current URL over to the settings page
+  const secret = searchParams.secret
+  const settingsHref = secret
+    ? `/admin/settings?secret=${encodeURIComponent(secret)}`
+    : '/admin/settings'
+
   const guests = await prisma.guest.findMany({
     include: { rsvp: true },
     orderBy: { createdAt: 'desc' }
@@ -13,7 +24,7 @@ export default async function AdminDashboard() {
   const attending = guests.filter(g => g.rsvp?.status === 'attending').length
   const notAttending = guests.filter(g => g.rsvp?.status === 'not_attending').length
   const pending = guests.filter(g => g.rsvp?.status === 'pending' || !g.rsvp).length
-  
+
   const expectedAttendance = guests
     .filter(g => g.rsvp?.status === 'attending')
     .reduce((sum, g) => sum + (g.rsvp?.numberOfGuests || 0), 0)
@@ -23,11 +34,14 @@ export default async function AdminDashboard() {
       <div className="max-w-6xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-          <a href="/admin/settings" className="px-4 py-2 bg-dark-brown text-white text-sm rounded-md hover:bg-gold transition">
+          <a
+            href={settingsHref}
+            className="px-4 py-2 bg-dark-brown text-white text-sm rounded-md hover:bg-gold transition"
+          >
             Pengaturan Undangan
           </a>
         </div>
-        
+
         {/* Analytics */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
           <div className="bg-white p-6 rounded-lg shadow-sm border border-stone-200">
