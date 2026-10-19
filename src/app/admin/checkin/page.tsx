@@ -1,8 +1,9 @@
 import CheckinScanner from './CheckinScanner'
+import { prisma } from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'
 
-export default function CheckinPage({
+export default async function CheckinPage({
   searchParams,
 }: {
   searchParams: { secret?: string }
@@ -11,6 +12,18 @@ export default function CheckinPage({
   const backHref = secret
     ? `/admin?secret=${encodeURIComponent(secret)}`
     : '/admin'
+
+  const checkedInGuests = await prisma.guest.findMany({
+    where: { checkedInAt: { not: null } },
+    include: { rsvp: true },
+    orderBy: { checkedInAt: 'desc' },
+  })
+
+  const totalGuests = checkedInGuests.length
+  const totalPax = checkedInGuests.reduce(
+    (sum, g) => sum + (g.rsvp?.numberOfGuests || 1),
+    0
+  )
 
   return (
     <div className="min-h-screen bg-stone-100 p-8 text-stone-800">
@@ -26,6 +39,42 @@ export default function CheckinPage({
         </div>
 
         <CheckinScanner secret={secret || ''} />
+
+        {/* Checked-in list */}
+        <div className="mt-6 bg-white rounded-lg shadow-sm border border-stone-200 p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="font-bold">Sudah Check-in</h2>
+            <p className="text-sm text-stone-600">
+              {totalGuests} tamu · {totalPax} orang
+            </p>
+          </div>
+
+          {checkedInGuests.length === 0 ? (
+            <p className="text-sm text-stone-500">Belum ada tamu yang check-in.</p>
+          ) : (
+            <ul className="divide-y divide-stone-200">
+              {checkedInGuests.map(g => (
+                <li key={g.id} className="py-2 flex items-center justify-between text-sm">
+                  <div>
+                    <p className="font-semibold">{g.name}</p>
+                    <p className="text-xs text-stone-500">
+                      {g.rsvp?.numberOfGuests || 1} orang
+                    </p>
+                  </div>
+                  <p className="text-xs text-stone-500">
+                    {g.checkedInAt
+                      ? new Date(g.checkedInAt).toLocaleTimeString('id-ID', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          timeZone: 'Asia/Jakarta',
+                        })
+                      : ''}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
     </div>
   )
