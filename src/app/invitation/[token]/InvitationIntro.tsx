@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { Volume2, VolumeX } from 'lucide-react'
 
 function RevealedContent({ children }: { children: React.ReactNode }) {
   const [visible, setVisible] = useState(false)
@@ -26,8 +27,17 @@ export default function InvitationIntro({
 }) {
   const [stage, setStage] = useState<'cover' | 'opening' | 'revealed'>('cover')
   const [panelsOpen, setPanelsOpen] = useState(false)
+  const [playing, setPlaying] = useState(false)
+  const audioRef = useRef<HTMLAudioElement>(null)
 
   const handleOpen = () => {
+    // Music must start inside the tap, otherwise the browser blocks it
+    const audio = audioRef.current
+    if (audio) {
+      audio.volume = 0.8
+      audio.play().catch(() => {})
+    }
+
     setStage('opening')
 
     // Panels mount already "closed" (in place, cream colored, blending with
@@ -39,80 +49,113 @@ export default function InvitationIntro({
     setTimeout(() => setStage('revealed'), 1500)
   }
 
-  if (stage === 'revealed') {
-    return <RevealedContent>{children}</RevealedContent>
+  const toggleMusic = () => {
+    const audio = audioRef.current
+    if (!audio) return
+    if (audio.paused) {
+      audio.play().catch(() => {})
+    } else {
+      audio.pause()
+    }
   }
 
   return (
-    <div className="fixed inset-0 z-50 overflow-hidden bg-cream flex items-center justify-center">
-      {/* Video background, dimmed */}
-      <video
-        autoPlay
-        muted
+    <>
+      {/* Stays mounted the whole time so the song keeps playing after the intro */}
+      <audio
+        ref={audioRef}
+        src="/Lullaby.mp3"
         loop
-        playsInline
-        className="absolute inset-0 w-full h-full object-cover opacity-[38%]"
-      >
-        <source src="/intro-bg.mp4" type="video/mp4" />
-      </video>
+        preload="auto"
+        onPlay={() => setPlaying(true)}
+        onPause={() => setPlaying(false)}
+      />
 
-      {/* Cream overlay to keep it subtle and match original look */}
-      <div className="absolute inset-0 bg-cream/70" />
-
-      {/* Falling petals */}
-      <div className="absolute inset-0 pointer-events-none">
-        {Array.from({ length: 14 }).map((_, i) => (
-          <span
-            key={i}
-            className="absolute block w-2 h-2 rounded-full bg-gold/60"
-            style={{
-              left: `${(i * 7) % 100}%`,
-              animation: `petal-fall ${5 + (i % 5)}s linear infinite`,
-              animationDelay: `${i * 0.4}s`,
-            }}
-          />
-        ))}
-      </div>
-
-      {/* Cover content - fades out as soon as opening starts */}
-      <div
-        className={`relative z-10 flex flex-col items-center text-center px-8 transition-opacity duration-500 ${
-          stage === 'opening' ? 'opacity-0 pointer-events-none' : 'opacity-100 animate-fade-in-up'
-        }`}
-      >
-        <p className="text-sm tracking-[0.3em] uppercase mb-4 text-dark-brown/70 font-medium">
-          We invite you to The Wedding of
-        </p>
-        <h1
-          className="text-5xl md:text-6xl text-gold mb-10"
-          style={{ fontFamily: "'Edwardian Script ITC', 'Baskerville', cursive" }}
-        >
-          Lutfi <span className="text-3xl md:text-4xl text-gold/80">&</span> Putri
-        </h1>
-        <button
-          onClick={handleOpen}
-          className="px-6 py-3 rounded-full bg-dark-brown text-white text-sm tracking-wide hover:bg-gold transition"
-        >
-          Open the Invitation
-        </button>
-        <p className="mt-6 text-xs text-stone-500 italic">For {guestName}</p>
-      </div>
-
-      {/* Curtain panels - ONE motion only: mount closed (blended with cover), then slide apart */}
-      {stage === 'opening' && (
+      {stage === 'revealed' ? (
         <>
-          <div
-            className={`absolute inset-y-0 left-0 w-1/2 bg-cream transition-transform duration-[1200ms] ease-[cubic-bezier(0.65,0,0.35,1)] z-20 ${
-              panelsOpen ? '-translate-x-full' : 'translate-x-0'
-            }`}
-          />
-          <div
-            className={`absolute inset-y-0 right-0 w-1/2 bg-cream transition-transform duration-[1200ms] ease-[cubic-bezier(0.65,0,0.35,1)] z-20 ${
-              panelsOpen ? 'translate-x-full' : 'translate-x-0'
-            }`}
-          />
+          <RevealedContent>{children}</RevealedContent>
+
+          <button
+            type="button"
+            onClick={toggleMusic}
+            aria-label={playing ? 'Matikan musik' : 'Putar musik'}
+            className="fixed bottom-5 right-5 z-[60] w-11 h-11 rounded-full bg-dark-brown/90 text-white shadow-lg flex items-center justify-center hover:bg-gold transition"
+          >
+            {playing ? <Volume2 size={20} /> : <VolumeX size={20} />}
+          </button>
         </>
+      ) : (
+        <div className="fixed inset-0 z-50 overflow-hidden bg-cream flex items-center justify-center">
+          {/* Video background, dimmed */}
+          <video
+            autoPlay
+            muted
+            loop
+            playsInline
+            className="absolute inset-0 w-full h-full object-cover opacity-[38%]"
+          >
+            <source src="/intro-bg.mp4" type="video/mp4" />
+          </video>
+
+          {/* Cream overlay to keep it subtle and match original look */}
+          <div className="absolute inset-0 bg-cream/70" />
+
+          {/* Falling petals */}
+          <div className="absolute inset-0 pointer-events-none">
+            {Array.from({ length: 14 }).map((_, i) => (
+              <span
+                key={i}
+                className="absolute block w-2 h-2 rounded-full bg-gold/60"
+                style={{
+                  left: `${(i * 7) % 100}%`,
+                  animation: `petal-fall ${5 + (i % 5)}s linear infinite`,
+                  animationDelay: `${i * 0.4}s`,
+                }}
+              />
+            ))}
+          </div>
+
+          {/* Cover content - fades out as soon as opening starts */}
+          <div
+            className={`relative z-10 flex flex-col items-center text-center px-8 transition-opacity duration-500 ${
+              stage === 'opening' ? 'opacity-0 pointer-events-none' : 'opacity-100 animate-fade-in-up'
+            }`}
+          >
+            <p className="text-sm tracking-[0.3em] uppercase mb-4 text-dark-brown/70 font-medium">
+              We invite you to The Wedding of
+            </p>
+            <h1
+              className="text-5xl md:text-6xl text-gold mb-10"
+              style={{ fontFamily: "'Edwardian Script ITC', 'Baskerville', cursive" }}
+            >
+              Lutfi <span className="text-3xl md:text-4xl text-gold/80">&</span> Putri
+            </h1>
+            <button
+              onClick={handleOpen}
+              className="px-6 py-3 rounded-full bg-dark-brown text-white text-sm tracking-wide hover:bg-gold transition"
+            >
+              Open the Invitation
+            </button>
+            <p className="mt-6 text-xs text-stone-500 italic">For {guestName}</p>
+          </div>
+
+          {/* Curtain panels - ONE motion only: mount closed (blended with cover), then slide apart */}
+          {stage === 'opening' && (
+            <>
+              <div
+                className={`absolute inset-y-0 left-0 w-1/2 bg-cream transition-transform duration-[1200ms] ease-[cubic-bezier(0.65,0,0.35,1)] z-20 ${
+                  panelsOpen ? '-translate-x-full' : 'translate-x-0'
+                }`}
+              />
+              <div
+                className={`absolute inset-y-0 right-0 w-1/2 bg-cream transition-transform duration-[1200ms] ease-[cubic-bezier(0.65,0,0.35,1)] z-20 ${
+                  panelsOpen ? 'translate-x-full' : 'translate-x-0'
+                }`}
+              />
+            </>
+          )}
+        </div>
       )}
-    </div>
+    </>
   )
 }
