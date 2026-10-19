@@ -3,19 +3,19 @@ generator client {
 }
 
 datasource db {
-  // Using sqlite for out-of-the-box running. Change to "postgresql" for production.
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 model Guest {
-  id        String   @id @default(uuid())
-  name      String
-  token     String   @unique
-  rsvp      Rsvp?
-  wishes    Wish[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String    @id @default(uuid())
+  name        String
+  token       String    @unique
+  rsvp        Rsvp?
+  wishes      Wish[]
+  checkedInAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
 
 model Rsvp {
