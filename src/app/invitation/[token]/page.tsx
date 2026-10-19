@@ -5,6 +5,7 @@ import WishForm from './WishForm'
 import InvitationIntro from './InvitationIntro'
 import ScrollReveal from './ScrollReveal'
 import GuestQrCode from './GuestQrCode'
+import AnimatedText from './AnimatedText'
 import { MapPin, Calendar, Clock, Gift, CreditCard, Leaf, CalendarPlus } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
@@ -24,6 +25,14 @@ export default async function InvitationPage({ params }: { params: { token: stri
     include: { guest: true }
   })
   const settings = await prisma.eventSettings.findUnique({ where: { id: 'main' } })
+
+  // Timing for the name animation in the hero
+  const groomFirst = settings?.groomName?.split(' ')[0] || ''
+  const brideFirst = settings?.brideName?.split(' ')[0] || ''
+  const letterStep = 0.08
+  const groomDelay = 0.6
+  const ampDelay = groomDelay + groomFirst.length * letterStep
+  const brideDelay = ampDelay + letterStep * 2
 
   const icsContent = [
     'BEGIN:VCALENDAR',
@@ -90,11 +99,20 @@ export default async function InvitationPage({ params }: { params: { token: stri
                     The Wedding Of
                   </p>
                   <h1 className="text-6xl md:text-7xl text-gold" style={{ fontFamily: "'Edwardian Script ITC', 'Lucida Calligraphy', 'Baskerville', cursive" }}>
-                    {settings?.groomName?.split(' ')[0]} <span className="text-4xl md:text-5xl text-gold/80">&</span> {settings?.brideName?.split(' ')[0]}
+                    <AnimatedText text={groomFirst} startDelay={groomDelay} step={letterStep} />
+                    {' '}
+                    <span
+                      className="letter-rise text-4xl md:text-5xl text-gold/80"
+                      style={{ animationDelay: `${ampDelay}s` }}
+                    >
+                      &
+                    </span>
+                    {' '}
+                    <AnimatedText text={brideFirst} startDelay={brideDelay} step={letterStep} />
                   </h1>
                 </div>
 
-                <div className="relative h-px bg-stone-400/40 mx-8"></div>
+                <div className="line-grow relative h-px bg-stone-400/40 mx-8"></div>
 
                 <div className="relative px-8 py-6">
                   <p className="text-sm mb-2 text-dark-brown font-medium">
@@ -104,17 +122,17 @@ export default async function InvitationPage({ params }: { params: { token: stri
                     className="text-4xl text-gold"
                     style={{ fontFamily: "'Monotype Corsiva', 'Snell Roundhand', 'Apple Chancery', cursive" }}
                   >
-                    {guest.name}
+                    <AnimatedText text={guest.name} startDelay={1.8} step={0.05} />
                   </p>
                 </div>
 
-                <div className="relative h-px bg-stone-400/40 mx-8"></div>
+                <div className="line-grow relative h-px bg-stone-400/40 mx-8"></div>
 
                 <div className="relative px-8 pt-6 pb-12">
                   <p className="text-sm text-dark-brown font-medium italic mb-2">
                     {settings?.welcomeMessage}
                   </p>
-                  <Leaf className="mx-auto text-gold" size={20} strokeWidth={1.5} fill="none" />
+                  <Leaf className="leaf-sway mx-auto text-gold" size={20} strokeWidth={1.5} fill="none" />
                 </div>
 
               </div>
@@ -224,7 +242,7 @@ export default async function InvitationPage({ params }: { params: { token: stri
 
                 <div className="relative px-8 py-8">
                   <div className="flex justify-center mb-4">
-                    <Gift size={32} className="text-gold" />
+                    <Gift size={32} className="float-soft text-gold" />
                   </div>
 
                   <p className="text-sm text-stone-700 mb-8 leading-relaxed">
