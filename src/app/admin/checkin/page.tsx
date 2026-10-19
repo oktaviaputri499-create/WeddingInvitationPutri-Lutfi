@@ -54,8 +54,20 @@ export default async function CheckinPage({
           ) : (
             <ul className="divide-y divide-stone-200">
               {checkedInGuests.map(g => (
-                <li key={g.id} className="py-2 flex items-center justify-between text-sm">
-                  <div>
+                <li key={g.id} className="py-2 flex items-center gap-3 text-sm">
+                  {g.checkInPhoto ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={g.checkInPhoto}
+                      alt={g.name}
+                      className="w-12 h-12 rounded-full object-cover border border-stone-300 shrink-0"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 rounded-full bg-stone-200 flex items-center justify-center text-stone-400 text-xs shrink-0">
+                      –
+                    </div>
+                  )}
+                  <div className="flex-1">
                     <p className="font-semibold">{g.name}</p>
                     <p className="text-xs text-stone-500">
                       {g.rsvp?.numberOfGuests || 1} orang

@@ -8,13 +8,16 @@ export type CheckInResult =
   | { status: 'invalid' }
   | { status: 'unauthorized' }
 
+function isValidSecret(secret: string) {
+  const validSecrets = [process.env.ADMIN_SECRET, 'demo123'].filter(Boolean)
+  return validSecrets.includes(secret)
+}
+
 export async function checkInGuest(
   rawToken: string,
   secret: string
 ): Promise<CheckInResult> {
-  // Same secret as the admin pages (middleware accepts demo123)
-  const validSecrets = [process.env.ADMIN_SECRET, 'demo123'].filter(Boolean)
-  if (!validSecrets.includes(secret)) {
+  if (!isValidSecret(secret)) {
     return { status: 'unauthorized' }
   }
 
@@ -50,4 +53,26 @@ export async function checkInGuest(
         ? undefined
         : 'RSVP tamu ini belum dikonfirmasi hadir.',
   }
+}
+
+export async function saveCheckInPhoto(
+  rawToken: string,
+  secret: string,
+  photo: string
+): Promise<{ ok: boolean }> {
+  if (!isValidSecret(secret)) return { ok: false }
+  if (!photo.startsWith('data:image/jpeg;base64,') || photo.length > 400_000) {
+    return { ok: false }
+  }
+
+  const token = rawToken.trim()
+  if (!token) return { ok: false }
+
+  // Only guests who are already checked in can get a photo
+  const updated = await prisma.guest.updateMany({
+    where: { token, checkedInAt: { not: null } },
+    data: { checkInPhoto: photo },
+  })
+
+  return { ok: updated.count > 0 }
 }

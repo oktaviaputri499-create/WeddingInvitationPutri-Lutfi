@@ -2,16 +2,48 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { checkInGuest, type CheckInResult } from '@/actions/checkin'
+import { checkInGuest, saveCheckInPhoto, type CheckInResult } from '@/actions/checkin'
+
+// Shrinks the photo so it stays small (about 40-80 KB) before saving
+function resizeImage(file: File, maxSize = 640): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    const url = URL.createObjectURL(file)
+    img.onload = () => {
+      const scale = Math.min(1, maxSize / Math.max(img.width, img.height))
+      const canvas = document.createElement('canvas')
+      canvas.width = Math.round(img.width * scale)
+      canvas.height = Math.round(img.height * scale)
+      const ctx = canvas.getContext('2d')
+      if (!ctx) {
+        URL.revokeObjectURL(url)
+        reject(new Error('canvas'))
+        return
+      }
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+      URL.revokeObjectURL(url)
+      resolve(canvas.toDataURL('image/jpeg', 0.7))
+    }
+    img.onerror = () => {
+      URL.revokeObjectURL(url)
+      reject(new Error('load'))
+    }
+    img.src = url
+  })
+}
 
 export default function CheckinScanner({ secret }: { secret: string }) {
   const router = useRouter()
   const scannerRef = useRef<any>(null)
   const busyRef = useRef(false)
+  const photoInputRef = useRef<HTMLInputElement>(null)
   const [scanning, setScanning] = useState(false)
   const [result, setResult] = useState<CheckInResult | null>(null)
   const [error, setError] = useState('')
   const [manualToken, setManualToken] = useState('')
+  const [photoToken, setPhotoToken] = useState<string | null>(null)
+  const [photoPreview, setPhotoPreview] = useState('')
+  const [photoStatus, setPhotoStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
 
   async function handleToken(raw: string) {
     if (busyRef.current) return
@@ -19,6 +51,13 @@ export default function CheckinScanner({ secret }: { secret: string }) {
     try {
       const res = await checkInGuest(raw, secret)
       setResult(res)
+      setPhotoPreview('')
+      setPhotoStatus('idle')
+      if (res.status === 'ok' || res.status === 'already') {
+        setPhotoToken(raw.trim())
+      } else {
+        setPhotoToken(null)
+      }
       if (res.status === 'ok') router.refresh()
     } catch {
       setError('Terjadi kesalahan. Coba lagi.')
@@ -27,6 +66,26 @@ export default function CheckinScanner({ secret }: { secret: string }) {
       setTimeout(() => {
         busyRef.current = false
       }, 2500)
+    }
+  }
+
+  async function handlePhoto(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file || !photoToken) return
+    setPhotoStatus('saving')
+    try {
+      const dataUrl = await resizeImage(file)
+      setPhotoPreview(dataUrl)
+      const res = await saveCheckInPhoto(photoToken, secret, dataUrl)
+      if (res.ok) {
+        setPhotoStatus('saved')
+        router.refresh()
+      } else {
+        setPhotoStatus('error')
+      }
+    } catch {
+      setPhotoStatus('error')
     }
   }
 
@@ -127,6 +186,49 @@ export default function CheckinScanner({ secret }: { secret: string }) {
           )}
           {result.status === 'unauthorized' && (
             <p className="font-bold">Akses ditolak. Buka halaman ini dengan ?secret=... yang benar.</p>
+          )}
+        </div>
+      )}
+
+      {/* Guest photo */}
+      {photoToken && (
+        <div className="mt-4 p-4 rounded-lg border border-stone-200 bg-stone-50">
+          <input
+            ref={photoInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={handlePhoto}
+            className="hidden"
+          />
+          <button
+            type="button"
+            onClick={() => photoInputRef.current?.click()}
+            disabled={photoStatus === 'saving'}
+            className="w-full py-3 border border-dark-brown text-dark-brown rounded-md hover:bg-dark-brown hover:text-white transition disabled:opacity-50"
+          >
+            {photoStatus === 'saving'
+              ? 'Menyimpan foto...'
+              : photoStatus === 'saved'
+              ? '📷 Ambil Ulang Foto'
+              : '📷 Ambil Foto Tamu'}
+          </button>
+
+          {photoPreview && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={photoPreview}
+              alt="Foto tamu"
+              className="mt-3 w-32 h-32 object-cover rounded-lg border border-stone-300 mx-auto"
+            />
+          )}
+          {photoStatus === 'saved' && (
+            <p className="mt-2 text-sm text-green-700 text-center">✓ Foto tersimpan</p>
+          )}
+          {photoStatus === 'error' && (
+            <p className="mt-2 text-sm text-red-600 text-center">
+              Foto gagal disimpan. Coba lagi.
+            </p>
           )}
         </div>
       )}
