@@ -4,7 +4,10 @@ import RsvpForm from './RsvpForm'
 import WishForm from './WishForm'
 import InvitationIntro from './InvitationIntro'
 import ScrollReveal from './ScrollReveal'
+import GuestQrCode from './GuestQrCode'
 import { MapPin, Calendar, Clock, Gift, CreditCard, Leaf, CalendarPlus } from 'lucide-react'
+
+export const dynamic = 'force-dynamic'
 
 export default async function InvitationPage({ params }: { params: { token: string } }) {
   const guest = await prisma.guest.findUnique({
@@ -182,8 +185,7 @@ export default async function InvitationPage({ params }: { params: { token: stri
                   </div>
 
                   <div className="flex flex-col gap-3">
-                    
-                      <a
+                    <a
                       href={mapsHref}
                       target="_blank"
                       rel="noopener noreferrer"
@@ -192,8 +194,7 @@ export default async function InvitationPage({ params }: { params: { token: stri
                       <MapPin size={16} />
                       Buka Google Maps
                     </a>
-                    
-                      <a
+                    <a
                       href={icsHref}
                       download="Akad-Nikah.ics"
                       className="inline-flex items-center justify-center gap-2 px-6 py-2 border border-dark-brown text-dark-brown text-sm rounded-full hover:bg-dark-brown hover:text-white transition"
@@ -268,6 +269,13 @@ export default async function InvitationPage({ params }: { params: { token: stri
 
                 <div className="relative px-8 py-8">
                   <RsvpForm token={guest.token} initialRsvp={guest.rsvp} guestName={guest.name} />
+
+                  {/* QR code entry pass: only shown after the guest confirms attendance */}
+                  {guest.rsvp?.status === 'attending' && (
+                    <div className="mt-8 pt-8 border-t border-stone-400/40">
+                      <GuestQrCode token={guest.token} guestName={guest.name} />
+                    </div>
+                  )}
                 </div>
 
               </div>

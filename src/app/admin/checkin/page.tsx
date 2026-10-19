@@ -1,96 +1,89 @@
 import { prisma } from '@/lib/prisma'
-import CheckinScanner from './CheckinScanner'
+import { addGuest, deleteGuest, resetRsvp } from '@/actions/admin'
+import AdminClient from './AdminClient'
 
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic"
 
-export default async function CheckinPage({
+export default async function AdminDashboard({
   searchParams,
 }: {
   searchParams: { secret?: string }
 }) {
-  const secret = searchParams.secret ?? ''
-  const dashboardHref = secret
-    ? `/admin?secret=${encodeURIComponent(secret)}`
-    : '/admin'
+  const secret = searchParams.secret
+  const settingsHref = secret
+    ? `/admin/settings?secret=${encodeURIComponent(secret)}`
+    : '/admin/settings'
+  const checkinHref = secret
+    ? `/admin/checkin?secret=${encodeURIComponent(secret)}`
+    : '/admin/checkin'
 
   const guests = await prisma.guest.findMany({
     include: { rsvp: true },
-    orderBy: { createdAt: 'desc' },
+    orderBy: { createdAt: 'desc' }
   })
 
-  const attendingGuests = guests.filter(g => g.rsvp?.status === 'attending')
-  const checkedIn = guests
-    .filter(g => g.checkedInAt)
-    .sort(
-      (a, b) =>
-        new Date(b.checkedInAt as Date).getTime() -
-        new Date(a.checkedInAt as Date).getTime()
-    )
+  const totalGuests = guests.length
+  const attending = guests.filter(g => g.rsvp?.status === 'attending').length
+  const notAttending = guests.filter(g => g.rsvp?.status === 'not_attending').length
+  const pending = guests.filter(g => g.rsvp?.status === 'pending' || !g.rsvp).length
+  const checkedIn = guests.filter(g => g.checkedInAt).length
 
-  const checkedInPeople = checkedIn.reduce(
-    (sum, g) => sum + (g.rsvp?.numberOfGuests || 1),
-    0
-  )
+  const expectedAttendance = guests
+    .filter(g => g.rsvp?.status === 'attending')
+    .reduce((sum, g) => sum + (g.rsvp?.numberOfGuests || 0), 0)
 
   return (
-    <div className="min-h-screen bg-stone-100 p-4 md:p-8 text-stone-800">
-      <div className="max-w-2xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold">Check-in Tamu</h1>
-          <a
-            href={dashboardHref}
-            className="px-4 py-2 border border-dark-brown text-dark-brown text-sm rounded-md hover:bg-dark-brown hover:text-white transition"
-          >
-            Kembali ke Dashboard
-          </a>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4 mb-6">
-          <div className="bg-white p-4 rounded-lg shadow-sm border border-stone-200">
-            <p className="text-sm text-stone-500">Sudah Check-in (Undangan)</p>
-            <p className="text-3xl font-bold text-green-600">
-              {checkedIn.length}
-              <span className="text-base text-stone-400"> / {attendingGuests.length}</span>
-            </p>
-          </div>
-          <div className="bg-dark-brown p-4 rounded-lg shadow-sm text-white">
-            <p className="text-sm text-stone-300">Total Orang Hadir</p>
-            <p className="text-3xl font-bold">{checkedInPeople}</p>
+    <div className="min-h-screen bg-stone-100 p-8 text-stone-800">
+      <div className="max-w-6xl mx-auto">
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+          <div className="flex gap-2">
+            <a
+              href={checkinHref}
+              className="px-4 py-2 border border-dark-brown text-dark-brown text-sm rounded-md hover:bg-dark-brown hover:text-white transition"
+            >
+              Scan Check-in
+            </a>
+            <a
+              href={settingsHref}
+              className="px-4 py-2 bg-dark-brown text-white text-sm rounded-md hover:bg-gold transition"
+            >
+              Pengaturan Undangan
+            </a>
           </div>
         </div>
 
-        <CheckinScanner secret={secret} />
+        {/* Analytics */}
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-stone-200">
+            <p className="text-sm text-stone-500">Total Tamu (Undangan)</p>
+            <p className="text-3xl font-bold">{totalGuests}</p>
+          </div>
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-stone-200">
+            <p className="text-sm text-stone-500">Akan Hadir</p>
+            <p className="text-3xl font-bold text-green-600">{attending}</p>
+          </div>
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-stone-200">
+            <p className="text-sm text-stone-500">Tidak Hadir</p>
+            <p className="text-3xl font-bold text-red-600">{notAttending}</p>
+          </div>
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-stone-200">
+            <p className="text-sm text-stone-500">Belum Konfirmasi</p>
+            <p className="text-3xl font-bold text-amber-600">{pending}</p>
+          </div>
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-stone-200">
+            <p className="text-sm text-stone-500">Sudah Check-in</p>
+            <p className="text-3xl font-bold text-blue-600">{checkedIn}</p>
+          </div>
+          <div className="bg-dark-brown p-6 rounded-lg shadow-sm text-white">
+            <p className="text-sm text-stone-300">Total Kehadiran (Orang)</p>
+            <p className="text-3xl font-bold">{expectedAttendance}</p>
+          </div>
+        </div>
 
-        <div className="bg-white rounded-lg shadow-sm border border-stone-200 p-4 mt-6">
-          <h2 className="font-bold mb-3">Daftar Tamu yang Sudah Check-in</h2>
-          {checkedIn.length === 0 ? (
-            <p className="text-sm text-stone-500">Belum ada tamu yang check-in.</p>
-          ) : (
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-stone-500 border-b border-stone-200">
-                  <th className="py-2">Nama</th>
-                  <th className="py-2">Jml</th>
-                  <th className="py-2 text-right">Waktu</th>
-                </tr>
-              </thead>
-              <tbody>
-                {checkedIn.map(g => (
-                  <tr key={g.token} className="border-b border-stone-100">
-                    <td className="py-2 font-medium">{g.name}</td>
-                    <td className="py-2">{g.rsvp?.numberOfGuests || 1}</td>
-                    <td className="py-2 text-right text-stone-500">
-                      {new Date(g.checkedInAt as Date).toLocaleTimeString('id-ID', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        timeZone: 'Asia/Jakarta',
-                      })}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+        {/* Guest Management */}
+        <div className="bg-white rounded-lg shadow-sm border border-stone-200 p-6">
+          <AdminClient initialGuests={guests} />
         </div>
       </div>
     </div>
