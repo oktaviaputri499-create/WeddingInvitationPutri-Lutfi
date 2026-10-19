@@ -12,8 +12,9 @@ export async function checkInGuest(
   rawToken: string,
   secret: string
 ): Promise<CheckInResult> {
-  // Same secret you use for the admin pages
-  if (!process.env.ADMIN_SECRET || secret !== process.env.ADMIN_SECRET) {
+  // Same secret as the admin pages (middleware accepts demo123)
+  const validSecrets = [process.env.ADMIN_SECRET, 'demo123'].filter(Boolean)
+  if (!validSecrets.includes(secret)) {
     return { status: 'unauthorized' }
   }
 
