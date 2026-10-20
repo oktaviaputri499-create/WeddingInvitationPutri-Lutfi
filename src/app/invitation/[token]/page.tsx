@@ -61,23 +61,6 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   )
 }
 
-function MiniSeal({ initials }: { initials: string }) {
-  return (
-    <div
-      className="mx-auto w-14 h-14 rounded-full flex items-center justify-center font-lux italic"
-      style={{
-        background: 'radial-gradient(circle at 35% 28%,#f6e8c4,#d4b26e 55%,#a6823f)',
-        boxShadow: 'inset 0 0 0 3px rgba(255,255,255,.18), 0 4px 10px rgba(0,0,0,.45)',
-        color: '#7a5a22',
-        fontSize: 18,
-        textShadow: 'none',
-      }}
-    >
-      {initials}
-    </div>
-  )
-}
-
 export default async function InvitationPage({ params }: { params: { token: string } }) {
   const guest = await prisma.guest.findUnique({
     where: { token: params.token },
@@ -101,7 +84,6 @@ export default async function InvitationPage({ params }: { params: { token: stri
   const groomDelay = 0.6
   const ampDelay = groomDelay + groomFirst.length * letterStep
   const brideDelay = ampDelay + letterStep * 2
-  const initials = `${groomFirst.charAt(0)}&${brideFirst.charAt(0)}`.toUpperCase()
 
   const icsContent = [
     'BEGIN:VCALENDAR',
@@ -222,14 +204,9 @@ export default async function InvitationPage({ params }: { params: { token: stri
           <section className="py-12 px-6 text-center">
             <ScrollReveal>
               <LuxPanel>
-                <div className="pt-12">
-                  <MiniSeal initials={initials} />
-                </div>
-                <div className="relative px-8 pt-4 pb-6">
-                  <h2 className="font-script text-5xl leading-tight" style={{ color: TITLE }}>
-                    <AnimatedText text="Wedding Event" startDelay={0.2} step={0.06} />
-                  </h2>
-                </div>
+                <SectionTitle>
+                  <AnimatedText text="Wedding Event" startDelay={0.2} step={0.06} />
+                </SectionTitle>
 
                 <GoldLine />
 
