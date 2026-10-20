@@ -101,7 +101,8 @@ export default async function InvitationPage({ params }: { params: { token: stri
   const brideFirst = settings?.brideName?.split(' ')[0] || ''
   const letterStep = 0.08
   const groomDelay = 0.6
-  const brideDelay = groomDelay + groomFirst.length * letterStep + 0.4
+  const ampDelay = groomDelay + groomFirst.length * letterStep
+  const brideDelay = ampDelay + letterStep * 2
   const initials = `${groomFirst.charAt(0)}&${brideFirst.charAt(0)}`.toUpperCase()
 
   const icsContent = [
@@ -134,39 +135,61 @@ export default async function InvitationPage({ params }: { params: { token: stri
         {/* Content wrapper */}
         <div className="relative z-10">
           {/* Hero Section */}
-          <section className="relative min-h-screen flex flex-col justify-between px-6 py-14 text-center overflow-hidden">
-            <div className="text-left" style={{ color: IVORY, textShadow: '0 2px 24px rgba(0,0,0,0.6)' }}>
-              <h1 className="font-script leading-[0.9]" style={{ fontSize: 'clamp(5rem, 26vw, 8rem)' }}>
-                <AnimatedText text={groomFirst} startDelay={groomDelay} step={letterStep} />
-              </h1>
-            </div>
+          <section className="relative min-h-screen flex flex-col items-center justify-center px-8 py-16 text-center overflow-hidden">
+            {/* Thin gold double frame */}
+            <div
+              className="absolute pointer-events-none"
+              style={{ inset: 14, border: '1px solid rgba(212,178,110,0.4)' }}
+            />
+            <div
+              className="absolute pointer-events-none"
+              style={{ inset: 20, border: '1px solid rgba(212,178,110,0.16)' }}
+            />
 
-            <div style={{ color: IVORY, textShadow: '0 2px 18px rgba(0,0,0,0.6)' }}>
-              <p className="font-lux uppercase text-xs tracking-[0.5em]" style={{ color: '#cdbfa8' }}>
+            <div
+              className="relative w-full flex flex-col items-center"
+              style={{ color: IVORY, textShadow: '0 2px 24px rgba(0,0,0,0.6)' }}
+            >
+              <p className="font-lux uppercase text-xs tracking-[0.5em] mb-5" style={{ color: '#cdbfa8' }}>
                 The Wedding Of
               </p>
-              <p className="font-lux uppercase mt-3" style={{ fontSize: 'clamp(2rem, 9vw, 2.8rem)', letterSpacing: '0.12em' }}>
+
+              {/* Groom & Bride on one line (wraps neatly if the names are long) */}
+              <h1
+                className="font-script"
+                style={{ fontSize: 'clamp(2.9rem, 13.5vw, 4.4rem)', lineHeight: 1.15 }}
+              >
+                <AnimatedText text={groomFirst} startDelay={groomDelay} step={letterStep} />
+                {' '}
+                <span style={{ fontSize: '0.72em', color: '#d4b26e' }}>
+                  <AnimatedText text="&" startDelay={ampDelay} step={letterStep} />
+                </span>
+                {' '}
+                <AnimatedText text={brideFirst} startDelay={brideDelay} step={letterStep} />
+              </h1>
+
+              <div
+                className="mx-auto mt-8 mb-7 h-px w-28"
+                style={{ background: 'linear-gradient(90deg,transparent,#d4b26e,transparent)' }}
+              />
+
+              <p
+                className="font-lux uppercase"
+                style={{ fontSize: 'clamp(1.6rem, 7.5vw, 2.2rem)', letterSpacing: '0.14em' }}
+              >
                 You&apos;re Invited
               </p>
 
-              <div className="mx-auto my-6 h-px w-24" style={{ background: 'linear-gradient(90deg,transparent,#d4b26e,transparent)' }} />
-
-              <p className="font-lux italic text-sm mb-1" style={{ color: '#cdbfa8' }}>
+              <p className="font-lux italic text-sm mt-8 mb-1" style={{ color: '#cdbfa8' }}>
                 To Our Beloved Guest,
               </p>
-              <p className="font-script" style={{ fontSize: '2.8rem', color: '#e6d3a6', lineHeight: 1.2 }}>
+              <p className="font-script" style={{ fontSize: '2.6rem', color: '#e6d3a6', lineHeight: 1.2 }}>
                 <AnimatedText text={guest.name} startDelay={1.8} step={0.05} />
               </p>
-              <p className="font-lux italic text-sm mt-4 px-4" style={{ color: '#d9cdb8' }}>
+              <p className="font-lux italic text-sm mt-4 px-2" style={{ color: '#d9cdb8' }}>
                 {settings?.welcomeMessage}
               </p>
               <Leaf className="leaf-sway mx-auto mt-4" size={20} strokeWidth={1.5} fill="none" color="#d4b26e" />
-            </div>
-
-            <div className="text-right" style={{ color: IVORY, textShadow: '0 2px 24px rgba(0,0,0,0.6)' }}>
-              <h1 className="font-script leading-[0.9]" style={{ fontSize: 'clamp(5rem, 26vw, 8rem)' }}>
-                <AnimatedText text={brideFirst} startDelay={brideDelay} step={letterStep} />
-              </h1>
             </div>
           </section>
 
