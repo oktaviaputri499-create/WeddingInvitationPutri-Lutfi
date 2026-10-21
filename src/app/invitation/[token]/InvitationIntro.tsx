@@ -15,9 +15,9 @@ const PETALS = Array.from({ length: 12 }, (_, i) => ({
   color: ['#f3dcdc', '#ead3a6', '#ffffff', '#ebcfcf'][i % 4],
 }))
 
-// Fine paper grain
+// Fine paper grain (light speckle for the dark paper)
 const GRAIN = `url("data:image/svg+xml;utf8,${encodeURIComponent(
-  "<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.45 0 0 0 0 0.38 0 0 0 0 0.3 0 0 0 0.14 0'/></filter><rect width='100%' height='100%' filter='url(#n)'/></svg>"
+  "<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 0.94 0 0 0 0 0.84 0 0 0 0.07 0'/></filter><rect width='100%' height='100%' filter='url(#n)'/></svg>"
 )}")`
 
 // Geometry of one botanical sprig (a curved stem with alternating leaves)
@@ -62,25 +62,35 @@ const SPRIG = (() => {
 
 const LEAF = 'M0 0 C6 -9 20 -9 28 0 C20 9 6 9 0 0 Z'
 
-// Tone-on-tone: same colour as the paper, so only the light/shadow filter shows the relief
+// Raised (embossed) relief: each shape has a light-to-dark gradient for volume,
+// a faint highlight rim and a centre vein; the .decor filter adds the cast shadow
 function Sprig({ style }: { style: React.CSSProperties }) {
+  const leaf = (transform: string, key?: number) => (
+    <g key={key} transform={transform}>
+      <path d={LEAF} />
+      <path d="M3 0 L23 0" fill="none" stroke="rgba(0,0,0,0.6)" strokeWidth="0.8" strokeLinecap="round" />
+    </g>
+  )
   return (
     <svg viewBox="0 0 200 300" style={style} aria-hidden>
-      <g fill="#f1ece1" stroke="#ece5d8" strokeWidth="0.5">
-        <path d="M20 290 C30 190 70 110 130 20" fill="none" strokeWidth="2.6" strokeLinecap="round" />
-        {SPRIG.leaves.map((l, i) => (
-          <path key={i} d={LEAF} transform={`translate(${l.x} ${l.y}) rotate(${l.a}) scale(${l.s})`} />
-        ))}
-        <path
-          d={LEAF}
-          transform={`translate(${SPRIG.tip[0]} ${SPRIG.tip[1]}) rotate(${SPRIG.tipAngle}) scale(1.25)`}
-        />
+      <defs>
+        <linearGradient id="embossFill" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#38332b" />
+          <stop offset="0.55" stopColor="#24201b" />
+          <stop offset="1" stopColor="#15120f" />
+        </linearGradient>
+      </defs>
+      <g fill="url(#embossFill)" stroke="rgba(255,236,205,0.2)" strokeWidth="0.6">
+        <path d="M20 290 C30 190 70 110 130 20" fill="none" stroke="#2c2822" strokeWidth="3.4" strokeLinecap="round" />
+        <path d="M20 290 C30 190 70 110 130 20" fill="none" stroke="rgba(255,236,205,0.18)" strokeWidth="0.8" strokeLinecap="round" transform="translate(-1 -1)" />
+        {SPRIG.leaves.map((l, i) => leaf(`translate(${l.x} ${l.y}) rotate(${l.a}) scale(${l.s})`, i))}
+        {leaf(`translate(${SPRIG.tip[0]} ${SPRIG.tip[1]}) rotate(${SPRIG.tipAngle}) scale(1.25)`)}
         {SPRIG.flowers.map((f, i) => (
           <g key={i} transform={`translate(${f.x} ${f.y}) rotate(${f.r})`}>
             {[0, 72, 144, 216, 288].map(r => (
-              <ellipse key={r} cx="0" cy="-4.6" rx="2.9" ry="4.6" transform={`rotate(${r})`} />
+              <ellipse key={r} cx="0" cy="-5" rx="3.3" ry="5" transform={`rotate(${r})`} />
             ))}
-            <circle r="2" />
+            <circle r="2.4" fill="#4a4338" />
           </g>
         ))}
       </g>
@@ -171,7 +181,7 @@ function Seal() {
 }
 
 const css = `
-.inv-root{position:fixed;inset:0;z-index:50;overflow:hidden;perspective:1600px;background:#f1ede4;
+.inv-root{position:fixed;inset:0;z-index:50;overflow:hidden;perspective:1600px;background:#0e0c0a;
   --seal:clamp(104px,24vmin,170px);--sw0:clamp(130px,42vmin,360px);
   transition:opacity 1.1s ease,visibility 1.1s;}
 .inv-root.is-fade{opacity:0;visibility:hidden;pointer-events:none;}
@@ -181,25 +191,25 @@ const css = `
 
 /* ---------- Flaps ---------- */
 .flap{position:absolute;inset:0;backface-visibility:hidden;will-change:transform;
-  filter:drop-shadow(0 3px 7px rgba(90,70,45,.28));}
+  filter:drop-shadow(0 4px 10px rgba(0,0,0,.7));}
 .flap-in{position:absolute;inset:0;overflow:hidden;}
 .flap-in::before{content:'';position:absolute;inset:0;pointer-events:none;}
 .f-top{z-index:4;transform-origin:50% 0;}
 .f-top .flap-in{clip-path:polygon(0 0,100% 0,50% 50.15%);}
-.f-top .flap-in::before{background:linear-gradient(180deg,rgba(255,255,255,.4),rgba(110,88,58,.12));}
+.f-top .flap-in::before{background:linear-gradient(180deg,rgba(255,236,205,.07),rgba(0,0,0,.38));}
 .f-bottom{z-index:3;transform-origin:50% 100%;}
 .f-bottom .flap-in{clip-path:polygon(0 100%,100% 100%,50% 49.85%);}
-.f-bottom .flap-in::before{background:linear-gradient(0deg,rgba(255,255,255,.4),rgba(110,88,58,.1));}
+.f-bottom .flap-in::before{background:linear-gradient(0deg,rgba(255,236,205,.07),rgba(0,0,0,.34));}
 .f-left{z-index:5;transform-origin:0 50%;}
 .f-left .flap-in{clip-path:polygon(0 0,50.1% 50%,0 100%);}
-.f-left .flap-in::before{background:linear-gradient(90deg,rgba(255,255,255,.3),rgba(110,88,58,.14));}
+.f-left .flap-in::before{background:linear-gradient(90deg,rgba(255,236,205,.05),rgba(0,0,0,.4));}
 .f-right{z-index:5;transform-origin:100% 50%;}
 .f-right .flap-in{clip-path:polygon(100% 0,49.9% 50%,100% 100%);}
-.f-right .flap-in::before{background:linear-gradient(270deg,rgba(255,255,255,.3),rgba(110,88,58,.1));}
+.f-right .flap-in::before{background:linear-gradient(270deg,rgba(255,236,205,.05),rgba(0,0,0,.32));}
 
-/* Emboss: light edge bottom-right, soft shade top-left */
+/* Raised relief: light from the top-left, so a highlight on that edge and a deep cast shadow bottom-right */
 .decor{position:absolute;inset:0;pointer-events:none;
-  filter:drop-shadow(1.3px 1.3px .5px rgba(255,255,255,.95)) drop-shadow(-1.1px -1.1px .7px rgba(130,105,70,.32));}
+  filter:drop-shadow(-1px -1px .4px rgba(255,236,205,.32)) drop-shadow(1.6px 2px 1.2px rgba(0,0,0,.9)) drop-shadow(4px 6px 5px rgba(0,0,0,.55));}
 
 .is-flap .f-top{animation:openTop 1.5s cubic-bezier(.6,.05,.3,1) forwards;}
 .is-flap .f-bottom{animation:openBottom 1.5s cubic-bezier(.6,.05,.3,1) .12s forwards;}
@@ -336,30 +346,30 @@ export default function InvitationIntro({
 
       {stage !== 'done' && (
         <div className={rootClass}>
-          {/* Plain paper, hidden behind the flaps until they open */}
+          {/* Plain black paper, hidden behind the flaps until they open */}
           <div
             className="inv-letter"
-            style={paper('radial-gradient(ellipse at 50% 40%,#fffdf8 0%,#f8f1e4 70%,#efe4d0 100%)')}
+            style={paper('radial-gradient(ellipse at 50% 40%,#24201b 0%,#14110e 70%,#0b0a08 100%)')}
           />
 
-          {/* Four flaps meeting in an X: ivory paper, soft fold shading, embossed florals */}
+          {/* Four flaps meeting in an X: black paper, soft fold shading, embossed florals */}
           <div className="flap f-bottom">
-            <div className="flap-in" style={paper('linear-gradient(0deg,#f7f3ea,#eee8db)')}>
+            <div className="flap-in" style={paper('linear-gradient(0deg,#1f1b17,#15120f)')}>
               <Decor />
             </div>
           </div>
           <div className="flap f-top">
-            <div className="flap-in" style={paper('linear-gradient(180deg,#f6f2e9,#ebe5d7)')}>
+            <div className="flap-in" style={paper('linear-gradient(180deg,#221e19,#14110e)')}>
               <Decor />
             </div>
           </div>
           <div className="flap f-left">
-            <div className="flap-in" style={paper('linear-gradient(90deg,#f3eee3,#ebe5d7)')}>
+            <div className="flap-in" style={paper('linear-gradient(90deg,#1c1915,#14110e)')}>
               <Decor />
             </div>
           </div>
           <div className="flap f-right">
-            <div className="flap-in" style={paper('linear-gradient(270deg,#f7f3ea,#eee8db)')}>
+            <div className="flap-in" style={paper('linear-gradient(270deg,#201c17,#15120f)')}>
               <Decor />
             </div>
           </div>
