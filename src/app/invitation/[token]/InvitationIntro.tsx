@@ -6,7 +6,7 @@ import { Volume2, VolumeX } from 'lucide-react'
 type Stage = 'closed' | 'seal' | 'flap' | 'fade' | 'done'
 const ORDER: Stage[] = ['closed', 'seal', 'flap', 'fade', 'done']
 
-const PETALS = Array.from({ length: 16 }, (_, i) => ({
+const PETALS = Array.from({ length: 12 }, (_, i) => ({
   left: (i * 37) % 100,
   size: 9 + ((i * 7) % 11),
   duration: 8 + ((i * 13) % 7),
@@ -15,9 +15,9 @@ const PETALS = Array.from({ length: 16 }, (_, i) => ({
   color: ['#f3dcdc', '#ead3a6', '#ffffff', '#ebcfcf'][i % 4],
 }))
 
-// Subtle paper grain
+// Fine paper grain
 const GRAIN = `url("data:image/svg+xml;utf8,${encodeURIComponent(
-  "<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.45 0 0 0 0 0.35 0 0 0 0 0.25 0 0 0 0.16 0'/></filter><rect width='100%' height='100%' filter='url(#n)'/></svg>"
+  "<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.45 0 0 0 0 0.38 0 0 0 0 0.3 0 0 0 0.14 0'/></filter><rect width='100%' height='100%' filter='url(#n)'/></svg>"
 )}")`
 
 // Geometry of one botanical sprig (a curved stem with alternating leaves)
@@ -49,24 +49,25 @@ const SPRIG = (() => {
     const s = 1.3 - t * 0.65
     return { x, y, a, s }
   })
-  const berries = [0.28, 0.5, 0.72].map((t, i) => {
+  const flowers = [0.28, 0.5, 0.72].map((t, i) => {
     const [x, y] = at(t)
     const [dx, dy] = dir(t)
     const n = Math.atan2(dy, dx) + (i % 2 ? 1 : -1) * (Math.PI / 2)
-    return { x: x + Math.cos(n) * 13, y: y + Math.sin(n) * 13 }
+    return { x: x + Math.cos(n) * 15, y: y + Math.sin(n) * 15, r: i * 24 }
   })
   const tip = at(1)
   const tipAngle = (Math.atan2(dir(1)[1], dir(1)[0]) * 180) / Math.PI
-  return { leaves, berries, tip, tipAngle }
+  return { leaves, flowers, tip, tipAngle }
 })()
 
 const LEAF = 'M0 0 C6 -9 20 -9 28 0 C20 9 6 9 0 0 Z'
 
+// Tone-on-tone: same colour as the paper, so only the light/shadow filter shows the relief
 function Sprig({ style }: { style: React.CSSProperties }) {
   return (
     <svg viewBox="0 0 200 300" style={style} aria-hidden>
-      <g fill="#efe6d5" stroke="#e1d3b8" strokeWidth="0.8">
-        <path d="M20 290 C30 190 70 110 130 20" fill="none" strokeWidth="2.4" strokeLinecap="round" />
+      <g fill="#f1ece1" stroke="#ece5d8" strokeWidth="0.5">
+        <path d="M20 290 C30 190 70 110 130 20" fill="none" strokeWidth="2.6" strokeLinecap="round" />
         {SPRIG.leaves.map((l, i) => (
           <path key={i} d={LEAF} transform={`translate(${l.x} ${l.y}) rotate(${l.a}) scale(${l.s})`} />
         ))}
@@ -74,17 +75,20 @@ function Sprig({ style }: { style: React.CSSProperties }) {
           d={LEAF}
           transform={`translate(${SPRIG.tip[0]} ${SPRIG.tip[1]}) rotate(${SPRIG.tipAngle}) scale(1.25)`}
         />
-        {SPRIG.berries.map((b, i) => (
-          <circle key={i} cx={b.x} cy={b.y} r="3.2" />
+        {SPRIG.flowers.map((f, i) => (
+          <g key={i} transform={`translate(${f.x} ${f.y}) rotate(${f.r})`}>
+            {[0, 72, 144, 216, 288].map(r => (
+              <ellipse key={r} cx="0" cy="-4.6" rx="2.9" ry="4.6" transform={`rotate(${r})`} />
+            ))}
+            <circle r="2" />
+          </g>
         ))}
       </g>
     </svg>
   )
 }
 
-// Embossed floral decoration. The same layer is placed inside every flap;
-// each flap clips it to its own triangle, so the pattern looks continuous
-// when the envelope is closed and each flap carries its own piece when it opens.
+// Embossed floral decoration, placed inside every flap (each flap clips it to its own triangle)
 function Decor() {
   const items: { left: string; top: string; rot: number; k: number }[] = [
     { left: 'calc(var(--sw) * -0.1)', top: 'calc(var(--sw) * -1.45)', rot: 113, k: 1 },
@@ -117,89 +121,85 @@ function Decor() {
   )
 }
 
-// Champagne-gold wax seal with a scalloped edge and monogram
-function Seal({ initials }: { initials: string }) {
-  const bumps = Array.from({ length: 22 }, (_, i) => {
-    const a = (i / 22) * Math.PI * 2
+// Rose-gold wax seal: scalloped edge with an embossed swan
+function Seal() {
+  const bumps = Array.from({ length: 20 }, (_, i) => {
+    const a = (i / 20) * Math.PI * 2
     return { x: 50 + Math.cos(a) * 41, y: 50 + Math.sin(a) * 41 }
   })
+  // Swan silhouette, drawn twice (highlight + shadow) for the embossed look
+  const swan = (
+    <>
+      <path
+        d="M36 53 C27 49 29 38 36 34 C40 31.5 39 27.5 43 27"
+        fill="none"
+        strokeWidth="3.4"
+        strokeLinecap="round"
+      />
+      <circle cx="44" cy="27.4" r="2.6" stroke="none" />
+      <path d="M46 26.6 L51.5 28.2 L46 29.8 Z" stroke="none" />
+      <path
+        d="M31 58 C37 68 55 70 65 58 C67 53 66 47 71 41 C69 49 70 53 66 56 C61 60 54 59 51 52 C47 57 39 56 36 51 C33 53 31 55 31 58 Z"
+        stroke="none"
+      />
+      <path d="M40 63 C46 66 54 66 60 62" fill="none" strokeWidth="1" strokeLinecap="round" />
+    </>
+  )
   return (
     <svg viewBox="0 0 100 100" width="100%" height="100%" aria-hidden>
       <defs>
-        <radialGradient id="sealGold" gradientUnits="userSpaceOnUse" cx="35" cy="28" r="85">
-          <stop offset="0" stopColor="#f6e8c4" />
-          <stop offset="0.45" stopColor="#d9bb7c" />
-          <stop offset="1" stopColor="#a6823f" />
+        <radialGradient id="sealRose" gradientUnits="userSpaceOnUse" cx="35" cy="26" r="88">
+          <stop offset="0" stopColor="#f3dcc4" />
+          <stop offset="0.45" stopColor="#d9b08c" />
+          <stop offset="1" stopColor="#a87a5a" />
         </radialGradient>
       </defs>
       {bumps.map((b, i) => (
-        <circle key={i} cx={b.x} cy={b.y} r="9" fill="url(#sealGold)" />
+        <circle key={i} cx={b.x} cy={b.y} r="9.5" fill="url(#sealRose)" />
       ))}
-      <circle cx="50" cy="50" r="42" fill="url(#sealGold)" />
-      <circle cx="50" cy="50" r="33" fill="none" stroke="rgba(255,248,226,0.8)" strokeWidth="1.3" />
-      <circle cx="50" cy="50" r="31.4" fill="none" stroke="rgba(120,88,36,0.45)" strokeWidth="0.8" />
-      <text
-        x="50.7"
-        y="58.2"
-        textAnchor="middle"
-        fontFamily="Georgia, 'Times New Roman', serif"
-        fontStyle="italic"
-        fontSize="22"
-        fill="rgba(255,250,232,0.9)"
-      >
-        {initials}
-      </text>
-      <text
-        x="50"
-        y="57.5"
-        textAnchor="middle"
-        fontFamily="Georgia, 'Times New Roman', serif"
-        fontStyle="italic"
-        fontSize="22"
-        fill="#86642a"
-      >
-        {initials}
-      </text>
+      <circle cx="50" cy="50" r="42" fill="url(#sealRose)" />
+      <circle cx="50" cy="50" r="34" fill="none" stroke="rgba(255,244,230,0.55)" strokeWidth="1.2" />
+      <circle cx="50" cy="50" r="32.6" fill="none" stroke="rgba(110,70,44,0.35)" strokeWidth="0.8" />
+      <g transform="translate(0.9 0.9)" fill="rgba(255,246,232,0.85)" stroke="rgba(255,246,232,0.85)">
+        {swan}
+      </g>
+      <g fill="#9a6e4d" stroke="#9a6e4d">
+        {swan}
+      </g>
     </svg>
   )
 }
 
 const css = `
-.inv-root{position:fixed;inset:0;z-index:50;overflow:hidden;perspective:1600px;background:#efe6d6;
+.inv-root{position:fixed;inset:0;z-index:50;overflow:hidden;perspective:1600px;background:#f1ede4;
   --seal:clamp(104px,24vmin,170px);--sw0:clamp(130px,42vmin,360px);
   transition:opacity 1.1s ease,visibility 1.1s;}
 .inv-root.is-fade{opacity:0;visibility:hidden;pointer-events:none;}
 
-/* ---------- Letter (revealed when the flaps open) ---------- */
-.inv-letter{position:absolute;inset:0;z-index:1;display:flex;align-items:center;justify-content:center;text-align:center;padding:0 8%;}
-.inv-letter::before{content:'';position:absolute;inset:clamp(12px,2.6vmin,24px);border:1px solid rgba(176,141,87,.65);}
-.inv-letter::after{content:'';position:absolute;inset:calc(clamp(12px,2.6vmin,24px) + 6px);border:1px solid rgba(176,141,87,.28);}
-.letter-c{position:relative;opacity:0;transform:translateY(16px) scale(.98);}
-.is-flap .letter-c{animation:letterIn 1.4s ease .9s forwards;}
-@keyframes letterIn{to{opacity:1;transform:none}}
-.letter-label{font-size:clamp(10px,1.9vmin,14px);letter-spacing:.42em;text-transform:uppercase;color:#6b5a4e;}
-.letter-names{font-size:clamp(2.6rem,11vmin,6rem);line-height:1.1;color:#b08d57;margin:.18em 0 .1em;}
-.letter-sub{font-size:clamp(11px,2vmin,15px);font-style:italic;color:#6b5a4e;}
-.divider{display:flex;align-items:center;justify-content:center;gap:10px;margin:.7em 0;}
-.divider span{display:block;width:clamp(36px,9vmin,70px);height:1px;background:#b08d57;opacity:.7;}
-.divider i{display:block;width:7px;height:7px;border:1px solid #b08d57;transform:rotate(45deg);}
+/* ---------- Paper revealed when the flaps open ---------- */
+.inv-letter{position:absolute;inset:0;z-index:1;}
 
 /* ---------- Flaps ---------- */
 .flap{position:absolute;inset:0;backface-visibility:hidden;will-change:transform;
-  filter:drop-shadow(0 0 1.2px rgba(90,68,38,.5));}
+  filter:drop-shadow(0 3px 7px rgba(90,70,45,.28));}
 .flap-in{position:absolute;inset:0;overflow:hidden;}
-.flap-in::after{content:'';position:absolute;inset:clamp(10px,2.2vmin,20px);border:1px solid rgba(176,141,87,.55);pointer-events:none;}
+.flap-in::before{content:'';position:absolute;inset:0;pointer-events:none;}
 .f-top{z-index:4;transform-origin:50% 0;}
 .f-top .flap-in{clip-path:polygon(0 0,100% 0,50% 50.15%);}
+.f-top .flap-in::before{background:linear-gradient(180deg,rgba(255,255,255,.4),rgba(110,88,58,.12));}
 .f-bottom{z-index:3;transform-origin:50% 100%;}
 .f-bottom .flap-in{clip-path:polygon(0 100%,100% 100%,50% 49.85%);}
+.f-bottom .flap-in::before{background:linear-gradient(0deg,rgba(255,255,255,.4),rgba(110,88,58,.1));}
 .f-left{z-index:5;transform-origin:0 50%;}
 .f-left .flap-in{clip-path:polygon(0 0,50.1% 50%,0 100%);}
+.f-left .flap-in::before{background:linear-gradient(90deg,rgba(255,255,255,.3),rgba(110,88,58,.14));}
 .f-right{z-index:5;transform-origin:100% 50%;}
 .f-right .flap-in{clip-path:polygon(100% 0,49.9% 50%,100% 100%);}
+.f-right .flap-in::before{background:linear-gradient(270deg,rgba(255,255,255,.3),rgba(110,88,58,.1));}
 
+/* Emboss: light edge bottom-right, soft shade top-left */
 .decor{position:absolute;inset:0;pointer-events:none;
-  filter:drop-shadow(1.2px 1.2px .6px rgba(255,255,255,.95)) drop-shadow(-1px -1px .8px rgba(150,125,90,.3));}
+  filter:drop-shadow(1.3px 1.3px .5px rgba(255,255,255,.95)) drop-shadow(-1.1px -1.1px .7px rgba(130,105,70,.32));}
 
 .is-flap .f-top{animation:openTop 1.5s cubic-bezier(.6,.05,.3,1) forwards;}
 .is-flap .f-bottom{animation:openBottom 1.5s cubic-bezier(.6,.05,.3,1) .12s forwards;}
@@ -210,12 +210,17 @@ const css = `
 @keyframes openLeft{0%{transform:rotateY(0);opacity:1}75%{opacity:1}100%{transform:rotateY(105deg);opacity:0}}
 @keyframes openRight{0%{transform:rotateY(0);opacity:1}75%{opacity:1}100%{transform:rotateY(-105deg);opacity:0}}
 
-/* ---------- Wax seal ---------- */
+/* ---------- Wax seal (also the tap target) ---------- */
 .seal{position:absolute;left:50%;top:50%;z-index:10;width:var(--seal);height:var(--seal);
-  margin:calc(var(--seal) / -2) 0 0 calc(var(--seal) / -2);filter:drop-shadow(0 6px 10px rgba(80,55,20,.4));}
+  margin:calc(var(--seal) / -2) 0 0 calc(var(--seal) / -2);padding:0;border:0;background:none;cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+  filter:drop-shadow(0 7px 10px rgba(80,55,35,.38)) drop-shadow(0 1px 1px rgba(80,55,35,.4));}
+.seal.broken{cursor:default;}
+.seal:focus-visible{outline:2px solid #a87a5a;outline-offset:8px;border-radius:50%;}
 .seal:not(.broken){animation:sealPulse 2.6s ease-in-out infinite;}
-@keyframes sealPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
-.seal-half{position:absolute;inset:0;}
+.seal:not(.broken):hover{filter:drop-shadow(0 8px 12px rgba(80,55,35,.42)) brightness(1.05);}
+@keyframes sealPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+.seal-half{position:absolute;inset:0;display:block;}
 .seal-l{clip-path:inset(0 50% 0 0);}
 .seal-r{clip-path:inset(0 0 0 50%);}
 .is-seal .seal-l{animation:sealL .8s ease-in forwards;}
@@ -223,34 +228,18 @@ const css = `
 @keyframes sealL{0%{transform:translate(0,0) rotate(0);opacity:1}100%{transform:translate(-26px,60px) rotate(-24deg);opacity:0}}
 @keyframes sealR{0%{transform:translate(0,0) rotate(0);opacity:1}100%{transform:translate(26px,64px) rotate(24deg);opacity:0}}
 
-/* ---------- Text and button on the envelope ---------- */
-.inv-top{position:absolute;top:calc(env(safe-area-inset-top,0px) + 6vh);left:0;right:0;z-index:12;text-align:center;padding:0 24px;transition:opacity .6s ease;}
-.inv-top p{font-size:clamp(10px,1.9vmin,14px);letter-spacing:.34em;text-transform:uppercase;color:#6b5a4e;}
-.inv-bottom{position:absolute;bottom:calc(env(safe-area-inset-bottom,0px) + 7vh);left:0;right:0;z-index:12;
-  display:flex;flex-direction:column;align-items:center;gap:12px;padding:0 24px;text-align:center;transition:opacity .6s ease;}
-.inv-bottom .lbl{font-size:clamp(10px,1.8vmin,13px);letter-spacing:.3em;text-transform:uppercase;color:#8a7b6e;}
-.inv-bottom .nm{font-size:clamp(1.5rem,5.5vmin,2.4rem);line-height:1.15;color:#b08d57;max-width:80%;text-wrap:balance;}
-.is-seal .inv-top,.is-seal .inv-bottom{opacity:0;pointer-events:none;}
-.inv-btn{margin-top:6px;padding:14px 38px;border-radius:999px;border:1px solid #b08d57;
-  background:linear-gradient(180deg,#cfb074,#a98446);color:#fff;font-size:13px;letter-spacing:.22em;text-transform:uppercase;cursor:pointer;
-  text-shadow:0 1px 1px rgba(90,60,20,.35);
-  box-shadow:0 10px 24px rgba(120,90,40,.3),inset 0 1px 0 rgba(255,255,255,.45);transition:transform .2s ease,filter .2s ease;}
-.inv-btn:hover{transform:translateY(-2px);filter:brightness(1.07);}
-
-@media (max-height:520px){
-  .inv-top p.sub{display:none;}
-  .inv-bottom{bottom:3vh;gap:6px;}
-  .inv-bottom .lbl{display:none;}
-}
-
 /* ---------- Petals ---------- */
 .petals{position:absolute;inset:0;pointer-events:none;z-index:11;overflow:hidden;}
-.petal{position:absolute;top:-30px;border-radius:150% 0 150% 0;opacity:.8;animation:petalFall linear infinite;
+.petal{position:absolute;top:-30px;border-radius:150% 0 150% 0;opacity:.7;animation:petalFall linear infinite;
   box-shadow:0 2px 6px rgba(120,80,60,.15);}
 @keyframes petalFall{
   0%{transform:translate3d(0,-5vh,0) rotate(0deg)}
   50%{transform:translate3d(calc(var(--dx) * .5),55vh,0) rotate(180deg)}
   100%{transform:translate3d(var(--dx),110vh,0) rotate(360deg)}
+}
+@media (prefers-reduced-motion:reduce){
+  .seal:not(.broken){animation:none;}
+  .petal{animation:none;opacity:0;}
 }
 `
 
@@ -271,8 +260,6 @@ function RevealedContent({ children }: { children: React.ReactNode }) {
 
 export default function InvitationIntro({
   guestName,
-  groomName = 'Lutfi',
-  brideName = 'Putri',
   children,
 }: {
   guestName: string
@@ -302,11 +289,11 @@ export default function InvitationIntro({
       audio.play().catch(() => {})
     }
 
-    // Timeline: seal cracks -> flaps open -> letter shown -> fade into the page
+    // Timeline: seal cracks -> flaps open -> fade into the page
     setStage('seal')
     timers.current.push(setTimeout(() => setStage('flap'), 800))
-    timers.current.push(setTimeout(() => setStage('fade'), 5200))
-    timers.current.push(setTimeout(() => setStage('done'), 6400))
+    timers.current.push(setTimeout(() => setStage('fade'), 3000))
+    timers.current.push(setTimeout(() => setStage('done'), 4200))
   }
 
   const toggleMusic = () => {
@@ -318,9 +305,6 @@ export default function InvitationIntro({
       audio.pause()
     }
   }
-
-  const initials = `${groomName.charAt(0)}&${brideName.charAt(0)}`.toUpperCase()
-  const script = "'Edwardian Script ITC', 'Lucida Calligraphy', 'Baskerville', cursive"
 
   const rootClass = [
     'inv-root',
@@ -352,71 +336,48 @@ export default function InvitationIntro({
 
       {stage !== 'done' && (
         <div className={rootClass}>
-          {/* The letter, hidden behind the flaps until they open */}
+          {/* Plain paper, hidden behind the flaps until they open */}
           <div
             className="inv-letter"
             style={paper('radial-gradient(ellipse at 50% 40%,#fffdf8 0%,#f8f1e4 70%,#efe4d0 100%)')}
-          >
-            <div className="letter-c">
-              <p className="letter-label">The Wedding Of</p>
-              <h2 className="letter-names" style={{ fontFamily: script, fontWeight: 400 }}>
-                {groomName} <span style={{ fontSize: '0.7em', opacity: 0.85 }}>&amp;</span> {brideName}
-              </h2>
-              <div className="divider">
-                <span />
-                <i />
-                <span />
-              </div>
-              <p className="letter-sub">You are cordially invited</p>
-            </div>
-          </div>
+          />
 
-          {/* Four flaps meeting in an X */}
+          {/* Four flaps meeting in an X: ivory paper, soft fold shading, embossed florals */}
           <div className="flap f-bottom">
-            <div className="flap-in" style={paper('linear-gradient(0deg,#faf6ee,#f1e9da)')}>
+            <div className="flap-in" style={paper('linear-gradient(0deg,#f7f3ea,#eee8db)')}>
               <Decor />
             </div>
           </div>
           <div className="flap f-top">
-            <div className="flap-in" style={paper('linear-gradient(180deg,#f8f3ea,#ece3d1)')}>
+            <div className="flap-in" style={paper('linear-gradient(180deg,#f6f2e9,#ebe5d7)')}>
               <Decor />
             </div>
           </div>
           <div className="flap f-left">
-            <div className="flap-in" style={paper('linear-gradient(90deg,#f4eddf,#ebe1cf)')}>
+            <div className="flap-in" style={paper('linear-gradient(90deg,#f3eee3,#ebe5d7)')}>
               <Decor />
             </div>
           </div>
           <div className="flap f-right">
-            <div className="flap-in" style={paper('linear-gradient(270deg,#faf6ed,#efe6d6)')}>
+            <div className="flap-in" style={paper('linear-gradient(270deg,#f7f3ea,#eee8db)')}>
               <Decor />
             </div>
           </div>
 
-          {/* Wax seal */}
-          <div className={`seal ${reached('seal') ? 'broken' : ''}`}>
-            <div className="seal-half seal-l">
-              <Seal initials={initials} />
-            </div>
-            <div className="seal-half seal-r">
-              <Seal initials={initials} />
-            </div>
-          </div>
-
-          <div className="inv-top">
-            <p className="sub">We invite you to</p>
-            <p>The Wedding of</p>
-          </div>
-
-          <div className="inv-bottom">
-            <span className="lbl">Special invitation for</span>
-            <span className="nm" style={{ fontFamily: script }}>
-              {guestName}
+          {/* Wax seal: tap it to open */}
+          <button
+            type="button"
+            className={`seal ${reached('seal') ? 'broken' : ''}`}
+            onClick={handleOpen}
+            aria-label={`Open invitation for ${guestName}`}
+          >
+            <span className="seal-half seal-l">
+              <Seal />
             </span>
-            <button className="inv-btn" onClick={handleOpen}>
-              Open Invitation
-            </button>
-          </div>
+            <span className="seal-half seal-r">
+              <Seal />
+            </span>
+          </button>
 
           {/* Floating petals */}
           <div className="petals">
