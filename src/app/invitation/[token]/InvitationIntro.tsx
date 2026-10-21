@@ -14,18 +14,18 @@ const GOLD = {
   lineWidth: 0.8, // outline thickness in px (screen space)
   vein: '#b8985a',
   dots: '#c9ad6a',
-  // flower fills (charcoal, same family as the envelope)
-  petalDark: '#1a1918',
-  petalMid: '#242220',
-  petalLight: '#2f2d29',
-  leaf: '#222020',
-  berry: '#242220',
-  stem: '#2a2825',
-  center: '#2a2825',
+  // flower fills (charcoal, tuned for the matte black paper)
+  petalDark: '#141413',
+  petalMid: '#1e1c1a',
+  petalLight: '#292724',
+  leaf: '#1a1918',
+  berry: '#1e1c1a',
+  stem: '#232120',
+  center: '#232120',
   // side vine fills (embossed look: light top-left -> dark bottom-right)
-  vineLight: '#34312d',
-  vineDark: '#1b1a18',
-  vineStem: '#32302c',
+  vineLight: '#2b2926',
+  vineDark: '#121211',
+  vineStem: '#2a2825',
 }
 
 // Keeps every outline the same thin width on screen, no matter how much the shape is scaled
@@ -51,7 +51,7 @@ const DUST = Array.from({ length: 22 }, (_, i) => ({
 
 // Fine paper grain
 const GRAIN = `url("data:image/svg+xml;utf8,${encodeURIComponent(
-  "<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.06 0'/></filter><rect width='100%' height='100%' filter='url(#n)'/></svg>"
+  "<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.05 0'/></filter><rect width='100%' height='100%' filter='url(#n)'/></svg>"
 )}")`
 
 // Geometry of one botanical sprig (a curved stem with alternating leaves)
@@ -379,12 +379,23 @@ function Spray({ position }: { position: 'top' | 'bottom' }) {
   )
 }
 
-// Antique champagne seal: muted metallic tones that sit naturally on the charcoal envelope
+// Black glossy seal: a domed, bevelled scalloped disc with a raised swan.
+// A faint champagne rim light on the top-left keeps it visible on the black paper.
 function Seal() {
   const bumps = Array.from({ length: 20 }, (_, i) => {
     const a = (i / 20) * Math.PI * 2
     return { x: 50 + Math.cos(a) * 41, y: 50 + Math.sin(a) * 41 }
   })
+
+  // Scalloped outline (drawn several times: shadow, rim light, body)
+  const outline = (
+    <>
+      {bumps.map((b, i) => (
+        <circle key={i} cx={b.x} cy={b.y} r="9.5" />
+      ))}
+      <circle cx="50" cy="50" r="42" />
+    </>
+  )
 
   // Swan silhouette facing right: S-curved neck, head with beak, rounded body, lifted tail
   const swan = (
@@ -412,37 +423,79 @@ function Seal() {
   return (
     <svg viewBox="0 0 100 100" width="100%" height="100%" aria-hidden>
       <defs>
-        <radialGradient id="sealRose" gradientUnits="userSpaceOnUse" cx="35" cy="26" r="92">
-          <stop offset="0" stopColor="#b8a67f" />
-          <stop offset="0.5" stopColor="#8a7a58" />
-          <stop offset="1" stopColor="#4f4430" />
+        {/* Glossy black body, lit from the top-left */}
+        <radialGradient id="sealBody" gradientUnits="userSpaceOnUse" cx="34" cy="26" r="88">
+          <stop offset="0" stopColor="#4d4944" />
+          <stop offset="0.38" stopColor="#2b2927" />
+          <stop offset="0.72" stopColor="#141312" />
+          <stop offset="1" stopColor="#070707" />
         </radialGradient>
-        {/* Soft darkening toward the edge so the seal melts into the paper */}
-        <radialGradient id="sealVignette" cx="50" cy="50" r="50" gradientUnits="userSpaceOnUse">
-          <stop offset="0.6" stopColor="#000" stopOpacity="0" />
-          <stop offset="1" stopColor="#000" stopOpacity="0.28" />
+        {/* Pressed-in center: dark at the top-left, lighter toward the bottom-right */}
+        <linearGradient id="sealDish" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#0a0a09" />
+          <stop offset="1" stopColor="#292724" />
+        </linearGradient>
+        {/* Soft specular glint */}
+        <radialGradient id="sealSpec" cx="0.5" cy="0.5" r="0.5">
+          <stop offset="0" stopColor="#ffffff" stopOpacity="0.26" />
+          <stop offset="1" stopColor="#ffffff" stopOpacity="0" />
         </radialGradient>
+        {/* Raised swan: graphite, lighter than the seal body */}
+        <linearGradient id="swanG" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#47433e" />
+          <stop offset="1" stopColor="#1f1e1c" />
+        </linearGradient>
       </defs>
-      {bumps.map((b, i) => (
-        <circle key={i} cx={b.x} cy={b.y} r="9.5" fill="url(#sealRose)" />
-      ))}
-      <circle cx="50" cy="50" r="42" fill="url(#sealRose)" />
-      <circle cx="50" cy="50" r="50" fill="url(#sealVignette)" />
-      <circle cx="50" cy="50" r="34" fill="none" stroke="rgba(225,210,175,0.28)" strokeWidth="1.1" />
-      <circle cx="50" cy="50" r="32.6" fill="none" stroke="rgba(35,28,16,0.45)" strokeWidth="0.8" />
 
-      {/* Swan, centered inside the ring */}
+      {/* Edge bevel: cast shadow, champagne rim light, then the body on top */}
+      <g fill="#000" fillOpacity=".55" transform="translate(1.2 1.6)">
+        {outline}
+      </g>
+      <g fill="#7a6f5a" fillOpacity=".7" transform="translate(-0.8 -0.8)">
+        {outline}
+      </g>
+      <g fill="url(#sealBody)">{outline}</g>
+
+      {/* Pressed-in center disc with an inner ring (shadow top-left, light bottom-right) */}
+      <circle cx="50" cy="50" r="34" fill="url(#sealDish)" />
+      <circle
+        cx="50"
+        cy="50"
+        r="34"
+        fill="none"
+        stroke="rgba(0,0,0,0.7)"
+        strokeWidth="1.2"
+        transform="translate(-0.5 -0.5)"
+      />
+      <circle
+        cx="50"
+        cy="50"
+        r="34"
+        fill="none"
+        stroke="rgba(230,210,160,0.32)"
+        strokeWidth="1"
+        transform="translate(0.6 0.6)"
+      />
+
+      {/* Specular glint */}
+      <ellipse cx="36" cy="26" rx="18" ry="9" fill="url(#sealSpec)" transform="rotate(-35 36 26)" />
+
+      {/* Raised swan, centered inside the ring */}
       <g transform="translate(50 50) scale(1.05) translate(-46 -47)">
-        {/* Highlight edge (bottom-right) */}
-        <g transform="translate(0.8 0.8)" fill="rgba(225,210,175,0.4)" stroke="rgba(225,210,175,0.4)">
+        {/* Cast shadow (bottom-right) */}
+        <g transform="translate(1.1 1.4)" fill="rgba(0,0,0,0.75)" stroke="rgba(0,0,0,0.75)">
           {swan}
         </g>
-        {/* Pressed-in swan */}
-        <g fill="#3f3524" stroke="#3f3524">
+        {/* Champagne rim light (top-left edge) */}
+        <g transform="translate(-0.5 -0.5)" fill="rgba(232,208,150,0.55)" stroke="rgba(232,208,150,0.55)">
+          {swan}
+        </g>
+        {/* Swan body */}
+        <g fill="url(#swanG)" stroke="rgba(214,190,130,0.35)">
           {swan}
         </g>
         {/* Wing feather lines */}
-        <g fill="none" stroke="rgba(225,210,175,0.38)" strokeWidth="0.9" strokeLinecap="round">
+        <g fill="none" stroke="rgba(225,205,160,0.32)" strokeWidth="0.9" strokeLinecap="round">
           <path d="M33 54 C40 49 50 49 57 55" />
           <path d="M36 58.5 C42 54.5 50 54.5 56 59.5" />
         </g>
@@ -452,7 +505,7 @@ function Seal() {
 }
 
 const css = `
-.inv-root{position:fixed;inset:0;z-index:50;overflow:hidden;perspective:1600px;background:#0c0c0b;
+.inv-root{position:fixed;inset:0;z-index:50;overflow:hidden;perspective:1600px;background:#050505;
   --seal:clamp(104px,24vmin,170px);--sw0:clamp(130px,42vmin,360px);
   --spw:min(96vw,clamp(300px,74vmin,780px));
   transition:opacity 1.1s ease,visibility 1.1s;}
@@ -463,25 +516,25 @@ const css = `
 
 /* ---------- Flaps ---------- */
 .flap{position:absolute;inset:0;backface-visibility:hidden;will-change:transform;
-  filter:drop-shadow(0 4px 10px rgba(0,0,0,.7));}
+  filter:drop-shadow(0 4px 10px rgba(0,0,0,.8));}
 .flap-in{position:absolute;inset:0;overflow:hidden;}
 .flap-in::before{content:'';position:absolute;inset:0;pointer-events:none;}
 .f-top{z-index:4;transform-origin:50% 0;}
 .f-top .flap-in{clip-path:polygon(0 0,100% 0,50% 50.15%);}
-.f-top .flap-in::before{background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(0,0,0,.38));}
+.f-top .flap-in::before{background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(0,0,0,.45));}
 .f-bottom{z-index:3;transform-origin:50% 100%;}
 .f-bottom .flap-in{clip-path:polygon(0 100%,100% 100%,50% 49.85%);}
-.f-bottom .flap-in::before{background:linear-gradient(0deg,rgba(255,255,255,.07),rgba(0,0,0,.34));}
+.f-bottom .flap-in::before{background:linear-gradient(0deg,rgba(255,255,255,.03),rgba(0,0,0,.42));}
 .f-left{z-index:5;transform-origin:0 50%;}
 .f-left .flap-in{clip-path:polygon(0 0,50.1% 50%,0 100%);}
-.f-left .flap-in::before{background:linear-gradient(90deg,rgba(255,255,255,.05),rgba(0,0,0,.4));}
+.f-left .flap-in::before{background:linear-gradient(90deg,rgba(255,255,255,.02),rgba(0,0,0,.48));}
 .f-right{z-index:5;transform-origin:100% 50%;}
 .f-right .flap-in{clip-path:polygon(100% 0,49.9% 50%,100% 100%);}
-.f-right .flap-in::before{background:linear-gradient(270deg,rgba(255,255,255,.05),rgba(0,0,0,.32));}
+.f-right .flap-in::before{background:linear-gradient(270deg,rgba(255,255,255,.02),rgba(0,0,0,.42));}
 
 /* Raised relief for the side vines: highlight on the top-left edge, deep cast shadow bottom-right */
 .decor{position:absolute;inset:0;pointer-events:none;
-  filter:drop-shadow(-1px -1px .5px rgba(255,255,255,.18)) drop-shadow(1.6px 2.2px 1.6px rgba(0,0,0,.88));}
+  filter:drop-shadow(-1px -1px .5px rgba(255,255,255,.14)) drop-shadow(1.6px 2.2px 1.6px rgba(0,0,0,.9));}
 
 /* Two vine layouts: wide screens use .decor-land, tall (phone) screens use .decor-port */
 .decor-port{display:none;}
@@ -493,7 +546,7 @@ const css = `
 
 /* Flower spray: deeper emboss than the vines, fades in on load */
 .decor.rich{
-  filter:drop-shadow(-1px -1px .5px rgba(255,255,255,.16)) drop-shadow(1.6px 2.2px 1.6px rgba(0,0,0,.88));
+  filter:drop-shadow(-1px -1px .5px rgba(255,255,255,.13)) drop-shadow(1.6px 2.2px 1.6px rgba(0,0,0,.9));
   animation:florIn 2s ease-out .2s both;}
 @keyframes florIn{0%{opacity:0}100%{opacity:1}}
 .spray{position:absolute;left:50%;width:var(--spw);height:auto;overflow:visible;}
@@ -514,11 +567,11 @@ const css = `
 @keyframes openLeft{0%{transform:rotateY(0);opacity:1}75%{opacity:1}100%{transform:rotateY(105deg);opacity:0}}
 @keyframes openRight{0%{transform:rotateY(0);opacity:1}75%{opacity:1}100%{transform:rotateY(-105deg);opacity:0}}
 
-/* ---------- Seal glow (soft halo behind the seal) ---------- */
+/* ---------- Seal glow (soft halo behind the seal, helps it stand out on black) ---------- */
 .seal-glow{position:absolute;left:50%;top:50%;z-index:9;pointer-events:none;border-radius:50%;
   width:calc(var(--seal) * 2.4);height:calc(var(--seal) * 2.4);
   margin:calc(var(--seal) * -1.2) 0 0 calc(var(--seal) * -1.2);
-  background:radial-gradient(circle,rgba(196,170,115,.22) 0%,rgba(196,170,115,.08) 40%,rgba(196,170,115,0) 70%);
+  background:radial-gradient(circle,rgba(196,170,115,.2) 0%,rgba(196,170,115,.07) 40%,rgba(196,170,115,0) 70%);
   animation:glowBreath 3.4s ease-in-out infinite;}
 @keyframes glowBreath{0%,100%{opacity:.55;transform:scale(.92)}50%{opacity:1;transform:scale(1.06)}}
 .is-seal .seal-glow{animation:glowOut .9s ease-out forwards;}
@@ -528,19 +581,19 @@ const css = `
 .seal{position:absolute;left:50%;top:50%;z-index:10;width:var(--seal);height:var(--seal);
   margin:calc(var(--seal) / -2) 0 0 calc(var(--seal) / -2);padding:0;border:0;background:none;cursor:pointer;
   -webkit-tap-highlight-color:transparent;
-  filter:drop-shadow(0 4px 8px rgba(0,0,0,.6)) drop-shadow(0 1px 1px rgba(0,0,0,.5));}
+  filter:drop-shadow(0 0 7px rgba(196,170,115,.16)) drop-shadow(0 6px 10px rgba(0,0,0,.85)) drop-shadow(0 1px 1px rgba(0,0,0,.6));}
 .seal.broken{cursor:default;}
 .seal:focus-visible{outline:2px solid #8a7a58;outline-offset:8px;border-radius:50%;}
 .seal:not(.broken){animation:sealPulse 2.6s ease-in-out infinite;}
-.seal:not(.broken):hover{filter:drop-shadow(0 4px 8px rgba(0,0,0,.65)) brightness(1.08);}
+.seal:not(.broken):hover{filter:drop-shadow(0 0 9px rgba(196,170,115,.26)) drop-shadow(0 6px 10px rgba(0,0,0,.85)) brightness(1.12);}
 @keyframes sealPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
 .is-seal .seal{animation:sealFade .6s ease-out forwards;pointer-events:none;}
 @keyframes sealFade{0%{transform:scale(1);opacity:1}100%{transform:scale(.94);opacity:0}}
 
-/* Light streak sweeping across the seal like metallic foil */
+/* Light streak sweeping across the seal like a glossy reflection */
 .seal-shine{position:absolute;inset:3%;border-radius:50%;overflow:hidden;pointer-events:none;}
 .seal-shine::after{content:'';position:absolute;top:-20%;bottom:-20%;left:-60%;width:40%;
-  background:linear-gradient(100deg,rgba(255,240,200,0),rgba(255,240,200,.38),rgba(255,240,200,0));
+  background:linear-gradient(100deg,rgba(255,240,200,0),rgba(255,240,200,.26),rgba(255,240,200,0));
   transform:skewX(-18deg);animation:sealShine 4.4s ease-in-out infinite;}
 @keyframes sealShine{0%,55%{left:-60%}100%{left:130%}}
 
@@ -663,15 +716,15 @@ export default function InvitationIntro({
 
       {stage !== 'done' && (
         <div className={rootClass}>
-          {/* Plain black paper, hidden behind the flaps until they open */}
+          {/* Matte black paper, hidden behind the flaps until they open */}
           <div
             className="inv-letter"
-            style={paper('radial-gradient(ellipse at 50% 40%,#1d1c1a 0%,#121211 70%,#0a0a09 100%)')}
+            style={paper('radial-gradient(ellipse at 50% 40%,#131312 0%,#0a0a0a 70%,#050505 100%)')}
           />
 
-          {/* Four flaps meeting in an X: black paper, soft fold shading, embossed ornaments */}
+          {/* Four flaps meeting in an X: matte black paper, soft fold shading, embossed ornaments */}
           <div className="flap f-bottom">
-            <div className="flap-in" style={paper('linear-gradient(0deg,#191817,#10100f)')}>
+            <div className="flap-in" style={paper('linear-gradient(0deg,#0e0e0d,#080808)')}>
               <Decor />
               <div className="decor rich">
                 <Spray position="bottom" />
@@ -679,7 +732,7 @@ export default function InvitationIntro({
             </div>
           </div>
           <div className="flap f-top">
-            <div className="flap-in" style={paper('linear-gradient(180deg,#1c1b19,#10100f)')}>
+            <div className="flap-in" style={paper('linear-gradient(180deg,#151514,#090909)')}>
               <Decor />
               <div className="decor rich">
                 <Spray position="top" />
@@ -687,12 +740,12 @@ export default function InvitationIntro({
             </div>
           </div>
           <div className="flap f-left">
-            <div className="flap-in" style={paper('linear-gradient(90deg,#171615,#10100f)')}>
+            <div className="flap-in" style={paper('linear-gradient(90deg,#10100f,#090909)')}>
               <Decor />
             </div>
           </div>
           <div className="flap f-right">
-            <div className="flap-in" style={paper('linear-gradient(270deg,#1a1918,#10100f)')}>
+            <div className="flap-in" style={paper('linear-gradient(270deg,#111110,#090909)')}>
               <Decor />
             </div>
           </div>
