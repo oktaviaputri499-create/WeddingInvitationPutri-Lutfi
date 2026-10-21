@@ -6,14 +6,15 @@ import { Volume2, VolumeX } from 'lucide-react'
 type Stage = 'closed' | 'seal' | 'flap' | 'fade' | 'done'
 const ORDER: Stage[] = ['closed', 'seal', 'flap', 'fade', 'done']
 
-// Flower sprays: charcoal fill with only a thin gold outline
+// Thin gold outline settings (used by the flower sprays AND the side vines)
 const GOLD = {
   line: '#b8985a', // outline color
-  lineOpacity: 0.7, // outline strength (lower = more subtle)
+  lineOpacity: 0.7, // flower outline strength (lower = more subtle)
+  vineOpacity: 0.6, // side vine outline strength
   lineWidth: 0.8, // outline thickness in px (screen space)
   vein: '#b8985a',
   dots: '#c9ad6a',
-  // fills (charcoal, same family as the envelope)
+  // flower fills (charcoal, same family as the envelope)
   petalDark: '#1a1918',
   petalMid: '#242220',
   petalLight: '#2f2d29',
@@ -22,6 +23,9 @@ const GOLD = {
   stem: '#2a2825',
   center: '#2a2825',
 }
+
+// Keeps every outline the same thin width on screen, no matter how much the shape is scaled
+const THIN = { vectorEffect: 'non-scaling-stroke' as const }
 
 const PETALS = Array.from({ length: 12 }, (_, i) => ({
   left: (i * 37) % 100,
@@ -87,22 +91,31 @@ const SPRIG = (() => {
 })()
 
 const LEAF = 'M0 0 C6 -9 20 -9 28 0 C20 9 6 9 0 0 Z'
+const SPRIG_STEM = 'M20 290 C30 190 70 110 130 20'
 
-// The original sprig, in tone-on-tone charcoal so it shows as a soft relief on the black paper
+// Side vine: same charcoal look as before, now with only a thin gold outline added
 function Sprig({ style }: { style: React.CSSProperties }) {
   return (
     <svg viewBox="0 0 200 300" style={style} aria-hidden>
-      <g fill="#262422" stroke="#3b3834" strokeWidth="0.8">
-        <path d="M20 290 C30 190 70 110 130 20" fill="none" strokeWidth="2.4" strokeLinecap="round" />
+      <g fill="#262422" stroke={GOLD.line} strokeOpacity={GOLD.vineOpacity} strokeWidth={GOLD.lineWidth}>
+        {/* Stem: original dark body with a hairline of gold on top */}
+        <path d={SPRIG_STEM} fill="none" stroke="#3b3834" strokeOpacity="1" strokeWidth="2.4" strokeLinecap="round" />
+        <path d={SPRIG_STEM} fill="none" strokeLinecap="round" {...THIN} />
         {SPRIG.leaves.map((l, i) => (
-          <path key={i} d={LEAF} transform={`translate(${l.x} ${l.y}) rotate(${l.a}) scale(${l.s})`} />
+          <path
+            key={i}
+            d={LEAF}
+            transform={`translate(${l.x} ${l.y}) rotate(${l.a}) scale(${l.s})`}
+            {...THIN}
+          />
         ))}
         <path
           d={LEAF}
           transform={`translate(${SPRIG.tip[0]} ${SPRIG.tip[1]}) rotate(${SPRIG.tipAngle}) scale(1.25)`}
+          {...THIN}
         />
         {SPRIG.berries.map((b, i) => (
-          <circle key={i} cx={b.x} cy={b.y} r="3.2" />
+          <circle key={i} cx={b.x} cy={b.y} r="3.2" {...THIN} />
         ))}
       </g>
     </svg>
@@ -211,9 +224,6 @@ const SPRAY_BERRIES = BRANCHES.flatMap(({ P }, bi) =>
 
 const PETAL = 'M0 0 C-17 -10 -21 -38 0 -62 C21 -38 17 -10 0 0 Z'
 const BUD = 'M0 0 C-8 -7 -8 -20 0 -30 C8 -20 8 -7 0 0 Z'
-
-// Keeps every outline the same thin width on screen, no matter how much the shape is scaled
-const THIN = { vectorEffect: 'non-scaling-stroke' as const }
 
 function Bloom({
   x,
