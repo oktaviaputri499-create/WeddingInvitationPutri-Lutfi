@@ -22,6 +22,10 @@ const GOLD = {
   berry: '#242220',
   stem: '#2a2825',
   center: '#2a2825',
+  // side vine fills (embossed look: light top-left -> dark bottom-right)
+  vineLight: '#34312d',
+  vineDark: '#1b1a18',
+  vineStem: '#32302c',
 }
 
 // Keeps every outline the same thin width on screen, no matter how much the shape is scaled
@@ -91,31 +95,43 @@ const SPRIG = (() => {
 })()
 
 const LEAF = 'M0 0 C6 -9 20 -9 28 0 C20 9 6 9 0 0 Z'
+const LEAF_VEIN = 'M3 0 C10 -0.6 18 -0.6 25 0'
 const SPRIG_STEM = 'M20 290 C30 190 70 110 130 20'
 
-// Side vine: same charcoal look as before, now with only a thin gold outline added
+// Side vine: embossed charcoal leaves with a thin gold outline.
+// overflow:visible stops the SVG from cutting off leaves that extend past its box.
 function Sprig({ style }: { style: React.CSSProperties }) {
   return (
-    <svg viewBox="0 0 200 300" style={style} aria-hidden>
-      <g fill="#262422" stroke={GOLD.line} strokeOpacity={GOLD.vineOpacity} strokeWidth={GOLD.lineWidth}>
-        {/* Stem: original dark body with a hairline of gold on top */}
-        <path d={SPRIG_STEM} fill="none" stroke="#3b3834" strokeOpacity="1" strokeWidth="2.4" strokeLinecap="round" />
+    <svg viewBox="0 0 200 300" style={{ overflow: 'visible', ...style }} aria-hidden>
+      <defs>
+        <linearGradient id="vineG" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor={GOLD.vineLight} />
+          <stop offset="1" stopColor={GOLD.vineDark} />
+        </linearGradient>
+      </defs>
+      <g stroke={GOLD.line} strokeOpacity={GOLD.vineOpacity} strokeWidth={GOLD.lineWidth}>
+        {/* Stem: thick dark body with a hairline of gold on top */}
+        <path
+          d={SPRIG_STEM}
+          fill="none"
+          stroke={GOLD.vineStem}
+          strokeOpacity="1"
+          strokeWidth="3.4"
+          strokeLinecap="round"
+        />
         <path d={SPRIG_STEM} fill="none" strokeLinecap="round" {...THIN} />
         {SPRIG.leaves.map((l, i) => (
-          <path
-            key={i}
-            d={LEAF}
-            transform={`translate(${l.x} ${l.y}) rotate(${l.a}) scale(${l.s})`}
-            {...THIN}
-          />
+          <g key={i} transform={`translate(${l.x} ${l.y}) rotate(${l.a}) scale(${l.s})`}>
+            <path d={LEAF} fill="url(#vineG)" {...THIN} />
+            <path d={LEAF_VEIN} fill="none" strokeOpacity=".25" strokeWidth=".5" {...THIN} />
+          </g>
         ))}
-        <path
-          d={LEAF}
-          transform={`translate(${SPRIG.tip[0]} ${SPRIG.tip[1]}) rotate(${SPRIG.tipAngle}) scale(1.25)`}
-          {...THIN}
-        />
+        <g transform={`translate(${SPRIG.tip[0]} ${SPRIG.tip[1]}) rotate(${SPRIG.tipAngle}) scale(1.25)`}>
+          <path d={LEAF} fill="url(#vineG)" {...THIN} />
+          <path d={LEAF_VEIN} fill="none" strokeOpacity=".25" strokeWidth=".5" {...THIN} />
+        </g>
         {SPRIG.berries.map((b, i) => (
-          <circle key={i} cx={b.x} cy={b.y} r="3.2" {...THIN} />
+          <circle key={i} cx={b.x} cy={b.y} r="3.6" fill="url(#vineG)" {...THIN} />
         ))}
       </g>
     </svg>
@@ -439,9 +455,9 @@ const css = `
 .f-right .flap-in{clip-path:polygon(100% 0,49.9% 50%,100% 100%);}
 .f-right .flap-in::before{background:linear-gradient(270deg,rgba(255,255,255,.05),rgba(0,0,0,.32));}
 
-/* Raised relief: light from the top-left, so a highlight on that edge and a cast shadow bottom-right */
+/* Raised relief for the side vines: highlight on the top-left edge, deep cast shadow bottom-right */
 .decor{position:absolute;inset:0;pointer-events:none;
-  filter:drop-shadow(-.8px -.8px .4px rgba(255,255,255,.14)) drop-shadow(1.2px 1.6px 1px rgba(0,0,0,.8));}
+  filter:drop-shadow(-1px -1px .5px rgba(255,255,255,.18)) drop-shadow(1.6px 2.2px 1.6px rgba(0,0,0,.88));}
 
 /* Flower spray: deeper emboss than the vines, fades in on load */
 .decor.rich{
