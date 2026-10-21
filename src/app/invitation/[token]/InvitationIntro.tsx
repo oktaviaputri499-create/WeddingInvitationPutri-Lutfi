@@ -138,20 +138,31 @@ function Sprig({ style }: { style: React.CSSProperties }) {
   )
 }
 
-// Embossed floral decoration. The same layer is placed inside every flap;
-// each flap clips it to its own triangle, so the pattern looks continuous
-// when the envelope is closed and each flap carries its own piece when it opens.
-function Decor() {
-  const items: { left: string; top: string; rot: number; k: number }[] = [
-    { left: 'calc(var(--sw) * -0.1)', top: 'calc(var(--sw) * -1.45)', rot: 113, k: 1 },
-    { left: 'calc(100% - var(--sw) * 0.1)', top: 'calc(var(--sw) * -1.45)', rot: 203, k: 1 },
-    { left: 'calc(var(--sw) * -0.1)', top: 'calc(100% - var(--sw) * 1.45)', rot: 23, k: 1 },
-    { left: 'calc(100% - var(--sw) * 0.1)', top: 'calc(100% - var(--sw) * 1.45)', rot: 293, k: 1 },
-    { left: 'calc(var(--sw) * -0.1)', top: 'calc(62% - var(--sw) * 1.45)', rot: 68, k: 0.8 },
-    { left: 'calc(100% - var(--sw) * 0.1)', top: 'calc(38% - var(--sw) * 1.45)', rot: 248, k: 0.8 },
-  ]
+type DecorItem = { left: string; top: string; rot: number; k: number }
+
+// Wide screens (laptop / landscape): vines hang from the four corners and the mid edges
+const DECOR_LAND: DecorItem[] = [
+  { left: 'calc(var(--sw) * -0.1)', top: 'calc(var(--sw) * -1.45)', rot: 113, k: 1 },
+  { left: 'calc(100% - var(--sw) * 0.1)', top: 'calc(var(--sw) * -1.45)', rot: 203, k: 1 },
+  { left: 'calc(var(--sw) * -0.1)', top: 'calc(100% - var(--sw) * 1.45)', rot: 23, k: 1 },
+  { left: 'calc(100% - var(--sw) * 0.1)', top: 'calc(100% - var(--sw) * 1.45)', rot: 293, k: 1 },
+  { left: 'calc(var(--sw) * -0.1)', top: 'calc(62% - var(--sw) * 1.45)', rot: 68, k: 0.8 },
+  { left: 'calc(100% - var(--sw) * 0.1)', top: 'calc(38% - var(--sw) * 1.45)', rot: 248, k: 0.8 },
+]
+
+// Tall screens (phone / portrait): vines run along the left and right edges,
+// so the middle of the top and bottom flaps stays clear for the flower sprays.
+// Each vine's base point is placed with: left = X - 0.1*sw, top = Y - 1.45*sw
+const DECOR_PORT: DecorItem[] = [
+  { left: 'calc(var(--sw) * -0.1)', top: 'calc(100% - var(--sw) * 1.45)', rot: 0, k: 1.1 },
+  { left: 'calc(100% - var(--sw) * 0.1)', top: 'calc(var(--sw) * -1.45)', rot: 180, k: 1.1 },
+  { left: 'calc(var(--sw) * -0.1)', top: 'calc(48% - var(--sw) * 1.45)', rot: 0, k: 0.85 },
+  { left: 'calc(100% - var(--sw) * 0.1)', top: 'calc(52% - var(--sw) * 1.45)', rot: 180, k: 0.85 },
+]
+
+function DecorLayer({ items, className }: { items: DecorItem[]; className: string }) {
   return (
-    <div className="decor">
+    <div className={className}>
       {items.map((it, i) => (
         <Sprig
           key={i}
@@ -170,6 +181,19 @@ function Decor() {
         />
       ))}
     </div>
+  )
+}
+
+// Embossed floral decoration. The same layer is placed inside every flap;
+// each flap clips it to its own triangle, so the pattern looks continuous
+// when the envelope is closed and each flap carries its own piece when it opens.
+// Both layouts are rendered; CSS shows the one that fits the screen shape.
+function Decor() {
+  return (
+    <>
+      <DecorLayer items={DECOR_LAND} className="decor decor-land" />
+      <DecorLayer items={DECOR_PORT} className="decor decor-port" />
+    </>
   )
 }
 
@@ -458,6 +482,14 @@ const css = `
 /* Raised relief for the side vines: highlight on the top-left edge, deep cast shadow bottom-right */
 .decor{position:absolute;inset:0;pointer-events:none;
   filter:drop-shadow(-1px -1px .5px rgba(255,255,255,.18)) drop-shadow(1.6px 2.2px 1.6px rgba(0,0,0,.88));}
+
+/* Two vine layouts: wide screens use .decor-land, tall (phone) screens use .decor-port */
+.decor-port{display:none;}
+@media (max-aspect-ratio:1/1){
+  .decor-land{display:none;}
+  .decor-port{display:block;}
+  .inv-root{--sw0:clamp(140px,50vw,300px);}
+}
 
 /* Flower spray: deeper emboss than the vines, fades in on load */
 .decor.rich{
