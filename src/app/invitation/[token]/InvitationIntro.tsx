@@ -6,16 +6,21 @@ import { Volume2, VolumeX } from 'lucide-react'
 type Stage = 'closed' | 'seal' | 'flap' | 'fade' | 'done'
 const ORDER: Stage[] = ['closed', 'seal', 'flap', 'fade', 'done']
 
-// Gold used for the embossed flower sprays (tuned to match the thin frame on the invitation page)
+// Flower sprays: charcoal fill with only a thin gold outline
 const GOLD = {
-  dark: '#5e4a22',
-  mid: '#8a703a',
-  light: '#b79a55',
-  line: '#c2a460',
-  leaf: '#6f5a2b',
-  berry: '#8f7539',
-  center: '#3f3118',
-  dots: '#e3cd8e',
+  line: '#b8985a', // outline color
+  lineOpacity: 0.7, // outline strength (lower = more subtle)
+  lineWidth: 0.8, // outline thickness in px (screen space)
+  vein: '#b8985a',
+  dots: '#c9ad6a',
+  // fills (charcoal, same family as the envelope)
+  petalDark: '#1a1918',
+  petalMid: '#242220',
+  petalLight: '#2f2d29',
+  leaf: '#222020',
+  berry: '#242220',
+  stem: '#2a2825',
+  center: '#2a2825',
 }
 
 const PETALS = Array.from({ length: 12 }, (_, i) => ({
@@ -139,7 +144,7 @@ function Decor() {
   )
 }
 
-/* ---------- Embossed gold flower spray (top & bottom flaps) ---------- */
+/* ---------- Embossed flower spray with thin gold outline (top & bottom flaps) ---------- */
 
 type Pt = [number, number]
 
@@ -207,6 +212,9 @@ const SPRAY_BERRIES = BRANCHES.flatMap(({ P }, bi) =>
 const PETAL = 'M0 0 C-17 -10 -21 -38 0 -62 C21 -38 17 -10 0 0 Z'
 const BUD = 'M0 0 C-8 -7 -8 -20 0 -30 C8 -20 8 -7 0 0 Z'
 
+// Keeps every outline the same thin width on screen, no matter how much the shape is scaled
+const THIN = { vectorEffect: 'non-scaling-stroke' as const }
+
 function Bloom({
   x,
   y,
@@ -231,28 +239,42 @@ function Bloom({
       <g className="bloom" style={{ animationDuration: `${dur}s`, animationDelay: `${delay}s` }}>
         {outer.map(a => (
           <g key={`o${a}`} transform={`rotate(${a})`}>
-            <path d={PETAL} fill="url(#petalG)" />
-            <path d="M0 -10 C1 -26 1 -38 0 -52" fill="none" stroke={GOLD.dots} strokeOpacity=".4" strokeWidth=".7" />
+            <path d={PETAL} fill="url(#petalG)" {...THIN} />
+            <path
+              d="M0 -10 C1 -26 1 -38 0 -52"
+              fill="none"
+              stroke={GOLD.vein}
+              strokeOpacity=".22"
+              strokeWidth=".5"
+              {...THIN}
+            />
           </g>
         ))}
         {mid.map(a => (
           <g key={`m${a}`} transform={`rotate(${a}) scale(.72)`}>
-            <path d={PETAL} fill="url(#petalG)" />
-            <path d="M0 -10 C1 -26 1 -38 0 -52" fill="none" stroke={GOLD.dots} strokeOpacity=".38" strokeWidth=".8" />
+            <path d={PETAL} fill="url(#petalG)" {...THIN} />
+            <path
+              d="M0 -10 C1 -26 1 -38 0 -52"
+              fill="none"
+              stroke={GOLD.vein}
+              strokeOpacity=".2"
+              strokeWidth=".5"
+              {...THIN}
+            />
           </g>
         ))}
         {inner.map(a => (
-          <path key={`i${a}`} d={PETAL} transform={`rotate(${a}) scale(.46)`} fill="url(#petalG)" />
+          <path key={`i${a}`} d={PETAL} transform={`rotate(${a}) scale(.46)`} fill="url(#petalG)" {...THIN} />
         ))}
-        <circle r="6" fill={GOLD.center} />
+        <circle r="6" fill={GOLD.center} {...THIN} />
         {dots.map((a, i) => (
           <circle
             key={i}
             cx={Math.cos(a) * 9.5}
             cy={Math.sin(a) * 9.5}
-            r="1.4"
+            r="1.2"
             fill={GOLD.dots}
-            fillOpacity=".85"
+            fillOpacity=".6"
             stroke="none"
           />
         ))}
@@ -266,36 +288,37 @@ function Spray({ position }: { position: 'top' | 'bottom' }) {
     <svg viewBox="-300 -75 600 215" className={`spray spray-${position}`} aria-hidden>
       <defs>
         <linearGradient id="petalG" x1="0" y1="1" x2="0" y2="0">
-          <stop offset="0" stopColor={GOLD.dark} />
-          <stop offset="0.55" stopColor={GOLD.mid} />
-          <stop offset="1" stopColor={GOLD.light} />
+          <stop offset="0" stopColor={GOLD.petalDark} />
+          <stop offset="0.55" stopColor={GOLD.petalMid} />
+          <stop offset="1" stopColor={GOLD.petalLight} />
         </linearGradient>
       </defs>
-      <g stroke={GOLD.line} strokeOpacity=".75" strokeWidth=".9">
+      <g stroke={GOLD.line} strokeOpacity={GOLD.lineOpacity} strokeWidth={GOLD.lineWidth}>
         {[1, -1].map(m => (
           <g key={m} transform={`scale(${m} 1)`}>
+            {/* Stems: dark body with a hairline of gold on top */}
             {BRANCHES.map((b, i) => (
-              <path
-                key={i}
-                d={stemPath(b.P)}
-                fill="none"
-                stroke={GOLD.mid}
-                strokeOpacity="1"
-                strokeWidth="2.2"
-                strokeLinecap="round"
-              />
+              <g key={i} fill="none" strokeLinecap="round">
+                <path d={stemPath(b.P)} stroke={GOLD.stem} strokeOpacity="1" strokeWidth="2.6" />
+                <path d={stemPath(b.P)} strokeWidth={GOLD.lineWidth} {...THIN} />
+              </g>
             ))}
             <g fill={GOLD.leaf}>
               {SPRAY_LEAVES.map((l, i) => (
-                <path key={i} d={LEAF} transform={`translate(${l.x} ${l.y}) rotate(${l.a}) scale(${l.s})`} />
+                <path
+                  key={i}
+                  d={LEAF}
+                  transform={`translate(${l.x} ${l.y}) rotate(${l.a}) scale(${l.s})`}
+                  {...THIN}
+                />
               ))}
             </g>
             <g fill={GOLD.berry}>
               {SPRAY_BERRIES.map((b, i) => (
-                <circle key={i} cx={b.x} cy={b.y} r="3" />
+                <circle key={i} cx={b.x} cy={b.y} r="3" {...THIN} />
               ))}
             </g>
-            <path d={BUD} transform="translate(68 60) rotate(155)" fill="url(#petalG)" />
+            <path d={BUD} transform="translate(68 60) rotate(155)" fill="url(#petalG)" {...THIN} />
             <Bloom x={215} y={38} s={0.42} rot={m * 12} dur={6.2} delay={m * -0.8} />
             <Bloom x={136} y={22} s={0.68} rot={m * 25} dur={7.4} delay={m * -1.6} />
           </g>
@@ -410,9 +433,9 @@ const css = `
 .decor{position:absolute;inset:0;pointer-events:none;
   filter:drop-shadow(-.8px -.8px .4px rgba(255,255,255,.14)) drop-shadow(1.2px 1.6px 1px rgba(0,0,0,.8));}
 
-/* Gold flower spray: warm highlight + deep shadow for a metallic emboss, fades in on load */
+/* Flower spray: deeper emboss than the vines, fades in on load */
 .decor.rich{
-  filter:drop-shadow(-1px -1px .5px rgba(255,232,170,.3)) drop-shadow(1.6px 2.2px 1.6px rgba(0,0,0,.88));
+  filter:drop-shadow(-1px -1px .5px rgba(255,255,255,.16)) drop-shadow(1.6px 2.2px 1.6px rgba(0,0,0,.88));
   animation:florIn 2s ease-out .2s both;}
 @keyframes florIn{0%{opacity:0}100%{opacity:1}}
 .spray{position:absolute;left:50%;width:var(--spw);height:auto;overflow:visible;}
