@@ -15,6 +15,15 @@ const PETALS = Array.from({ length: 12 }, (_, i) => ({
   color: ['#f3dcdc', '#ead3a6', '#ffffff', '#ebcfcf'][i % 4],
 }))
 
+// Tiny champagne sparkles drifting upward
+const DUST = Array.from({ length: 22 }, (_, i) => ({
+  left: (i * 53) % 100,
+  top: (i * 31) % 100,
+  size: 2 + ((i * 5) % 4),
+  duration: 5 + ((i * 7) % 6),
+  delay: -((i * 17) % 10),
+}))
+
 // Fine paper grain
 const GRAIN = `url("data:image/svg+xml;utf8,${encodeURIComponent(
   "<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.06 0'/></filter><rect width='100%' height='100%' filter='url(#n)'/></svg>"
@@ -118,6 +127,163 @@ function Decor() {
   )
 }
 
+/* ---------- Embossed flower spray (top & bottom flaps) ---------- */
+
+type Pt = [number, number]
+
+const bez = (P: Pt[], t: number): Pt => {
+  const u = 1 - t
+  return [0, 1].map(
+    k => u * u * u * P[0][k] + 3 * u * u * t * P[1][k] + 3 * u * t * t * P[2][k] + t * t * t * P[3][k]
+  ) as Pt
+}
+
+const bezDir = (P: Pt[], t: number): Pt => {
+  const u = 1 - t
+  return [0, 1].map(
+    k => 3 * u * u * (P[1][k] - P[0][k]) + 6 * u * t * (P[2][k] - P[1][k]) + 3 * t * t * (P[3][k] - P[2][k])
+  ) as Pt
+}
+
+const stemPath = (P: Pt[]) =>
+  `M${P[0][0]} ${P[0][1]} C${P[1][0]} ${P[1][1]} ${P[2][0]} ${P[2][1]} ${P[3][0]} ${P[3][1]}`
+
+// Two trailing branches (right side; the left side is mirrored)
+const BRANCHES: { P: Pt[]; n: number; s: number }[] = [
+  {
+    P: [
+      [0, 0],
+      [80, 10],
+      [165, 38],
+      [252, 26],
+    ],
+    n: 9,
+    s: 1,
+  },
+  {
+    P: [
+      [0, 6],
+      [55, 42],
+      [105, 84],
+      [175, 96],
+    ],
+    n: 7,
+    s: 0.85,
+  },
+]
+
+const SPRAY_LEAVES = BRANCHES.flatMap(({ P, n, s }) =>
+  Array.from({ length: n }, (_, i) => {
+    const t = 0.2 + (i / (n - 1)) * 0.78
+    const [x, y] = bez(P, t)
+    const [dx, dy] = bezDir(P, t)
+    const side = i % 2 === 0 ? 1 : -1
+    const a = (Math.atan2(dy, dx) * 180) / Math.PI + side * 48
+    return { x, y, a, s: s * (1.25 - t * 0.55) }
+  })
+)
+
+const SPRAY_BERRIES = BRANCHES.flatMap(({ P }, bi) =>
+  [0.42, 0.66, 0.86].map((t, i) => {
+    const [x, y] = bez(P, t)
+    const [dx, dy] = bezDir(P, t)
+    const n = Math.atan2(dy, dx) + ((i + bi) % 2 ? 1 : -1) * (Math.PI / 2)
+    return { x: x + Math.cos(n) * 11, y: y + Math.sin(n) * 11 }
+  })
+)
+
+const PETAL = 'M0 0 C-17 -10 -21 -38 0 -62 C21 -38 17 -10 0 0 Z'
+const BUD = 'M0 0 C-8 -7 -8 -20 0 -30 C8 -20 8 -7 0 0 Z'
+
+function Bloom({
+  x,
+  y,
+  s,
+  rot = 0,
+  dur = 7,
+  delay = 0,
+}: {
+  x: number
+  y: number
+  s: number
+  rot?: number
+  dur?: number
+  delay?: number
+}) {
+  const outer = Array.from({ length: 8 }, (_, i) => i * 45)
+  const mid = Array.from({ length: 7 }, (_, i) => i * (360 / 7) + 12)
+  const inner = Array.from({ length: 5 }, (_, i) => i * 72 + 20)
+  const dots = Array.from({ length: 9 }, (_, i) => (i / 9) * Math.PI * 2)
+  return (
+    <g transform={`translate(${x} ${y}) rotate(${rot}) scale(${s})`}>
+      <g className="bloom" style={{ animationDuration: `${dur}s`, animationDelay: `${delay}s` }}>
+        {outer.map(a => (
+          <g key={`o${a}`} transform={`rotate(${a})`}>
+            <path d={PETAL} fill="url(#petalG)" />
+            <path d="M0 -10 C1 -26 1 -38 0 -52" fill="none" strokeOpacity=".55" strokeWidth=".7" />
+          </g>
+        ))}
+        {mid.map(a => (
+          <g key={`m${a}`} transform={`rotate(${a}) scale(.72)`}>
+            <path d={PETAL} fill="url(#petalG)" />
+            <path d="M0 -10 C1 -26 1 -38 0 -52" fill="none" strokeOpacity=".5" strokeWidth=".8" />
+          </g>
+        ))}
+        {inner.map(a => (
+          <path key={`i${a}`} d={PETAL} transform={`rotate(${a}) scale(.46)`} fill="url(#petalG)" />
+        ))}
+        <circle r="6" fill="#2e2c29" />
+        {dots.map((a, i) => (
+          <circle
+            key={i}
+            cx={Math.cos(a) * 9.5}
+            cy={Math.sin(a) * 9.5}
+            r="1.4"
+            fill="#7a6d4e"
+            fillOpacity=".7"
+            stroke="none"
+          />
+        ))}
+      </g>
+    </g>
+  )
+}
+
+function Spray({ position }: { position: 'top' | 'bottom' }) {
+  return (
+    <svg viewBox="-300 -75 600 215" className={`spray spray-${position}`} aria-hidden>
+      <defs>
+        <linearGradient id="petalG" x1="0" y1="1" x2="0" y2="0">
+          <stop offset="0" stopColor="#1c1b19" />
+          <stop offset="0.55" stopColor="#262422" />
+          <stop offset="1" stopColor="#34322e" />
+        </linearGradient>
+      </defs>
+      <g stroke="#3d3a36" strokeWidth=".9">
+        {[1, -1].map(m => (
+          <g key={m} transform={`scale(${m} 1)`}>
+            {BRANCHES.map((b, i) => (
+              <path key={i} d={stemPath(b.P)} fill="none" strokeWidth="2.2" strokeLinecap="round" />
+            ))}
+            <g fill="#232120">
+              {SPRAY_LEAVES.map((l, i) => (
+                <path key={i} d={LEAF} transform={`translate(${l.x} ${l.y}) rotate(${l.a}) scale(${l.s})`} />
+              ))}
+              {SPRAY_BERRIES.map((b, i) => (
+                <circle key={i} cx={b.x} cy={b.y} r="3" />
+              ))}
+            </g>
+            <path d={BUD} transform="translate(68 60) rotate(155)" fill="url(#petalG)" />
+            <Bloom x={215} y={38} s={0.42} rot={m * 12} dur={6.2} delay={m * -0.8} />
+            <Bloom x={136} y={22} s={0.68} rot={m * 25} dur={7.4} delay={m * -1.6} />
+          </g>
+        ))}
+        <Bloom x={0} y={0} s={1} rot={22} dur={8.5} />
+      </g>
+    </svg>
+  )
+}
+
 // Antique champagne seal: muted metallic tones that sit naturally on the charcoal envelope
 function Seal() {
   const bumps = Array.from({ length: 20 }, (_, i) => {
@@ -193,6 +359,7 @@ function Seal() {
 const css = `
 .inv-root{position:fixed;inset:0;z-index:50;overflow:hidden;perspective:1600px;background:#0c0c0b;
   --seal:clamp(104px,24vmin,170px);--sw0:clamp(130px,42vmin,360px);
+  --spw:min(96vw,clamp(300px,74vmin,780px));
   transition:opacity 1.1s ease,visibility 1.1s;}
 .inv-root.is-fade{opacity:0;visibility:hidden;pointer-events:none;}
 
@@ -221,6 +388,20 @@ const css = `
 .decor{position:absolute;inset:0;pointer-events:none;
   filter:drop-shadow(-.8px -.8px .4px rgba(255,255,255,.14)) drop-shadow(1.2px 1.6px 1px rgba(0,0,0,.8));}
 
+/* Flower spray: deeper emboss than the vines, and it fades in on load */
+.decor.rich{
+  filter:drop-shadow(-1px -1px .5px rgba(255,255,255,.2)) drop-shadow(1.6px 2.2px 1.6px rgba(0,0,0,.88));
+  animation:florIn 2s ease-out .2s both;}
+@keyframes florIn{0%{opacity:0}100%{opacity:1}}
+.spray{position:absolute;left:50%;width:var(--spw);height:auto;overflow:visible;}
+.spray-top{top:calc(var(--spw) * -.025);transform:translateX(-50%);}
+.spray-bottom{bottom:calc(var(--spw) * -.025);transform:translateX(-50%) rotate(180deg);}
+.bloom{transform-box:fill-box;transform-origin:center;animation:bloomSway 7s ease-in-out infinite;}
+@keyframes bloomSway{
+  0%,100%{transform:rotate(-3deg) scale(1)}
+  50%{transform:rotate(3deg) scale(1.035)}
+}
+
 .is-flap .f-top{animation:openTop 1.5s cubic-bezier(.6,.05,.3,1) forwards;}
 .is-flap .f-bottom{animation:openBottom 1.5s cubic-bezier(.6,.05,.3,1) .12s forwards;}
 .is-flap .f-left{animation:openLeft 1.5s cubic-bezier(.6,.05,.3,1) .24s forwards;}
@@ -229,6 +410,16 @@ const css = `
 @keyframes openBottom{0%{transform:rotateX(0);opacity:1}75%{opacity:1}100%{transform:rotateX(105deg);opacity:0}}
 @keyframes openLeft{0%{transform:rotateY(0);opacity:1}75%{opacity:1}100%{transform:rotateY(105deg);opacity:0}}
 @keyframes openRight{0%{transform:rotateY(0);opacity:1}75%{opacity:1}100%{transform:rotateY(-105deg);opacity:0}}
+
+/* ---------- Seal glow (soft halo behind the seal) ---------- */
+.seal-glow{position:absolute;left:50%;top:50%;z-index:9;pointer-events:none;border-radius:50%;
+  width:calc(var(--seal) * 2.4);height:calc(var(--seal) * 2.4);
+  margin:calc(var(--seal) * -1.2) 0 0 calc(var(--seal) * -1.2);
+  background:radial-gradient(circle,rgba(196,170,115,.22) 0%,rgba(196,170,115,.08) 40%,rgba(196,170,115,0) 70%);
+  animation:glowBreath 3.4s ease-in-out infinite;}
+@keyframes glowBreath{0%,100%{opacity:.55;transform:scale(.92)}50%{opacity:1;transform:scale(1.06)}}
+.is-seal .seal-glow{animation:glowOut .9s ease-out forwards;}
+@keyframes glowOut{0%{opacity:1;transform:scale(1.06)}40%{opacity:1;transform:scale(1.5)}100%{opacity:0;transform:scale(2.3)}}
 
 /* ---------- Wax seal (also the tap target) ---------- */
 .seal{position:absolute;left:50%;top:50%;z-index:10;width:var(--seal);height:var(--seal);
@@ -243,7 +434,14 @@ const css = `
 .is-seal .seal{animation:sealFade .6s ease-out forwards;pointer-events:none;}
 @keyframes sealFade{0%{transform:scale(1);opacity:1}100%{transform:scale(.94);opacity:0}}
 
-/* ---------- Petals ---------- */
+/* Light streak sweeping across the seal like metallic foil */
+.seal-shine{position:absolute;inset:3%;border-radius:50%;overflow:hidden;pointer-events:none;}
+.seal-shine::after{content:'';position:absolute;top:-20%;bottom:-20%;left:-60%;width:40%;
+  background:linear-gradient(100deg,rgba(255,240,200,0),rgba(255,240,200,.38),rgba(255,240,200,0));
+  transform:skewX(-18deg);animation:sealShine 4.4s ease-in-out infinite;}
+@keyframes sealShine{0%,55%{left:-60%}100%{left:130%}}
+
+/* ---------- Petals & gold dust ---------- */
 .petals{position:absolute;inset:0;pointer-events:none;z-index:11;overflow:hidden;}
 .petal{position:absolute;top:-30px;border-radius:150% 0 150% 0;opacity:.7;animation:petalFall linear infinite;
   box-shadow:0 2px 6px rgba(120,80,60,.15);}
@@ -252,9 +450,20 @@ const css = `
   50%{transform:translate3d(calc(var(--dx) * .5),55vh,0) rotate(180deg)}
   100%{transform:translate3d(var(--dx),110vh,0) rotate(360deg)}
 }
+.dust{position:absolute;border-radius:50%;opacity:0;
+  background:radial-gradient(circle,rgba(240,222,170,.95),rgba(240,222,170,0) 70%);
+  animation:dustFloat ease-in-out infinite;}
+@keyframes dustFloat{
+  0%{transform:translate3d(0,12px,0) scale(.6);opacity:0}
+  30%{opacity:.9}
+  70%{opacity:.5}
+  100%{transform:translate3d(10px,-40px,0) scale(1.1);opacity:0}
+}
+
 @media (prefers-reduced-motion:reduce){
   .seal:not(.broken){animation:none;}
-  .petal{animation:none;opacity:0;}
+  .seal-glow,.bloom,.seal-shine::after{animation:none;}
+  .petal,.dust{animation:none;opacity:0;}
 }
 `
 
@@ -357,15 +566,21 @@ export default function InvitationIntro({
             style={paper('radial-gradient(ellipse at 50% 40%,#1d1c1a 0%,#121211 70%,#0a0a09 100%)')}
           />
 
-          {/* Four flaps meeting in an X: black paper, soft fold shading, embossed vine ornament */}
+          {/* Four flaps meeting in an X: black paper, soft fold shading, embossed ornaments */}
           <div className="flap f-bottom">
             <div className="flap-in" style={paper('linear-gradient(0deg,#191817,#10100f)')}>
               <Decor />
+              <div className="decor rich">
+                <Spray position="bottom" />
+              </div>
             </div>
           </div>
           <div className="flap f-top">
             <div className="flap-in" style={paper('linear-gradient(180deg,#1c1b19,#10100f)')}>
               <Decor />
+              <div className="decor rich">
+                <Spray position="top" />
+              </div>
             </div>
           </div>
           <div className="flap f-left">
@@ -379,6 +594,9 @@ export default function InvitationIntro({
             </div>
           </div>
 
+          {/* Soft halo behind the seal */}
+          <div className="seal-glow" aria-hidden />
+
           {/* Wax seal: tap it to open */}
           <button
             type="button"
@@ -387,9 +605,10 @@ export default function InvitationIntro({
             aria-label={`Open invitation for ${guestName}`}
           >
             <Seal />
+            <span className="seal-shine" aria-hidden />
           </button>
 
-          {/* Floating petals */}
+          {/* Floating petals + gold dust */}
           <div className="petals">
             {PETALS.map((p, i) => (
               <span
@@ -406,6 +625,20 @@ export default function InvitationIntro({
                     ['--dx' as string]: `${p.dx}px`,
                   } as React.CSSProperties
                 }
+              />
+            ))}
+            {DUST.map((d, i) => (
+              <span
+                key={`d${i}`}
+                className="dust"
+                style={{
+                  left: `${d.left}%`,
+                  top: `${d.top}%`,
+                  width: d.size,
+                  height: d.size,
+                  animationDuration: `${d.duration}s`,
+                  animationDelay: `${d.delay}s`,
+                }}
               />
             ))}
           </div>
