@@ -118,7 +118,7 @@ function Decor() {
   )
 }
 
-// Champagne-gold wax seal: scalloped edge with an embossed swan
+// Antique champagne seal: muted metallic tones that sit naturally on the charcoal envelope
 function Seal() {
   const bumps = Array.from({ length: 20 }, (_, i) => {
     const a = (i / 20) * Math.PI * 2
@@ -145,22 +145,28 @@ function Seal() {
   return (
     <svg viewBox="0 0 100 100" width="100%" height="100%" aria-hidden>
       <defs>
-        <radialGradient id="sealRose" gradientUnits="userSpaceOnUse" cx="35" cy="26" r="88">
-          <stop offset="0" stopColor="#f3e3b8" />
-          <stop offset="0.45" stopColor="#d2ae68" />
-          <stop offset="1" stopColor="#8c6c34" />
+        <radialGradient id="sealRose" gradientUnits="userSpaceOnUse" cx="35" cy="26" r="92">
+          <stop offset="0" stopColor="#b8a67f" />
+          <stop offset="0.5" stopColor="#8a7a58" />
+          <stop offset="1" stopColor="#4f4430" />
+        </radialGradient>
+        {/* Soft darkening toward the edge so the seal melts into the paper */}
+        <radialGradient id="sealVignette" cx="50" cy="50" r="50" gradientUnits="userSpaceOnUse">
+          <stop offset="0.6" stopColor="#000" stopOpacity="0" />
+          <stop offset="1" stopColor="#000" stopOpacity="0.28" />
         </radialGradient>
       </defs>
       {bumps.map((b, i) => (
         <circle key={i} cx={b.x} cy={b.y} r="9.5" fill="url(#sealRose)" />
       ))}
       <circle cx="50" cy="50" r="42" fill="url(#sealRose)" />
-      <circle cx="50" cy="50" r="34" fill="none" stroke="rgba(255,244,230,0.55)" strokeWidth="1.2" />
-      <circle cx="50" cy="50" r="32.6" fill="none" stroke="rgba(90,66,26,0.4)" strokeWidth="0.8" />
-      <g transform="translate(0.9 0.9)" fill="rgba(255,246,232,0.85)" stroke="rgba(255,246,232,0.85)">
+      <circle cx="50" cy="50" r="50" fill="url(#sealVignette)" />
+      <circle cx="50" cy="50" r="34" fill="none" stroke="rgba(225,210,175,0.28)" strokeWidth="1.1" />
+      <circle cx="50" cy="50" r="32.6" fill="none" stroke="rgba(35,28,16,0.45)" strokeWidth="0.8" />
+      <g transform="translate(0.8 0.8)" fill="rgba(225,210,175,0.4)" stroke="rgba(225,210,175,0.4)">
         {swan}
       </g>
-      <g fill="#7d5f2c" stroke="#7d5f2c">
+      <g fill="#3f3524" stroke="#3f3524">
         {swan}
       </g>
     </svg>
@@ -211,19 +217,14 @@ const css = `
 .seal{position:absolute;left:50%;top:50%;z-index:10;width:var(--seal);height:var(--seal);
   margin:calc(var(--seal) / -2) 0 0 calc(var(--seal) / -2);padding:0;border:0;background:none;cursor:pointer;
   -webkit-tap-highlight-color:transparent;
-  filter:drop-shadow(0 8px 12px rgba(0,0,0,.65)) drop-shadow(0 1px 1px rgba(0,0,0,.5));}
+  filter:drop-shadow(0 4px 8px rgba(0,0,0,.6)) drop-shadow(0 1px 1px rgba(0,0,0,.5));}
 .seal.broken{cursor:default;}
-.seal:focus-visible{outline:2px solid #cfa95f;outline-offset:8px;border-radius:50%;}
+.seal:focus-visible{outline:2px solid #8a7a58;outline-offset:8px;border-radius:50%;}
 .seal:not(.broken){animation:sealPulse 2.6s ease-in-out infinite;}
-.seal:not(.broken):hover{filter:drop-shadow(0 8px 12px rgba(0,0,0,.7)) brightness(1.05);}
-@keyframes sealPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
-.seal-half{position:absolute;inset:0;display:block;}
-.seal-l{clip-path:inset(0 50% 0 0);}
-.seal-r{clip-path:inset(0 0 0 50%);}
-.is-seal .seal-l{animation:sealL .8s ease-in forwards;}
-.is-seal .seal-r{animation:sealR .8s ease-in forwards;}
-@keyframes sealL{0%{transform:translate(0,0) rotate(0);opacity:1}100%{transform:translate(-26px,60px) rotate(-24deg);opacity:0}}
-@keyframes sealR{0%{transform:translate(0,0) rotate(0);opacity:1}100%{transform:translate(26px,64px) rotate(24deg);opacity:0}}
+.seal:not(.broken):hover{filter:drop-shadow(0 4px 8px rgba(0,0,0,.65)) brightness(1.08);}
+@keyframes sealPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+.is-seal .seal{animation:sealFade .6s ease-out forwards;pointer-events:none;}
+@keyframes sealFade{0%{transform:scale(1);opacity:1}100%{transform:scale(.94);opacity:0}}
 
 /* ---------- Petals ---------- */
 .petals{position:absolute;inset:0;pointer-events:none;z-index:11;overflow:hidden;}
@@ -286,11 +287,11 @@ export default function InvitationIntro({
       audio.play().catch(() => {})
     }
 
-    // Timeline: seal cracks -> flaps open -> fade into the page
+    // Timeline: seal fades -> flaps open -> fade into the page
     setStage('seal')
-    timers.current.push(setTimeout(() => setStage('flap'), 800))
-    timers.current.push(setTimeout(() => setStage('fade'), 3000))
-    timers.current.push(setTimeout(() => setStage('done'), 4200))
+    timers.current.push(setTimeout(() => setStage('flap'), 300))
+    timers.current.push(setTimeout(() => setStage('fade'), 2500))
+    timers.current.push(setTimeout(() => setStage('done'), 3700))
   }
 
   const toggleMusic = () => {
@@ -368,12 +369,7 @@ export default function InvitationIntro({
             onClick={handleOpen}
             aria-label={`Open invitation for ${guestName}`}
           >
-            <span className="seal-half seal-l">
-              <Seal />
-            </span>
-            <span className="seal-half seal-r">
-              <Seal />
-            </span>
+            <Seal />
           </button>
 
           {/* Floating petals */}
