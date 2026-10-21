@@ -124,24 +124,30 @@ function Seal() {
     const a = (i / 20) * Math.PI * 2
     return { x: 50 + Math.cos(a) * 41, y: 50 + Math.sin(a) * 41 }
   })
-  // Swan silhouette, drawn twice (highlight + shadow) for the embossed look
+
+  // Swan silhouette facing right: S-curved neck, head with beak, rounded body, lifted tail
   const swan = (
     <>
+      {/* Body + neck + head */}
       <path
-        d="M36 53 C27 49 29 38 36 34 C40 31.5 39 27.5 43 27"
-        fill="none"
-        strokeWidth="3.4"
-        strokeLinecap="round"
-      />
-      <circle cx="44" cy="27.4" r="2.6" stroke="none" />
-      <path d="M46 26.6 L51.5 28.2 L46 29.8 Z" stroke="none" />
-      <path
-        d="M31 58 C37 68 55 70 65 58 C67 53 66 47 71 41 C69 49 70 53 66 56 C61 60 54 59 51 52 C47 57 39 56 36 51 C33 53 31 55 31 58 Z"
+        d="M24 49.5
+           C30 66 52 70 64 60
+           C68 56 66.5 50 62 45
+           C59 41.5 59.5 36 61 32.5
+           C62 29.5 60.5 26.5 57.8 27
+           C55 27.4 54.6 30.5 55.2 33.5
+           C56 38 57.5 42 57.5 46
+           C57.5 49 53 49 49 47.5
+           C42 45 32 44 24 49.5 Z"
         stroke="none"
       />
-      <path d="M40 63 C46 66 54 66 60 62" fill="none" strokeWidth="1" strokeLinecap="round" />
+      {/* Beak */}
+      <path d="M60.5 27.8 L67 30.4 L60.2 31.6 Z" stroke="none" />
+      {/* Water ripple */}
+      <path d="M30 71 C40 73.5 56 73.5 66 70" fill="none" strokeWidth="1.1" strokeLinecap="round" />
     </>
   )
+
   return (
     <svg viewBox="0 0 100 100" width="100%" height="100%" aria-hidden>
       <defs>
@@ -163,11 +169,22 @@ function Seal() {
       <circle cx="50" cy="50" r="50" fill="url(#sealVignette)" />
       <circle cx="50" cy="50" r="34" fill="none" stroke="rgba(225,210,175,0.28)" strokeWidth="1.1" />
       <circle cx="50" cy="50" r="32.6" fill="none" stroke="rgba(35,28,16,0.45)" strokeWidth="0.8" />
-      <g transform="translate(0.8 0.8)" fill="rgba(225,210,175,0.4)" stroke="rgba(225,210,175,0.4)">
-        {swan}
-      </g>
-      <g fill="#3f3524" stroke="#3f3524">
-        {swan}
+
+      {/* Swan, centered inside the ring */}
+      <g transform="translate(50 50) scale(1.05) translate(-46 -47)">
+        {/* Highlight edge (bottom-right) */}
+        <g transform="translate(0.8 0.8)" fill="rgba(225,210,175,0.4)" stroke="rgba(225,210,175,0.4)">
+          {swan}
+        </g>
+        {/* Pressed-in swan */}
+        <g fill="#3f3524" stroke="#3f3524">
+          {swan}
+        </g>
+        {/* Wing feather lines */}
+        <g fill="none" stroke="rgba(225,210,175,0.38)" strokeWidth="0.9" strokeLinecap="round">
+          <path d="M33 54 C40 49 50 49 57 55" />
+          <path d="M36 58.5 C42 54.5 50 54.5 56 59.5" />
+        </g>
       </g>
     </svg>
   )
