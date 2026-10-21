@@ -20,142 +20,53 @@ const GRAIN = `url("data:image/svg+xml;utf8,${encodeURIComponent(
   "<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.06 0'/></filter><rect width='100%' height='100%' filter='url(#n)'/></svg>"
 )}")`
 
-// ---------- Damask ornament (symmetrical, built from scrolls, leaves and rosettes) ----------
-type Pt = number[]
-const bez = (P: Pt[], t: number): Pt => {
-  const u = 1 - t
-  return [0, 1].map(k => u * u * u * P[0][k] + 3 * u * u * t * P[1][k] + 3 * u * t * t * P[2][k] + t * t * t * P[3][k])
-}
-const bezDir = (P: Pt[], t: number): Pt => {
-  const u = 1 - t
-  return [0, 1].map(
-    k => 3 * u * u * (P[1][k] - P[0][k]) + 6 * u * t * (P[2][k] - P[1][k]) + 3 * t * t * (P[3][k] - P[2][k])
-  )
-}
+// ---------- Mega mendung (layered cloud) ornament ----------
+// One cloud silhouette (100 wide, 40 tall, base on y = 40). Smaller copies are stacked
+// inside it to make the stepped, layered look of the batik motif.
+const CLOUD =
+  'M5 40 C0 31 6 25 14 27 C11 19 20 13 28 17 C29 8 42 3 52 8 C58 1 72 3 75 12 C84 9 94 17 90 26 C98 29 98 40 92 40 Z'
 
-// Left half of the motif (viewBox 200 x 300); the right half is its mirror image
-const BRANCHES: { P: Pt[]; n: number; k: number }[] = [
-  { P: [[100, 282], [52, 270], [14, 226], [30, 176]], n: 7, k: 1 },
-  { P: [[30, 176], [44, 150], [30, 128], [48, 108]], n: 4, k: 0.85 },
-  { P: [[100, 196], [70, 204], [44, 176], [58, 140]], n: 5, k: 0.9 },
-  { P: [[100, 112], [72, 106], [50, 78], [64, 44]], n: 5, k: 0.85 },
-  { P: [[100, 60], [82, 58], [72, 42], [80, 26]], n: 3, k: 0.7 },
+// outermost to innermost: scale and fill (each layer slightly lighter, so it reads as raised)
+const LAYERS = [
+  { s: 1, fill: '#1f1e1c' },
+  { s: 0.74, fill: '#252422' },
+  { s: 0.5, fill: '#2b2a27' },
+  { s: 0.28, fill: '#32312d' },
 ]
-const HALF = BRANCHES.map(({ P, n, k }) => ({
-  d: `M${P[0][0]} ${P[0][1]} C${P[1][0]} ${P[1][1]} ${P[2][0]} ${P[2][1]} ${P[3][0]} ${P[3][1]}`,
-  end: P[3],
-  leaves: Array.from({ length: n }, (_, i) => {
-    const t = 0.14 + (i / n) * 0.8
-    const [x, y] = bez(P, t)
-    const [dx, dy] = bezDir(P, t)
-    const side = i % 2 === 0 ? 1 : -1
-    return { x, y, a: (Math.atan2(dy, dx) * 180) / Math.PI + side * 50, s: k * (1.05 - t * 0.35) }
-  }),
-}))
 
-const LEAF = 'M0 0 C6 -9 20 -9 28 0 C20 9 6 9 0 0 Z'
-
-function Leaf({ transform }: { transform: string }) {
-  return (
-    <g transform={transform}>
-      <path d={LEAF} />
-      <path d="M3 0 L23 0" fill="none" stroke="rgba(0,0,0,0.55)" strokeWidth="0.8" strokeLinecap="round" />
-    </g>
-  )
-}
-
-function Rosette({ x, y, r, n }: { x: number; y: number; r: number; n: number }) {
-  const step = 360 / n
+function Clouds({ cid, x, y }: { cid: string; x: number; y: number }) {
   return (
     <g transform={`translate(${x} ${y})`}>
-      {Array.from({ length: n }, (_, i) => (
-        <ellipse key={`a${i}`} cx="0" cy={-r * 0.55} rx={r * 0.36} ry={r * 0.55} transform={`rotate(${i * step})`} />
+      {LAYERS.map((l, i) => (
+        <g key={i} transform={`translate(50 40) scale(${l.s}) translate(-50 -40)`}>
+          {/* dark underlay shifted down-right = shadow between the layers */}
+          <use href={`#${cid}`} transform="translate(1.2 1.6)" fill="#070706" opacity="0.85" />
+          <use href={`#${cid}`} fill={l.fill} stroke="rgba(255,255,255,0.13)" strokeWidth="0.7" />
+        </g>
       ))}
-      {Array.from({ length: n }, (_, i) => (
-        <ellipse
-          key={`b${i}`}
-          cx="0"
-          cy={-r * 0.34}
-          rx={r * 0.24}
-          ry={r * 0.36}
-          fill="#34312d"
-          transform={`rotate(${i * step + step / 2})`}
-        />
-      ))}
-      <circle r={r * 0.2} fill="#46423c" />
     </g>
   )
 }
 
-function Half() {
-  return (
-    <>
-      {HALF.map((b, i) => (
-        <g key={i}>
-          <path d={b.d} fill="none" stroke="#2d2a26" strokeWidth="2.6" strokeLinecap="round" />
-          <path d={b.d} fill="none" stroke="rgba(255,255,255,0.16)" strokeWidth="0.7" strokeLinecap="round" transform="translate(-0.9 -0.9)" />
-          {b.leaves.map((l, j) => (
-            <Leaf key={j} transform={`translate(${l.x} ${l.y}) rotate(${l.a}) scale(${l.s})`} />
-          ))}
-          <circle cx={b.end[0]} cy={b.end[1]} r="3.6" />
-        </g>
-      ))}
-      {/* crown petal */}
-      <path d="M100 40 C86 38 78 26 82 12 C88 22 95 26 100 28 Z" />
-    </>
-  )
-}
-
-// One raised damask medallion. Light-to-dark gradients give each shape volume;
-// the .decor filter adds the highlight edge and cast shadow.
-function Damask({ style }: { style: React.CSSProperties }) {
-  return (
-    <svg viewBox="0 0 200 300" style={style} aria-hidden>
-      <defs>
-        <linearGradient id="embossFill" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#3a3733" />
-          <stop offset="0.55" stopColor="#262320" />
-          <stop offset="1" stopColor="#171513" />
-        </linearGradient>
-      </defs>
-      <g fill="url(#embossFill)" stroke="rgba(255,255,255,0.14)" strokeWidth="0.5">
-        <Half />
-        <g transform="translate(200 0) scale(-1 1)">
-          <Half />
-        </g>
-        <path d="M100 8 C90 20 90 34 100 46 C110 34 110 20 100 8 Z" />
-        <Rosette x={100} y={150} r={40} n={10} />
-        <Rosette x={100} y={88} r={17} n={8} />
-        <Rosette x={100} y={236} r={19} n={8} />
-      </g>
-    </svg>
-  )
-}
-
-// The same ornament layer sits inside every flap; each flap clips it to its own triangle.
-// Each medallion grows inward from its own edge toward the seal.
-function Decor() {
-  const items = [
-    { cx: 50, cy: 24, rot: 180 }, // top flap
-    { cx: 50, cy: 76, rot: 0 }, // bottom flap
-    { cx: 15, cy: 50, rot: 90 }, // left flap
-    { cx: 85, cy: 50, rot: -90 }, // right flap
-  ]
+// The same cloud layer sits inside every flap; each flap clips it to its own triangle,
+// so the pattern runs continuously across the closed envelope.
+// The viewBox is fixed and scaled to cover the screen, so it looks the same on any size.
+function Decor({ uid }: { uid: string }) {
+  const pid = `mm-${uid}`
+  const cid = `mmc-${uid}`
   return (
     <div className="decor">
-      {items.map((it, i) => (
-        <Damask
-          key={i}
-          style={{
-            position: 'absolute',
-            width: 'var(--dm)',
-            height: 'calc(var(--dm) * 1.5)',
-            left: `calc(${it.cx}% - var(--dm) / 2)`,
-            top: `calc(${it.cy}% - var(--dm) * 0.75)`,
-            transform: `rotate(${it.rot}deg)`,
-          }}
-        />
-      ))}
+      <svg viewBox="0 0 1600 800" preserveAspectRatio="xMidYMid slice" aria-hidden>
+        <defs>
+          <path id={cid} d={CLOUD} />
+          <pattern id={pid} width="100" height="80" patternUnits="userSpaceOnUse">
+            <Clouds cid={cid} x={0} y={0} />
+            <Clouds cid={cid} x={50} y={40} />
+            <Clouds cid={cid} x={-50} y={40} />
+          </pattern>
+        </defs>
+        <rect width="1600" height="800" fill={`url(#${pid})`} />
+      </svg>
     </div>
   )
 }
@@ -211,7 +122,7 @@ function Seal() {
 
 const css = `
 .inv-root{position:fixed;inset:0;z-index:50;overflow:hidden;perspective:1600px;background:#0c0c0b;
-  --seal:clamp(104px,24vmin,170px);--dm:min(30vh,36vw);
+  --seal:clamp(104px,24vmin,170px);
   transition:opacity 1.1s ease,visibility 1.1s;}
 .inv-root.is-fade{opacity:0;visibility:hidden;pointer-events:none;}
 
@@ -236,9 +147,10 @@ const css = `
 .f-right .flap-in{clip-path:polygon(100% 0,49.9% 50%,100% 100%);}
 .f-right .flap-in::before{background:linear-gradient(270deg,rgba(255,255,255,.05),rgba(0,0,0,.32));}
 
-/* Raised relief: light from the top-left, so a highlight on that edge and a deep cast shadow bottom-right */
+/* Raised relief: light from the top-left, so a highlight on that edge and a cast shadow bottom-right */
 .decor{position:absolute;inset:0;pointer-events:none;
-  filter:drop-shadow(-1px -1px .4px rgba(255,255,255,.22)) drop-shadow(1.4px 1.8px 1px rgba(0,0,0,.85)) drop-shadow(3px 5px 4px rgba(0,0,0,.5));}
+  filter:drop-shadow(-.8px -.8px .3px rgba(255,255,255,.18)) drop-shadow(1px 1.4px 1px rgba(0,0,0,.8));}
+.decor svg{position:absolute;inset:0;width:100%;height:100%;}
 
 .is-flap .f-top{animation:openTop 1.5s cubic-bezier(.6,.05,.3,1) forwards;}
 .is-flap .f-bottom{animation:openBottom 1.5s cubic-bezier(.6,.05,.3,1) .12s forwards;}
@@ -381,25 +293,25 @@ export default function InvitationIntro({
             style={paper('radial-gradient(ellipse at 50% 40%,#1d1c1a 0%,#121211 70%,#0a0a09 100%)')}
           />
 
-          {/* Four flaps meeting in an X: black paper, soft fold shading, embossed damask */}
+          {/* Four flaps meeting in an X: black paper, soft fold shading, embossed mega mendung clouds */}
           <div className="flap f-bottom">
             <div className="flap-in" style={paper('linear-gradient(0deg,#191817,#10100f)')}>
-              <Decor />
+              <Decor uid="bottom" />
             </div>
           </div>
           <div className="flap f-top">
             <div className="flap-in" style={paper('linear-gradient(180deg,#1c1b19,#10100f)')}>
-              <Decor />
+              <Decor uid="top" />
             </div>
           </div>
           <div className="flap f-left">
             <div className="flap-in" style={paper('linear-gradient(90deg,#171615,#10100f)')}>
-              <Decor />
+              <Decor uid="left" />
             </div>
           </div>
           <div className="flap f-right">
             <div className="flap-in" style={paper('linear-gradient(270deg,#1a1918,#10100f)')}>
-              <Decor />
+              <Decor uid="right" />
             </div>
           </div>
 
