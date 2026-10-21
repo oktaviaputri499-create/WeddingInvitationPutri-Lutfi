@@ -6,6 +6,18 @@ import { Volume2, VolumeX } from 'lucide-react'
 type Stage = 'closed' | 'seal' | 'flap' | 'fade' | 'done'
 const ORDER: Stage[] = ['closed', 'seal', 'flap', 'fade', 'done']
 
+// Gold used for the embossed flower sprays (tuned to match the thin frame on the invitation page)
+const GOLD = {
+  dark: '#5e4a22',
+  mid: '#8a703a',
+  light: '#b79a55',
+  line: '#c2a460',
+  leaf: '#6f5a2b',
+  berry: '#8f7539',
+  center: '#3f3118',
+  dots: '#e3cd8e',
+}
+
 const PETALS = Array.from({ length: 12 }, (_, i) => ({
   left: (i * 37) % 100,
   size: 9 + ((i * 7) % 11),
@@ -127,7 +139,7 @@ function Decor() {
   )
 }
 
-/* ---------- Embossed flower spray (top & bottom flaps) ---------- */
+/* ---------- Embossed gold flower spray (top & bottom flaps) ---------- */
 
 type Pt = [number, number]
 
@@ -220,27 +232,27 @@ function Bloom({
         {outer.map(a => (
           <g key={`o${a}`} transform={`rotate(${a})`}>
             <path d={PETAL} fill="url(#petalG)" />
-            <path d="M0 -10 C1 -26 1 -38 0 -52" fill="none" strokeOpacity=".55" strokeWidth=".7" />
+            <path d="M0 -10 C1 -26 1 -38 0 -52" fill="none" stroke={GOLD.dots} strokeOpacity=".4" strokeWidth=".7" />
           </g>
         ))}
         {mid.map(a => (
           <g key={`m${a}`} transform={`rotate(${a}) scale(.72)`}>
             <path d={PETAL} fill="url(#petalG)" />
-            <path d="M0 -10 C1 -26 1 -38 0 -52" fill="none" strokeOpacity=".5" strokeWidth=".8" />
+            <path d="M0 -10 C1 -26 1 -38 0 -52" fill="none" stroke={GOLD.dots} strokeOpacity=".38" strokeWidth=".8" />
           </g>
         ))}
         {inner.map(a => (
           <path key={`i${a}`} d={PETAL} transform={`rotate(${a}) scale(.46)`} fill="url(#petalG)" />
         ))}
-        <circle r="6" fill="#2e2c29" />
+        <circle r="6" fill={GOLD.center} />
         {dots.map((a, i) => (
           <circle
             key={i}
             cx={Math.cos(a) * 9.5}
             cy={Math.sin(a) * 9.5}
             r="1.4"
-            fill="#7a6d4e"
-            fillOpacity=".7"
+            fill={GOLD.dots}
+            fillOpacity=".85"
             stroke="none"
           />
         ))}
@@ -254,21 +266,31 @@ function Spray({ position }: { position: 'top' | 'bottom' }) {
     <svg viewBox="-300 -75 600 215" className={`spray spray-${position}`} aria-hidden>
       <defs>
         <linearGradient id="petalG" x1="0" y1="1" x2="0" y2="0">
-          <stop offset="0" stopColor="#1c1b19" />
-          <stop offset="0.55" stopColor="#262422" />
-          <stop offset="1" stopColor="#34322e" />
+          <stop offset="0" stopColor={GOLD.dark} />
+          <stop offset="0.55" stopColor={GOLD.mid} />
+          <stop offset="1" stopColor={GOLD.light} />
         </linearGradient>
       </defs>
-      <g stroke="#3d3a36" strokeWidth=".9">
+      <g stroke={GOLD.line} strokeOpacity=".75" strokeWidth=".9">
         {[1, -1].map(m => (
           <g key={m} transform={`scale(${m} 1)`}>
             {BRANCHES.map((b, i) => (
-              <path key={i} d={stemPath(b.P)} fill="none" strokeWidth="2.2" strokeLinecap="round" />
+              <path
+                key={i}
+                d={stemPath(b.P)}
+                fill="none"
+                stroke={GOLD.mid}
+                strokeOpacity="1"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+              />
             ))}
-            <g fill="#232120">
+            <g fill={GOLD.leaf}>
               {SPRAY_LEAVES.map((l, i) => (
                 <path key={i} d={LEAF} transform={`translate(${l.x} ${l.y}) rotate(${l.a}) scale(${l.s})`} />
               ))}
+            </g>
+            <g fill={GOLD.berry}>
               {SPRAY_BERRIES.map((b, i) => (
                 <circle key={i} cx={b.x} cy={b.y} r="3" />
               ))}
@@ -388,9 +410,9 @@ const css = `
 .decor{position:absolute;inset:0;pointer-events:none;
   filter:drop-shadow(-.8px -.8px .4px rgba(255,255,255,.14)) drop-shadow(1.2px 1.6px 1px rgba(0,0,0,.8));}
 
-/* Flower spray: deeper emboss than the vines, and it fades in on load */
+/* Gold flower spray: warm highlight + deep shadow for a metallic emboss, fades in on load */
 .decor.rich{
-  filter:drop-shadow(-1px -1px .5px rgba(255,255,255,.2)) drop-shadow(1.6px 2.2px 1.6px rgba(0,0,0,.88));
+  filter:drop-shadow(-1px -1px .5px rgba(255,232,170,.3)) drop-shadow(1.6px 2.2px 1.6px rgba(0,0,0,.88));
   animation:florIn 2s ease-out .2s both;}
 @keyframes florIn{0%{opacity:0}100%{opacity:1}}
 .spray{position:absolute;left:50%;width:var(--spw);height:auto;overflow:visible;}
