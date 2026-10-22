@@ -1,472 +1,267 @@
-import { prisma } from '@/lib/prisma'
-import { notFound } from 'next/navigation'
-import RsvpForm from './RsvpForm'
-import WishForm from './WishForm'
-import InvitationIntro from './InvitationIntro'
-import ScrollReveal from './ScrollReveal'
-import GuestQrCode from './GuestQrCode'
-import AnimatedText from './AnimatedText'
-import LuxBackground from './LuxBackground'
-import { MapPin, Calendar, Clock, Gift, CreditCard, CalendarPlus, Heart } from 'lucide-react'
+'use client'
 
-export const dynamic = 'force-dynamic'
+import { useEffect, useRef } from 'react'
 
-const GOLD = '#d4b26e'
-const IVORY = '#f3ece0'
-const TITLE = '#e6d3a6'
-const MUTED = '#cdbfa8'
-const BODY = '#d9cdb8'
-const LINE = 'rgba(212,178,110,0.3)'
+const LEAF = 'M0 0 C6 -9 20 -9 28 0 C20 9 6 9 0 0 Z'
 
-// Same look as the hero: thin gold double frame on a dark background
-function LuxPanel({ children }: { children: React.ReactNode }) {
+// One botanical branch: a curved stem with outlined leaves
+const BRANCH = (() => {
+  const P = [
+    [20, 290],
+    [30, 190],
+    [70, 110],
+    [130, 20],
+  ]
+  const at = (t: number) => {
+    const u = 1 - t
+    return [0, 1].map(
+      k => u * u * u * P[0][k] + 3 * u * u * t * P[1][k] + 3 * u * t * t * P[2][k] + t * t * t * P[3][k]
+    )
+  }
+  const dir = (t: number) => {
+    const u = 1 - t
+    return [0, 1].map(
+      k => 3 * u * u * (P[1][k] - P[0][k]) + 6 * u * t * (P[2][k] - P[1][k]) + 3 * t * t * (P[3][k] - P[2][k])
+    )
+  }
+  const leaves = Array.from({ length: 11 }, (_, i) => {
+    const t = 0.08 + i * 0.08
+    const [x, y] = at(t)
+    const [dx, dy] = dir(t)
+    const side = i % 2 === 0 ? 1 : -1
+    const a = (Math.atan2(dy, dx) * 180) / Math.PI + side * 50
+    return { x, y, a, s: 1.35 - t * 0.7 }
+  })
+  const tip = at(1)
+  const tipAngle = (Math.atan2(dir(1)[1], dir(1)[0]) * 180) / Math.PI
+  return { leaves, tip, tipAngle }
+})()
+
+function Branch({ pos, delay }: { pos: string; delay: number }) {
   return (
-    <div
-      className="relative w-full"
-      style={{
-        color: IVORY,
-        textShadow: '0 2px 24px rgba(0,0,0,0.6)',
-        backgroundColor: 'rgba(12,10,8,0.35)',
-      }}
-    >
-      <div
-        className="absolute pointer-events-none"
-        style={{ inset: 0, border: '1px solid rgba(212,178,110,0.4)' }}
-      />
-      <div
-        className="absolute pointer-events-none"
-        style={{ inset: 6, border: '1px solid rgba(212,178,110,0.16)' }}
-      />
-      <div className="relative">{children}</div>
-    </div>
-  )
-}
-
-function GoldLine() {
-  return (
-    <div
-      className="mx-auto h-px w-28"
-      style={{ background: 'linear-gradient(90deg,transparent,#d4b26e,transparent)' }}
-    />
-  )
-}
-
-function SectionTitle({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="relative px-8 pt-12 pb-6">
-      <h2 className="font-script text-5xl leading-tight" style={{ color: TITLE }}>
-        {children}
-      </h2>
-    </div>
-  )
-}
-
-// Thin gold flourish for the top and bottom of the hero (outline only, no fill).
-// The right half is drawn once and mirrored for the left half.
-function HeroOrnament({ id, flip = false }: { id: string; flip?: boolean }) {
-  const half = (
-    <>
-      {/* Line that fades out toward the edge */}
-      <path d="M133 20 H228" stroke={`url(#${id})`} />
-      {/* Curling tendrils */}
-      <path d="M133 20 C141 20 145 11 153 11 C159 11 161 16 157 17.5" />
-      <path d="M133 20 C141 20 145 29 153 29 C159 29 161 24 157 22.5" />
-      {/* Leaves with a center vein */}
-      <path d="M166 19 C169 12 177 10 183 12 C181 18 173 21 166 19 Z" />
-      <path d="M166.5 18.6 C172 15.5 177 13.5 182 12.3" strokeOpacity=".5" />
-      <path d="M190 21 C193 28 201 30 207 28 C205 22 197 19 190 21 Z" />
-      <path d="M190.5 21.4 C196 23.5 201 26 206 28" strokeOpacity=".5" />
-      <circle cx="232" cy="20" r="1.2" fill={GOLD} stroke="none" />
-    </>
-  )
-
-  return (
-    <div
-      aria-hidden
-      className="absolute left-1/2 pointer-events-none"
-      style={{
-        [flip ? 'bottom' : 'top']: 34,
-        width: 'min(70%, 260px)',
-        transform: 'translateX(-50%)',
-        animation: 'heroFade 1.6s ease-out 0.4s both',
-      }}
-    >
-      <svg
-        viewBox="0 0 240 40"
-        width="100%"
-        style={{ display: 'block', overflow: 'visible', transform: flip ? 'scaleY(-1)' : undefined }}
-      >
-        <defs>
-          <linearGradient id={id} gradientUnits="userSpaceOnUse" x1="133" y1="0" x2="228" y2="0">
-            <stop offset="0" stopColor={GOLD} stopOpacity="0.9" />
-            <stop offset="1" stopColor={GOLD} stopOpacity="0" />
-          </linearGradient>
-        </defs>
-        <g fill="none" stroke={GOLD} strokeOpacity=".85" strokeWidth=".8" strokeLinecap="round" strokeLinejoin="round">
-          {/* Center diamond */}
-          <path d="M120 13.5 L126.5 20 L120 26.5 L113.5 20 Z" />
-          <circle cx="120" cy="20" r="1.6" fill={GOLD} stroke="none" />
-          <g>{half}</g>
-          <g transform="translate(240 0) scale(-1 1)">{half}</g>
+    <div className={`lux-br ${pos}`}>
+      <svg viewBox="0 0 200 300" className="lux-sway" aria-hidden style={{ animationDelay: `${delay}s` }}>
+        <g fill="none" stroke="rgba(238,228,210,0.55)" strokeWidth="1" strokeLinecap="round">
+          <path
+            d="M20 290 C30 190 70 110 130 20"
+            strokeWidth="1.6"
+            pathLength={1}
+            className="lux-draw"
+            style={{ animationDelay: `${delay}s` }}
+          />
+          {BRANCH.leaves.map((l, i) => (
+            <path
+              key={i}
+              d={LEAF}
+              className="lux-leaf"
+              style={{ animationDelay: `${delay + 1.2 + i * 0.28}s` }}
+              transform={`translate(${l.x} ${l.y}) rotate(${l.a}) scale(${l.s})`}
+            />
+          ))}
+          <path
+            d={LEAF}
+            className="lux-leaf"
+            style={{ animationDelay: `${delay + 4.4}s` }}
+            transform={`translate(${BRANCH.tip[0]} ${BRANCH.tip[1]}) rotate(${BRANCH.tipAngle}) scale(1.3)`}
+          />
         </g>
       </svg>
     </div>
   )
 }
 
-export default async function InvitationPage({ params }: { params: { token: string } }) {
-  const guest = await prisma.guest.findUnique({
-    where: { token: params.token },
-    include: { rsvp: true }
-  })
+const GRAIN = `url("data:image/svg+xml;utf8,${encodeURIComponent(
+  "<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.5 0'/></filter><rect width='100%' height='100%' filter='url(#n)'/></svg>"
+)}")`
 
-  if (!guest) {
-    notFound()
-  }
+const css = `
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Pinyon+Script&family=Playfair+Display:wght@500;600&display=swap');
 
-  const wishes = await prisma.wish.findMany({
-    orderBy: { createdAt: 'desc' },
-    include: { guest: true }
-  })
-  const settings = await prisma.eventSettings.findUnique({ where: { id: 'main' } })
+.font-script{font-family:'Pinyon Script','Edwardian Script ITC','Lucida Calligraphy',cursive;font-weight:400;}
+.font-name{font-family:'Playfair Display',Georgia,'Times New Roman',serif;}
+.font-lux{font-family:'Cormorant Garamond',Georgia,'Times New Roman',serif;}
 
-  // Timing for the name animation in the hero
-  const groomFirst = settings?.groomName?.split(' ')[0] || ''
-  const brideFirst = settings?.brideName?.split(' ')[0] || ''
-  const letterStep = 0.08
-  const groomDelay = 0.6
-  const ampDelay = groomDelay + groomFirst.length * letterStep
-  const brideDelay = ampDelay + letterStep * 2
-  // The tagline fades in once both names have been written
-  const taglineDelay = brideDelay + brideFirst.length * letterStep + 0.2
+.lux-bg{position:fixed;inset:0;z-index:0;overflow:hidden;
+  background:radial-gradient(ellipse at 50% 28%,#26231f 0%,#0e0d0b 68%,#050505 100%);}
 
-  const icsContent = [
-    'BEGIN:VCALENDAR',
-    'VERSION:2.0',
-    'BEGIN:VEVENT',
-    'DTSTART:20270707T010000Z',
-    'DTEND:20270707T030000Z',
-    `SUMMARY:Akad Nikah ${settings?.groomName} & ${settings?.brideName}`,
-    `LOCATION:${settings?.weddingLocation}`,
-    `DESCRIPTION:Akad Nikah ${settings?.groomName} & ${settings?.brideName}`,
-    'END:VEVENT',
-    'END:VCALENDAR'
-  ].join('\r\n')
+.lux-leak{position:absolute;width:90vmax;height:90vmax;border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle,rgba(214,190,150,.17) 0%,rgba(214,190,150,0) 62%);}
+.lux-leak.a{left:-35vmax;top:-30vmax;animation:leakA 26s ease-in-out infinite alternate;}
+.lux-leak.b{right:-40vmax;bottom:-35vmax;animation:leakB 32s ease-in-out infinite alternate;}
+@keyframes leakA{from{transform:translate(0,0)}to{transform:translate(22vw,16vh)}}
+@keyframes leakB{from{transform:translate(0,0)}to{transform:translate(-20vw,-14vh)}}
 
-  const icsHref = `data:text/calendar;charset=utf-8,${encodeURIComponent(icsContent)}`
-  const mapsHref = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(settings?.weddingLocation || '')}`
+.lux-br{position:absolute;width:clamp(190px,50vmin,430px);opacity:.6;pointer-events:none;}
+.lux-br svg{display:block;width:100%;height:auto;overflow:visible;}
+.br-bl{left:-4vmin;bottom:-5vmin;}
+.br-br{right:-4vmin;bottom:-5vmin;transform:scaleX(-1);}
+.br-tl{left:-4vmin;top:-5vmin;transform:scaleY(-1);}
+.br-tr{right:-4vmin;top:-5vmin;transform:scale(-1,-1);}
+
+.lux-sway{transform-origin:10% 97%;animation:luxSway 10s ease-in-out infinite alternate;}
+@keyframes luxSway{from{transform:rotate(-2.2deg)}to{transform:rotate(2.4deg)}}
+.lux-draw{stroke-dasharray:1;stroke-dashoffset:1;animation:luxDraw 5s ease-out forwards;}
+@keyframes luxDraw{to{stroke-dashoffset:0}}
+.lux-leaf{opacity:0;animation:luxLeaf 1.6s ease-out forwards;}
+@keyframes luxLeaf{to{opacity:1}}
+
+.lux-vignette{position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse at 50% 45%,rgba(0,0,0,0) 35%,rgba(0,0,0,.6) 100%);}
+.lux-grain{position:absolute;inset:0;pointer-events:none;opacity:.07;background-image:${GRAIN};mix-blend-mode:screen;}
+.lux-canvas{position:absolute;inset:0;pointer-events:none;}
+.lux-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:grayscale(1) contrast(1.05) brightness(.7);opacity:.55;}
+
+@media (prefers-reduced-motion:reduce){
+  .lux-sway,.lux-leak{animation:none;}
+}
+`
+
+type Petal = {
+  x: number
+  y: number
+  s: number
+  vy: number
+  vx: number
+  rot: number
+  vr: number
+  flip: number
+  vf: number
+  a: number
+  ph: number
+  amp: number
+}
+
+export default function LuxBackground({ videoSrc }: { videoSrc?: string }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const dpr = Math.min(window.devicePixelRatio || 1, 2)
+    let w = 0
+    let h = 0
+    let raf = 0
+    let last = 0
+    let t = 0
+
+    const resize = () => {
+      w = window.innerWidth
+      h = window.innerHeight
+      canvas.width = w * dpr
+      canvas.height = h * dpr
+      canvas.style.width = `${w}px`
+      canvas.style.height = `${h}px`
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+    }
+    resize()
+
+    const makePetal = (init: boolean): Petal => {
+      const depth = Math.random()
+      const s = 5 + depth * 13
+      return {
+        x: Math.random() * w,
+        y: init ? Math.random() * h : -s * 2,
+        s,
+        vy: 14 + depth * 34,
+        vx: (Math.random() - 0.5) * 10,
+        rot: Math.random() * Math.PI * 2,
+        vr: (Math.random() - 0.5) * 0.9,
+        flip: Math.random() * Math.PI * 2,
+        vf: 0.8 + Math.random() * 1.6,
+        a: 0.16 + depth * 0.5,
+        ph: Math.random() * Math.PI * 2,
+        amp: 10 + Math.random() * 30,
+      }
+    }
+
+    const petals: Petal[] = Array.from({ length: w < 600 ? 22 : 38 }, () => makePetal(true))
+    const dust = Array.from({ length: w < 600 ? 28 : 50 }, () => ({
+      x: Math.random() * w,
+      y: Math.random() * h,
+      r: 0.5 + Math.random() * 1.3,
+      ph: Math.random() * Math.PI * 2,
+      sp: 0.6 + Math.random() * 1.4,
+    }))
+
+    const drawPetal = (p: Petal) => {
+      const px = p.x + Math.sin(t * 0.6 + p.ph) * p.amp
+      ctx.save()
+      ctx.translate(px, p.y)
+      ctx.rotate(p.rot)
+      ctx.scale(1, Math.max(0.15, Math.abs(Math.cos(p.flip))))
+      ctx.beginPath()
+      ctx.moveTo(0, -p.s)
+      ctx.bezierCurveTo(p.s * 0.95, -p.s * 0.6, p.s * 0.95, p.s * 0.5, 0, p.s)
+      ctx.bezierCurveTo(-p.s * 0.95, p.s * 0.5, -p.s * 0.95, -p.s * 0.6, 0, -p.s)
+      ctx.fillStyle = `rgba(245,240,232,${p.a})`
+      ctx.fill()
+      ctx.restore()
+    }
+
+    const frame = (now: number) => {
+      const dt = Math.min((now - last) / 1000 || 0.016, 0.05)
+      last = now
+      t += dt
+      ctx.clearRect(0, 0, w, h)
+
+      for (const d of dust) {
+        const a = ((Math.sin(t * d.sp + d.ph) + 1) / 2) * 0.55
+        ctx.beginPath()
+        ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2)
+        ctx.fillStyle = `rgba(240,225,195,${a})`
+        ctx.fill()
+      }
+
+      petals.forEach((p, i) => {
+        p.y += p.vy * dt
+        p.x += p.vx * dt
+        p.rot += p.vr * dt
+        p.flip += p.vf * dt
+        if (p.y > h + p.s * 2) petals[i] = makePetal(false)
+        drawPetal(p)
+      })
+
+      raf = requestAnimationFrame(frame)
+    }
+
+    if (reduce) {
+      petals.forEach(drawPetal)
+    } else {
+      raf = requestAnimationFrame(frame)
+    }
+
+    window.addEventListener('resize', resize)
+    return () => {
+      cancelAnimationFrame(raf)
+      window.removeEventListener('resize', resize)
+    }
+  }, [])
 
   return (
-    <InvitationIntro
-      guestName={guest.name}
-      groomName={groomFirst || undefined}
-      brideName={brideFirst || undefined}
-    >
-      <div className="max-w-md mx-auto min-h-screen overflow-hidden relative">
-        <LuxBackground />
+    <div className="lux-bg" aria-hidden>
+      <style>{css}</style>
 
-        {/* Content wrapper */}
-        <div className="relative z-10">
-          {/* Hero Section */}
-          <section className="relative min-h-screen flex flex-col items-center justify-center px-8 py-16 text-center overflow-hidden">
-            <style>{`@keyframes heroFade{from{opacity:0}to{opacity:1}}`}</style>
+      {videoSrc && (
+        <video className="lux-video" autoPlay loop muted playsInline>
+          <source src={videoSrc} type="video/mp4" />
+        </video>
+      )}
 
-            <div
-              className="absolute pointer-events-none"
-              style={{ inset: 14, border: '1px solid rgba(212,178,110,0.4)' }}
-            />
-            <div
-              className="absolute pointer-events-none"
-              style={{ inset: 20, border: '1px solid rgba(212,178,110,0.16)' }}
-            />
+      <div className="lux-leak a" />
+      <div className="lux-leak b" />
 
-            {/* Ornaments at the top and bottom of the frame */}
-            <HeroOrnament id="heroOrnTop" />
-            <HeroOrnament id="heroOrnBottom" flip />
+      <Branch pos="br-bl" delay={0.3} />
+      <Branch pos="br-br" delay={1.2} />
+      <Branch pos="br-tl" delay={2.1} />
+      <Branch pos="br-tr" delay={0.8} />
 
-            <div
-              className="relative w-full flex flex-col items-center"
-              style={{ color: IVORY, textShadow: '0 2px 24px rgba(0,0,0,0.6)' }}
-            >
-              <p className="font-lux uppercase text-xs tracking-[0.5em] mb-5" style={{ color: MUTED }}>
-                <AnimatedText text="The Wedding Of" startDelay={0.2} step={0.05} />
-              </p>
-
-              <h1
-                className="font-script"
-                style={{ fontSize: 'clamp(2.9rem, 13.5vw, 4.4rem)', lineHeight: 1.15 }}
-              >
-                <AnimatedText text={groomFirst} startDelay={groomDelay} step={letterStep} />
-                {' '}
-                <span style={{ fontSize: '0.72em', color: GOLD }}>
-                  <AnimatedText text="&" startDelay={ampDelay} step={letterStep} />
-                </span>
-                {' '}
-                <AnimatedText text={brideFirst} startDelay={brideDelay} step={letterStep} />
-              </h1>
-
-              <div
-                className="mx-auto mt-8 h-px w-28"
-                style={{ background: 'linear-gradient(90deg,transparent,#d4b26e,transparent)' }}
-              />
-
-              <p
-                className="font-lux italic text-sm mt-6 px-2"
-                style={{ color: BODY, animation: `heroFade 1.4s ease-out ${taglineDelay}s both` }}
-              >
-                Two hearts, one beautiful{' '}
-                <span className="whitespace-nowrap">
-                  beginning
-                  <Heart
-                    size={14}
-                    strokeWidth={1.5}
-                    fill="none"
-                    color={GOLD}
-                    className="inline-block ml-1.5 align-middle"
-                  />
-                </span>
-              </p>
-            </div>
-          </section>
-
-          {/* Couple Section */}
-          <section className="py-12 px-6 text-center">
-            <ScrollReveal>
-              <LuxPanel>
-                <SectionTitle>
-                  <AnimatedText text="The Groom & The Bride" startDelay={0.2} step={0.06} />
-                </SectionTitle>
-
-                <GoldLine />
-
-                <div className="relative px-8 py-8">
-                  <h3 className="font-name text-3xl font-semibold mb-3" style={{ color: IVORY }}>
-                    <AnimatedText text={settings?.groomName || ''} startDelay={0.3} step={0.05} />
-                  </h3>
-                  <p className="font-lux italic text-sm mb-1" style={{ color: MUTED }}>
-                    <AnimatedText text="Putra dari:" startDelay={0.9} step={0.04} />
-                  </p>
-                  <p className="font-lux text-sm" style={{ color: BODY }}>
-                    <AnimatedText text={settings?.groomParents || ''} startDelay={1.3} step={0.03} />
-                  </p>
-                </div>
-
-                <div className="relative text-3xl font-script" style={{ color: GOLD }}>
-                  <AnimatedText text="&" startDelay={0.3} step={0.05} />
-                </div>
-
-                <div className="relative px-8 py-8 pb-12">
-                  <h3 className="font-name text-3xl font-semibold mb-3" style={{ color: IVORY }}>
-                    <AnimatedText text={settings?.brideName || ''} startDelay={0.3} step={0.05} />
-                  </h3>
-                  <p className="font-lux italic text-sm mb-1" style={{ color: MUTED }}>
-                    <AnimatedText text="Putri dari:" startDelay={0.9} step={0.04} />
-                  </p>
-                  <p className="font-lux text-sm" style={{ color: BODY }}>
-                    <AnimatedText text={settings?.brideParents || ''} startDelay={1.3} step={0.03} />
-                  </p>
-                </div>
-              </LuxPanel>
-            </ScrollReveal>
-          </section>
-
-          {/* Event Details */}
-          <section className="py-12 px-6 text-center">
-            <ScrollReveal>
-              <LuxPanel>
-                <SectionTitle>
-                  <AnimatedText text="Wedding Event" startDelay={0.2} step={0.06} />
-                </SectionTitle>
-
-                <GoldLine />
-
-                <div className="relative px-8 py-8 pb-12">
-                  <h3 className="font-lux uppercase text-2xl mb-5 text-center" style={{ color: IVORY, letterSpacing: '0.14em' }}>
-                    <AnimatedText text="Akad Nikah" startDelay={0.3} step={0.06} />
-                  </h3>
-
-                  <div className="font-lux inline-flex flex-col items-start gap-2 text-base mb-7 text-left" style={{ color: BODY }}>
-                    <div className="flex items-center gap-2">
-                      <Calendar size={16} className="shrink-0" style={{ color: GOLD }} />
-                      <span>
-                        <AnimatedText text={settings?.weddingDate || ''} startDelay={0.9} step={0.04} />
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Clock size={16} className="shrink-0" style={{ color: GOLD }} />
-                      <span>
-                        <AnimatedText text={settings?.weddingTime || ''} startDelay={1.4} step={0.04} />
-                      </span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <MapPin size={16} className="shrink-0 mt-1" style={{ color: GOLD }} />
-                      <span>
-                        <AnimatedText text={settings?.weddingLocation || ''} startDelay={1.9} step={0.03} />
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col gap-3">
-                    <a
-                      href={mapsHref}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="font-lux inline-flex items-center justify-center gap-2 px-6 py-2 text-sm rounded-full transition hover:opacity-90"
-                      style={{ backgroundColor: GOLD, color: '#1b1510', textShadow: 'none' }}
-                    >
-                      <MapPin size={16} />
-                      <AnimatedText text="Buka Google Maps" startDelay={2.6} step={0.04} />
-                    </a>
-                    <a
-                      href={icsHref}
-                      download="Akad-Nikah.ics"
-                      className="font-lux inline-flex items-center justify-center gap-2 px-6 py-2 text-sm rounded-full border transition hover:bg-[#d4b26e] hover:text-[#1b1510]"
-                      style={{ borderColor: GOLD, color: GOLD, textShadow: 'none' }}
-                    >
-                      <CalendarPlus size={16} />
-                      <AnimatedText text="Tambah ke Kalender" startDelay={3.2} step={0.04} />
-                    </a>
-                  </div>
-                </div>
-              </LuxPanel>
-            </ScrollReveal>
-          </section>
-
-          {/* Wedding Gift Section */}
-          <section className="py-12 px-6 text-center">
-            <ScrollReveal>
-              <LuxPanel>
-                <SectionTitle>
-                  <AnimatedText text="Gift & Support" startDelay={0.2} step={0.06} />
-                </SectionTitle>
-
-                <GoldLine />
-
-                <div className="relative px-8 py-8 pb-12">
-                  <div className="flex justify-center mb-4">
-                    <Gift size={32} className="float-soft" style={{ color: GOLD }} />
-                  </div>
-
-                  <p className="font-lux italic text-base mb-8 leading-relaxed" style={{ color: BODY }}>
-                    <AnimatedText text={settings?.giftMessage || ''} startDelay={0.6} step={0.02} />
-                  </p>
-
-                  <div
-                    className="flex flex-col items-center justify-center text-sm pt-6"
-                    style={{ borderTop: `1px solid ${LINE}` }}
-                  >
-                    <div className="font-lux flex items-center gap-2 font-bold mb-2" style={{ color: IVORY }}>
-                      <CreditCard size={18} style={{ color: GOLD }} />
-                      <span>
-                        <AnimatedText text={settings?.bank1Name || ''} startDelay={2.6} step={0.05} />
-                      </span>
-                    </div>
-                    <p className="text-2xl font-mono tracking-widest mb-1" style={{ color: GOLD }}>
-                      <AnimatedText text={settings?.bank1Number || ''} startDelay={3.0} step={0.05} />
-                    </p>
-                    <p className="font-lux" style={{ color: MUTED }}>
-                      <AnimatedText text={settings?.bank1Holder || ''} startDelay={3.7} step={0.04} />
-                    </p>
-                  </div>
-
-                  <div
-                    className="flex flex-col items-center justify-center text-sm pt-6 mt-6"
-                    style={{ borderTop: `1px solid ${LINE}` }}
-                  >
-                    <div className="font-lux flex items-center gap-2 font-bold mb-2" style={{ color: IVORY }}>
-                      <CreditCard size={18} style={{ color: GOLD }} />
-                      <span>
-                        <AnimatedText text={settings?.bank2Name || ''} startDelay={4.3} step={0.05} />
-                      </span>
-                    </div>
-                    <p className="text-2xl font-mono tracking-widest mb-1" style={{ color: GOLD }}>
-                      <AnimatedText text={settings?.bank2Number || ''} startDelay={4.7} step={0.05} />
-                    </p>
-                    <p className="font-lux" style={{ color: MUTED }}>
-                      <AnimatedText text={settings?.bank2Holder || ''} startDelay={5.4} step={0.04} />
-                    </p>
-                  </div>
-                </div>
-              </LuxPanel>
-            </ScrollReveal>
-          </section>
-
-          {/* RSVP */}
-          <section className="py-12 px-6 text-center">
-            <ScrollReveal>
-              <LuxPanel>
-                <SectionTitle>
-                  <AnimatedText text="RSVP" startDelay={0.2} step={0.1} />
-                </SectionTitle>
-
-                <GoldLine />
-
-                <div className="relative px-8 py-8 pb-12">
-                  <RsvpForm token={guest.token} initialRsvp={guest.rsvp} guestName={guest.name} />
-
-                  {/* QR code entry pass: only shown after the guest confirms attendance */}
-                  {guest.rsvp?.status === 'attending' && (
-                    <div className="mt-8 pt-8" style={{ borderTop: `1px solid ${LINE}` }}>
-                      <GuestQrCode token={guest.token} guestName={guest.name} />
-                    </div>
-                  )}
-                </div>
-              </LuxPanel>
-            </ScrollReveal>
-          </section>
-
-          {/* Wishes */}
-          <section className="py-12 px-6">
-            <ScrollReveal>
-              <LuxPanel>
-                <div className="text-center">
-                  <SectionTitle>
-                    <AnimatedText text="Ucapan & Doa" startDelay={0.2} step={0.06} />
-                  </SectionTitle>
-                </div>
-
-                <GoldLine />
-
-                <div className="relative px-8 py-8 pb-12">
-                  <WishForm token={guest.token} guestName={guest.name} />
-                </div>
-              </LuxPanel>
-            </ScrollReveal>
-
-            <div className="mt-6 space-y-4 max-h-[500px] overflow-y-auto pr-2">
-              {wishes.map((wish, i) => (
-                <ScrollReveal key={wish.id} delay={Math.min(i * 60, 400)}>
-                  <div
-                    className="p-4 rounded-sm"
-                    style={{
-                      backgroundColor: 'rgba(12,10,8,0.45)',
-                      border: '1px solid rgba(212,178,110,0.25)',
-                      color: IVORY,
-                    }}
-                  >
-                    <p className="font-lux font-semibold text-base" style={{ color: TITLE }}>
-                      <AnimatedText text={wish.guest.name} startDelay={0.2} step={0.04} />
-                    </p>
-                    <p className="font-lux italic text-base mt-2" style={{ color: BODY }}>
-                      <AnimatedText text={wish.message} startDelay={0.6} step={0.015} />
-                    </p>
-                  </div>
-                </ScrollReveal>
-              ))}
-            </div>
-          </section>
-
-          <footer className="py-8 text-center text-xs bg-black/60 backdrop-blur-md text-stone-300">
-            <p className="font-lux tracking-widest">
-              <AnimatedText
-                text={`© 2026 ${settings?.groomName?.split(' ')[0] || ''} & ${settings?.brideName?.split(' ')[0] || ''}. All rights reserved.`}
-                startDelay={0.2}
-                step={0.03}
-              />
-            </p>
-          </footer>
-        </div>
-      </div>
-    </InvitationIntro>
+      <canvas ref={canvasRef} className="lux-canvas" />
+      <div className="lux-vignette" />
+      <div className="lux-grain" />
+    </div>
   )
 }
