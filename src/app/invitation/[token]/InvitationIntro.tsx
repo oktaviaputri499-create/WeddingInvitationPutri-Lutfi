@@ -391,6 +391,7 @@ function Card({ guestName }: { guestName: string }) {
               <div className="card-rule" />
               <div className="card-invited">You&apos;re Invited</div>
               <div className="card-rule" />
+              <div className="card-rule card-rule-sub" />
             </div>
 
             <div className="card-msg">
@@ -526,24 +527,30 @@ const css = `
   box-shadow:0 14px 40px rgba(0,0,0,.65),0 2px 6px rgba(0,0,0,.5);}
 .card-frame{position:absolute;inset:6px;border:1px solid rgba(184,152,90,.26);pointer-events:none;}
 
-/* All text sizes scale with the card width (cqw), so the proportions match the invitation page on any screen */
-.card-text{position:absolute;left:0;right:0;top:0;padding:9cqw 6cqw 0;text-align:center;
+/* All text sizes scale with the card width (cqw), so the proportions match the invitation page on any screen.
+   The text area fills the whole card as a column: the main block sits near the top,
+   and the closing sentence is pushed to the bottom. */
+.card-text{position:absolute;left:0;right:0;top:0;bottom:0;padding:13cqw 6cqw 11cqw;
+  display:flex;flex-direction:column;text-align:center;
   font-family:'Cormorant Garamond',Georgia,'Times New Roman',serif;font-weight:400;color:#e9dfc8;}
 
 /* The block is as wide as "YOU'RE INVITED"; the first line is aligned to its left edge */
 .card-block{width:fit-content;max-width:100%;margin:0 auto;}
-.card-dear{text-align:left;font-style:italic;font-size:3.1cqw;line-height:1.3;color:rgba(226,214,184,.9);}
-.card-guest{margin-top:1.5cqw;padding-bottom:.1em;text-align:center;overflow-wrap:anywhere;
+.card-dear{text-align:left;white-space:nowrap;font-style:italic;font-size:3.6cqw;line-height:1.3;color:rgba(226,214,184,.9);}
+.card-guest{margin-top:3cqw;padding-bottom:.1em;text-align:center;overflow-wrap:anywhere;
   font-family:'Pinyon Script','Great Vibes','Allura','Snell Roundhand',cursive;font-weight:400;
   font-size:10cqw;line-height:1.3;
   background:linear-gradient(180deg,#f3e3b6,#cfae6c);
   -webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;}
-.card-rule{width:34%;height:1px;margin:3cqw auto;
+.card-rule{width:34%;height:1px;margin:6cqw auto;
   background:linear-gradient(90deg,transparent,rgba(201,169,106,.85),transparent);}
+/* Extra, shorter and fainter line under the lower rule */
+.card-rule-sub{width:18%;margin:-3cqw auto 0;opacity:.6;}
 .card-invited{text-align:center;white-space:nowrap;text-transform:uppercase;
   font-size:9cqw;line-height:1.15;letter-spacing:.06em;color:#f1e9d6;}
 
-.card-msg{margin:5cqw auto 0;max-width:92%;text-align:center;
+/* margin-top:auto pushes this sentence down to the bottom of the card */
+.card-msg{margin:auto auto 0;max-width:92%;text-align:center;
   font-style:italic;font-size:3.1cqw;line-height:1.5;color:rgba(226,214,184,.92);}
 .card-end{white-space:nowrap;}
 .card-leaf{display:inline-block;width:1.7em;height:1.7em;margin-left:.45em;vertical-align:-.55em;}
