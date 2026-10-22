@@ -383,27 +383,37 @@ function Card({ guestName }: { guestName: string }) {
         <div className="card-face" style={{ backgroundImage: `${GRAIN}, linear-gradient(180deg,#1e1d1b,#141413)` }}>
           <div className="card-frame" />
           <div className="card-text">
-            <div className="card-dear">Dear our beloved guest,</div>
-            <div className="card-guest">{guestName}</div>
+            {/* This block is exactly as wide as "YOU'RE INVITED", so the left-aligned line lines up with it */}
+            <div className="card-block">
+              <div className="card-dear">Dear our beloved guest,</div>
+              <div className="card-guest">{guestName}</div>
 
-            <div className="card-rule" />
-            <div className="card-invited">You&apos;re Invited</div>
-            <div className="card-rule" />
+              <div className="card-rule" />
+              <div className="card-invited">You&apos;re Invited</div>
+              <div className="card-rule" />
+            </div>
 
-            <div className="card-msg">We would love to celebrate this special day with you</div>
-
-            <svg className="card-leaf" viewBox="0 0 24 24" fill="none" aria-hidden>
-              <path
-                d="M4.5 19.5 C3.5 10.5 10 4 20 4 C20.5 13.5 14.5 20 4.5 19.5 Z"
-                stroke="#c9a96a"
-                strokeWidth="1.1"
-                strokeLinejoin="round"
-              />
-              <path d="M4.5 19.5 L15.5 8.5" stroke="#c9a96a" strokeWidth="1" strokeLinecap="round" />
-              <path d="M9.5 14.5 L9 10.8 M12 12 L15.2 12.4" stroke="#c9a96a" strokeWidth=".8" strokeLinecap="round" />
-            </svg>
-
-            <div className="card-hint">Tarik undangan</div>
+            <div className="card-msg">
+              We would love to celebrate this special day{' '}
+              <span className="card-end">
+                with you
+                <svg className="card-leaf" viewBox="0 0 24 24" fill="none" aria-hidden>
+                  <path
+                    d="M4.5 19.5 C3.5 10.5 10 4 20 4 C20.5 13.5 14.5 20 4.5 19.5 Z"
+                    stroke="#c9a96a"
+                    strokeWidth="1.1"
+                    strokeLinejoin="round"
+                  />
+                  <path d="M4.5 19.5 L15.5 8.5" stroke="#c9a96a" strokeWidth="1" strokeLinecap="round" />
+                  <path
+                    d="M9.5 14.5 L9 10.8 M12 12 L15.2 12.4"
+                    stroke="#c9a96a"
+                    strokeWidth=".8"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -412,6 +422,8 @@ function Card({ guestName }: { guestName: string }) {
 }
 
 const css = `
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=Pinyon+Script&display=swap');
+
 .inv-root{position:fixed;inset:0;z-index:50;overflow:hidden;perspective:1800px;background:#050505;cursor:pointer;
   --sw0:clamp(130px,42vmin,360px);
   --spw:min(96vw,clamp(300px,74vmin,780px));
@@ -514,21 +526,27 @@ const css = `
   box-shadow:0 14px 40px rgba(0,0,0,.65),0 2px 6px rgba(0,0,0,.5);}
 .card-frame{position:absolute;inset:6px;border:1px solid rgba(184,152,90,.26);pointer-events:none;}
 
-/* All text sizes scale with the card width (cqw), so it fits on phones and desktops alike */
-.card-text{position:absolute;left:0;right:0;top:0;padding:8cqw 8cqw 0;text-align:center;
-  font-family:'Cormorant Garamond',Georgia,'Times New Roman',serif;color:#e9dfc8;}
-.card-dear{font-style:italic;font-size:4.4cqw;line-height:1.3;color:rgba(226,214,184,.88);}
-.card-guest{margin-top:1cqw;font-size:15cqw;line-height:1.15;color:#d8bd82;
-  font-family:'Pinyon Script','Great Vibes','Allura','Snell Roundhand','Brush Script MT',cursive;
-  overflow-wrap:anywhere;}
-.card-rule{width:46%;height:1px;margin:3.4cqw auto;
+/* All text sizes scale with the card width (cqw), so the proportions match the invitation page on any screen */
+.card-text{position:absolute;left:0;right:0;top:0;padding:9cqw 6cqw 0;text-align:center;
+  font-family:'Cormorant Garamond',Georgia,'Times New Roman',serif;font-weight:400;color:#e9dfc8;}
+
+/* The block is as wide as "YOU'RE INVITED"; the first line is aligned to its left edge */
+.card-block{width:fit-content;max-width:100%;margin:0 auto;}
+.card-dear{text-align:left;font-style:italic;font-size:3.1cqw;line-height:1.3;color:rgba(226,214,184,.9);}
+.card-guest{margin-top:1.5cqw;padding-bottom:.1em;text-align:center;overflow-wrap:anywhere;
+  font-family:'Pinyon Script','Great Vibes','Allura','Snell Roundhand',cursive;font-weight:400;
+  font-size:10cqw;line-height:1.3;
+  background:linear-gradient(180deg,#f3e3b6,#cfae6c);
+  -webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;}
+.card-rule{width:34%;height:1px;margin:3cqw auto;
   background:linear-gradient(90deg,transparent,rgba(201,169,106,.85),transparent);}
-.card-invited{font-size:6.2cqw;line-height:1.2;letter-spacing:.14em;text-transform:uppercase;color:#f1e9d6;white-space:nowrap;}
-.card-msg{margin:4.2cqw auto 0;max-width:86%;font-style:italic;font-size:4.2cqw;line-height:1.45;
-  color:rgba(226,214,184,.9);text-wrap:balance;}
-.card-leaf{display:block;width:7.5cqw;height:7.5cqw;margin:3.6cqw auto 0;}
-.card-hint{margin-top:4.5cqw;font-size:2.8cqw;letter-spacing:.22em;text-transform:uppercase;white-space:nowrap;
-  color:rgba(214,198,160,.6);animation:hintPulse 3s ease-in-out infinite;}
+.card-invited{text-align:center;white-space:nowrap;text-transform:uppercase;
+  font-size:9cqw;line-height:1.15;letter-spacing:.06em;color:#f1e9d6;}
+
+.card-msg{margin:5cqw auto 0;max-width:92%;text-align:center;
+  font-style:italic;font-size:3.1cqw;line-height:1.5;color:rgba(226,214,184,.92);}
+.card-end{white-space:nowrap;}
+.card-leaf{display:inline-block;width:1.7em;height:1.7em;margin-left:.45em;vertical-align:-.55em;}
 
 /* ---------- Tap hint on the closed envelope ---------- */
 .tap-hint{position:absolute;left:0;right:0;top:61%;z-index:10;text-align:center;pointer-events:none;
@@ -557,7 +575,7 @@ const css = `
 }
 
 @media (prefers-reduced-motion:reduce){
-  .tap-hint,.bloom,.card-hint{animation:none;}
+  .tap-hint,.bloom{animation:none;}
   .is-card:not(.is-pull) .card-bob{animation:none;}
   .petal,.dust{animation:none;opacity:0;}
 }
