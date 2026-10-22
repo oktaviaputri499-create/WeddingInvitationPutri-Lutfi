@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { updateSettings } from '@/actions/settings'
-import { TEXT_GROUPS, parseSavedTexts } from '@/lib/siteTexts'
+import { TEXT_GROUPS, getTexts } from '@/lib/siteTexts'
 
 type FormState = {
   groomName: string
@@ -107,7 +107,7 @@ const SECTIONS: Section[] = [
   },
 ]
 
-// Look up the text definitions (label, default, hint, input type) by key
+// Look up the text definitions (label, hint, input type) by key
 const TEXT_BY_KEY = Object.fromEntries(TEXT_GROUPS.flatMap(g => g.fields.map(f => [f.key, f])))
 
 export default function SettingsForm({ settings }: { settings: any }) {
@@ -128,7 +128,8 @@ export default function SettingsForm({ settings }: { settings: any }) {
     bank2Number: settings?.bank2Number || '',
     bank2Holder: settings?.bank2Holder || '',
   })
-  const [texts, setTexts] = useState<Record<string, string>>(() => parseSavedTexts(settings?.texts))
+  // Starts with the current wording already filled in
+  const [texts, setTexts] = useState<Record<string, string>>(() => getTexts(settings?.texts))
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
 
@@ -159,8 +160,8 @@ export default function SettingsForm({ settings }: { settings: any }) {
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
       <p className="text-sm text-stone-500">
-        Urutan bagian di bawah sama dengan urutan di undangan. Untuk kolom yang punya teks abu-abu, biarkan kosong jika
-        ingin memakai teks bawaan tersebut.
+        Urutan bagian di bawah sama dengan urutan di undangan. Kolom teks yang dikosongkan tidak akan ditampilkan di
+        undangan.
       </p>
 
       {SECTIONS.map(section => (
@@ -201,7 +202,7 @@ export default function SettingsForm({ settings }: { settings: any }) {
                     <textarea
                       rows={2}
                       className={inputClass}
-                      placeholder={f.def}
+                      placeholder="(kosong = tidak ditampilkan)"
                       value={texts[f.key] ?? ''}
                       onChange={e => handleTextChange(f.key, e.target.value)}
                     />
@@ -209,7 +210,7 @@ export default function SettingsForm({ settings }: { settings: any }) {
                     <input
                       type={f.input || 'text'}
                       className={inputClass}
-                      placeholder={f.def}
+                      placeholder="(kosong = tidak ditampilkan)"
                       value={texts[f.key] ?? ''}
                       onChange={e => handleTextChange(f.key, e.target.value)}
                     />

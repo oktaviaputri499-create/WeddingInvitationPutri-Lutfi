@@ -375,7 +375,8 @@ function FlapEdge({ points }: { points: string }) {
   )
 }
 
-// The invitation paper that slides out of the envelope
+// The invitation paper that slides out of the envelope.
+// A text that is empty is not shown (the guest name always is).
 function Card({
   guestName,
   texts,
@@ -383,12 +384,12 @@ function Card({
   guestName: string
   texts?: { dear?: string; invited?: string; message?: string }
 }) {
-  const dear = texts?.dear || 'Dear our beloved guest,'
-  const invited = texts?.invited || "You're Invited"
-  const message = texts?.message || 'We would love to celebrate this special day with you'
+  const dear = texts?.dear ?? 'Dear our beloved guest,'
+  const invited = texts?.invited ?? "You're Invited"
+  const message = texts?.message ?? 'We would love to celebrate this special day with you'
 
   // The gold leaf sits right after the last two words
-  const words = message.trim().split(/\s+/)
+  const words = message.trim().split(/\s+/).filter(Boolean)
   const tail = words.slice(-2).join(' ')
   const head = words.slice(0, -2).join(' ')
 
@@ -398,38 +399,44 @@ function Card({
         <div className="card-face" style={{ backgroundImage: `${GRAIN}, linear-gradient(180deg,#1e1d1b,#141413)` }}>
           <div className="card-frame" />
           <div className="card-text">
-            {/* This block is exactly as wide as the title, so the left-aligned line lines up with it */}
+            {/* This block is as wide as the title, so the left-aligned line lines up with it */}
             <div className="card-block">
-              <div className="card-dear">{dear}</div>
+              {dear && <div className="card-dear">{dear}</div>}
               <div className="card-guest">{guestName}</div>
 
-              <div className="card-rule" />
-              <div className="card-invited">{invited}</div>
-              <div className="card-rule" />
+              {invited && (
+                <>
+                  <div className="card-rule" />
+                  <div className="card-invited">{invited}</div>
+                  <div className="card-rule" />
+                </>
+              )}
             </div>
 
-            <div className="card-msg">
-              {head}
-              {head ? ' ' : ''}
-              <span className="card-end">
-                {tail}
-                <svg className="card-leaf" viewBox="0 0 24 24" fill="none" aria-hidden>
-                  <path
-                    d="M4.5 19.5 C3.5 10.5 10 4 20 4 C20.5 13.5 14.5 20 4.5 19.5 Z"
-                    stroke="#c9a96a"
-                    strokeWidth="1.1"
-                    strokeLinejoin="round"
-                  />
-                  <path d="M4.5 19.5 L15.5 8.5" stroke="#c9a96a" strokeWidth="1" strokeLinecap="round" />
-                  <path
-                    d="M9.5 14.5 L9 10.8 M12 12 L15.2 12.4"
-                    stroke="#c9a96a"
-                    strokeWidth=".8"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              </span>
-            </div>
+            {words.length > 0 && (
+              <div className="card-msg">
+                {head}
+                {head ? ' ' : ''}
+                <span className="card-end">
+                  {tail}
+                  <svg className="card-leaf" viewBox="0 0 24 24" fill="none" aria-hidden>
+                    <path
+                      d="M4.5 19.5 C3.5 10.5 10 4 20 4 C20.5 13.5 14.5 20 4.5 19.5 Z"
+                      stroke="#c9a96a"
+                      strokeWidth="1.1"
+                      strokeLinejoin="round"
+                    />
+                    <path d="M4.5 19.5 L15.5 8.5" stroke="#c9a96a" strokeWidth="1" strokeLinecap="round" />
+                    <path
+                      d="M9.5 14.5 L9 10.8 M12 12 L15.2 12.4"
+                      stroke="#c9a96a"
+                      strokeWidth=".8"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                </span>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -615,6 +622,9 @@ export default function InvitationIntro({
 
   const reached = (s: Stage) => ORDER.indexOf(stage) >= ORDER.indexOf(s)
 
+  // An empty tap hint is not shown
+  const tapHint = envTexts?.tapHint ?? 'Ketuk untuk membuka'
+
   useEffect(() => {
     const list = timers.current
     return () => list.forEach(clearTimeout)
@@ -741,9 +751,11 @@ export default function InvitationIntro({
             </div>
           </div>
 
-          <div className="tap-hint" aria-hidden>
-            {envTexts?.tapHint || 'Ketuk untuk membuka'}
-          </div>
+          {tapHint && (
+            <div className="tap-hint" aria-hidden>
+              {tapHint}
+            </div>
+          )}
 
           <div className="petals">
             {PETALS.map((p, i) => (

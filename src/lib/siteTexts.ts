@@ -62,7 +62,7 @@ export const TEXT_GROUPS: TextGroup[] = [
         label: 'Tanggal acara',
         def: '2027-03-07',
         input: 'date',
-        hint: 'Dipakai tombol "Tambah ke Kalender". Bawaan: 7 Maret 2027.',
+        hint: 'Dipakai tombol "Tambah ke Kalender". Jika dikosongkan, memakai 7 Maret 2027.',
       },
       { key: 'calStart', label: 'Jam mulai (WIB)', def: '08:00', input: 'time' },
       { key: 'calEnd', label: 'Jam selesai (WIB)', def: '10:00', input: 'time' },
@@ -96,8 +96,7 @@ const DEFAULTS: Record<string, string> = Object.fromEntries(
   TEXT_GROUPS.flatMap(g => g.fields.map(f => [f.key, f.def]))
 )
 
-// Only the texts the admin has actually changed (used to fill the admin form)
-export function parseSavedTexts(raw?: string | null): Record<string, string> {
+function readSaved(raw?: string | null): Record<string, string> {
   if (!raw) return {}
   try {
     const obj = JSON.parse(raw)
@@ -113,13 +112,14 @@ export function parseSavedTexts(raw?: string | null): Record<string, string> {
   }
 }
 
-// Every text, with the default used wherever the admin left it empty
+// Every text for the invitation AND the admin form:
+// - a text the admin saved is used exactly as saved (an empty text stays empty and is hidden)
+// - a text that was never saved falls back to the current default wording
 export function getTexts(raw?: string | null): Record<string, string> {
-  const saved = parseSavedTexts(raw)
-  const out = { ...DEFAULTS }
-  for (const k of Object.keys(DEFAULTS)) {
-    const v = saved[k]
-    if (typeof v === 'string' && v.trim()) out[k] = v.trim()
+  const saved = readSaved(raw)
+  const out: Record<string, string> = {}
+  for (const key of Object.keys(DEFAULTS)) {
+    out[key] = key in saved ? saved[key] : DEFAULTS[key]
   }
   return out
 }

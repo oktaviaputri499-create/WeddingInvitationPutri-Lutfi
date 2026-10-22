@@ -142,7 +142,7 @@ export default async function InvitationPage({ params }: { params: { token: stri
   })
   const settings = await prisma.eventSettings.findUnique({ where: { id: 'main' } })
 
-  // All editable texts (admin value, or the default when left empty)
+  // All editable texts. A text left empty in the admin stays empty and is not shown.
   const t = getTexts(settings?.texts)
 
   // Timing for the name animation in the hero
@@ -162,15 +162,16 @@ export default async function InvitationPage({ params }: { params: { token: stri
 
   const footerText = t.footerText.replace('{groom}', groomFirst).replace('{bride}', brideFirst)
 
+  const eventLabel = t.eventName || 'Wedding'
   const icsContent = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
     'BEGIN:VEVENT',
     `DTSTART:${icsStamp(t.calDate, t.calStart, '2027-03-07T08:00:00+07:00')}`,
     `DTEND:${icsStamp(t.calDate, t.calEnd, '2027-03-07T10:00:00+07:00')}`,
-    `SUMMARY:${t.eventName} ${settings?.groomName} & ${settings?.brideName}`,
+    `SUMMARY:${eventLabel} ${settings?.groomName} & ${settings?.brideName}`,
     `LOCATION:${settings?.weddingLocation}`,
-    `DESCRIPTION:${t.eventName} ${settings?.groomName} & ${settings?.brideName}`,
+    `DESCRIPTION:${eventLabel} ${settings?.groomName} & ${settings?.brideName}`,
     'END:VEVENT',
     'END:VCALENDAR'
   ].join('\r\n')
@@ -216,9 +217,11 @@ export default async function InvitationPage({ params }: { params: { token: stri
               className="relative w-full flex flex-col items-center"
               style={{ color: IVORY, textShadow: '0 2px 24px rgba(0,0,0,0.6)' }}
             >
-              <p className="font-lux uppercase text-xs tracking-[0.5em] mb-5" style={{ color: MUTED }}>
-                <AnimatedText text={t.heroEyebrow} startDelay={0.1} step={0.03} />
-              </p>
+              {t.heroEyebrow && (
+                <p className="font-lux uppercase text-xs tracking-[0.5em] mb-5" style={{ color: MUTED }}>
+                  <AnimatedText text={t.heroEyebrow} startDelay={0.1} step={0.03} />
+                </p>
+              )}
 
               <h1
                 className="font-script"
@@ -238,22 +241,24 @@ export default async function InvitationPage({ params }: { params: { token: stri
                 style={{ background: 'linear-gradient(90deg,transparent,#d4b26e,transparent)' }}
               />
 
-              <p
-                className="font-lux italic text-sm mt-6 px-2"
-                style={{ color: BODY, animation: `heroFade 1.4s ease-out ${taglineDelay}s both` }}
-              >
-                {tagHead}{tagHead ? ' ' : ''}
-                <span className="whitespace-nowrap">
-                  {tagLast}
-                  <Heart
-                    size={14}
-                    strokeWidth={1.5}
-                    fill="none"
-                    color={GOLD}
-                    className="inline-block ml-1.5 align-middle"
-                  />
-                </span>
-              </p>
+              {t.heroTagline && (
+                <p
+                  className="font-lux italic text-sm mt-6 px-2"
+                  style={{ color: BODY, animation: `heroFade 1.4s ease-out ${taglineDelay}s both` }}
+                >
+                  {tagHead}{tagHead ? ' ' : ''}
+                  <span className="whitespace-nowrap">
+                    {tagLast}
+                    <Heart
+                      size={14}
+                      strokeWidth={1.5}
+                      fill="none"
+                      color={GOLD}
+                      className="inline-block ml-1.5 align-middle"
+                    />
+                  </span>
+                </p>
+              )}
             </div>
           </section>
 
@@ -261,9 +266,11 @@ export default async function InvitationPage({ params }: { params: { token: stri
           <section className="py-12 px-6 text-center">
             <ScrollReveal>
               <LuxPanel>
-                <SectionTitle>
-                  <AnimatedText text={t.coupleTitle} startDelay={0.1} step={0.035} />
-                </SectionTitle>
+                {t.coupleTitle && (
+                  <SectionTitle>
+                    <AnimatedText text={t.coupleTitle} startDelay={0.1} step={0.035} />
+                  </SectionTitle>
+                )}
 
                 <GoldLine />
 
@@ -274,9 +281,11 @@ export default async function InvitationPage({ params }: { params: { token: stri
                   >
                     <AnimatedText text={settings?.groomName || ''} startDelay={0.2} step={0.03} />
                   </h3>
-                  <p className="font-lux italic text-sm mb-1" style={{ color: MUTED }}>
-                    <AnimatedText text={t.groomLabel} startDelay={0.5} step={0.025} />
-                  </p>
+                  {t.groomLabel && (
+                    <p className="font-lux italic text-sm mb-1" style={{ color: MUTED }}>
+                      <AnimatedText text={t.groomLabel} startDelay={0.5} step={0.025} />
+                    </p>
+                  )}
                   <p className="font-lux text-sm" style={{ color: BODY }}>
                     <AnimatedText text={settings?.groomParents || ''} startDelay={0.8} step={0.02} />
                   </p>
@@ -293,9 +302,11 @@ export default async function InvitationPage({ params }: { params: { token: stri
                   >
                     <AnimatedText text={settings?.brideName || ''} startDelay={0.2} step={0.03} />
                   </h3>
-                  <p className="font-lux italic text-sm mb-1" style={{ color: MUTED }}>
-                    <AnimatedText text={t.brideLabel} startDelay={0.5} step={0.025} />
-                  </p>
+                  {t.brideLabel && (
+                    <p className="font-lux italic text-sm mb-1" style={{ color: MUTED }}>
+                      <AnimatedText text={t.brideLabel} startDelay={0.5} step={0.025} />
+                    </p>
+                  )}
                   <p className="font-lux text-sm" style={{ color: BODY }}>
                     <AnimatedText text={settings?.brideParents || ''} startDelay={0.8} step={0.02} />
                   </p>
@@ -308,16 +319,20 @@ export default async function InvitationPage({ params }: { params: { token: stri
           <section className="py-12 px-6 text-center">
             <ScrollReveal>
               <LuxPanel>
-                <SectionTitle>
-                  <AnimatedText text={t.eventTitle} startDelay={0.1} step={0.035} />
-                </SectionTitle>
+                {t.eventTitle && (
+                  <SectionTitle>
+                    <AnimatedText text={t.eventTitle} startDelay={0.1} step={0.035} />
+                  </SectionTitle>
+                )}
 
                 <GoldLine />
 
                 <div className="relative px-8 py-8 pb-12">
-                  <h3 className="font-lux uppercase text-2xl mb-5 text-center" style={{ color: IVORY, letterSpacing: '0.14em' }}>
-                    <AnimatedText text={t.eventName} startDelay={0.2} step={0.035} />
-                  </h3>
+                  {t.eventName && (
+                    <h3 className="font-lux uppercase text-2xl mb-5 text-center" style={{ color: IVORY, letterSpacing: '0.14em' }}>
+                      <AnimatedText text={t.eventName} startDelay={0.2} step={0.035} />
+                    </h3>
+                  )}
 
                   <div className="font-lux inline-flex flex-col items-start gap-2 text-base mb-7 text-left" style={{ color: BODY }}>
                     <div className="flex items-center gap-2">
@@ -341,25 +356,29 @@ export default async function InvitationPage({ params }: { params: { token: stri
                   </div>
 
                   <div className="flex flex-col gap-3">
-                    <a
-                      href={mapsHref}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="font-lux inline-flex items-center justify-center gap-2 px-6 py-2 text-sm rounded-full transition hover:opacity-90"
-                      style={{ backgroundColor: GOLD, color: '#1b1510', textShadow: 'none' }}
-                    >
-                      <MapPin size={16} />
-                      <AnimatedText text={t.mapsButton} startDelay={1.5} step={0.025} />
-                    </a>
-                    <a
-                      href={icsHref}
-                      download="Akad-Nikah.ics"
-                      className="font-lux inline-flex items-center justify-center gap-2 px-6 py-2 text-sm rounded-full border transition hover:bg-[#d4b26e] hover:text-[#1b1510]"
-                      style={{ borderColor: GOLD, color: GOLD, textShadow: 'none' }}
-                    >
-                      <CalendarPlus size={16} />
-                      <AnimatedText text={t.calendarButton} startDelay={1.9} step={0.025} />
-                    </a>
+                    {t.mapsButton && (
+                      <a
+                        href={mapsHref}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-lux inline-flex items-center justify-center gap-2 px-6 py-2 text-sm rounded-full transition hover:opacity-90"
+                        style={{ backgroundColor: GOLD, color: '#1b1510', textShadow: 'none' }}
+                      >
+                        <MapPin size={16} />
+                        <AnimatedText text={t.mapsButton} startDelay={1.5} step={0.025} />
+                      </a>
+                    )}
+                    {t.calendarButton && (
+                      <a
+                        href={icsHref}
+                        download="Akad-Nikah.ics"
+                        className="font-lux inline-flex items-center justify-center gap-2 px-6 py-2 text-sm rounded-full border transition hover:bg-[#d4b26e] hover:text-[#1b1510]"
+                        style={{ borderColor: GOLD, color: GOLD, textShadow: 'none' }}
+                      >
+                        <CalendarPlus size={16} />
+                        <AnimatedText text={t.calendarButton} startDelay={1.9} step={0.025} />
+                      </a>
+                    )}
                   </div>
                 </div>
               </LuxPanel>
@@ -370,9 +389,11 @@ export default async function InvitationPage({ params }: { params: { token: stri
           <section className="py-12 px-6 text-center">
             <ScrollReveal>
               <LuxPanel>
-                <SectionTitle>
-                  <AnimatedText text={t.giftTitle} startDelay={0.1} step={0.035} />
-                </SectionTitle>
+                {t.giftTitle && (
+                  <SectionTitle>
+                    <AnimatedText text={t.giftTitle} startDelay={0.1} step={0.035} />
+                  </SectionTitle>
+                )}
 
                 <GoldLine />
 
@@ -429,9 +450,11 @@ export default async function InvitationPage({ params }: { params: { token: stri
           <section className="py-12 px-6 text-center">
             <ScrollReveal>
               <LuxPanel>
-                <SectionTitle>
-                  <AnimatedText text={t.rsvpTitle} startDelay={0.1} step={0.06} />
-                </SectionTitle>
+                {t.rsvpTitle && (
+                  <SectionTitle>
+                    <AnimatedText text={t.rsvpTitle} startDelay={0.1} step={0.06} />
+                  </SectionTitle>
+                )}
 
                 <GoldLine />
 
@@ -453,11 +476,13 @@ export default async function InvitationPage({ params }: { params: { token: stri
           <section className="py-12 px-6">
             <ScrollReveal>
               <LuxPanel>
-                <div className="text-center">
-                  <SectionTitle>
-                    <AnimatedText text={t.wishesTitle} startDelay={0.1} step={0.035} />
-                  </SectionTitle>
-                </div>
+                {t.wishesTitle && (
+                  <div className="text-center">
+                    <SectionTitle>
+                      <AnimatedText text={t.wishesTitle} startDelay={0.1} step={0.035} />
+                    </SectionTitle>
+                  </div>
+                )}
 
                 <GoldLine />
 
@@ -490,11 +515,13 @@ export default async function InvitationPage({ params }: { params: { token: stri
             </div>
           </section>
 
-          <footer className="py-8 text-center text-xs bg-black/60 backdrop-blur-md text-stone-300">
-            <p className="font-lux tracking-widest">
-              <AnimatedText text={footerText} startDelay={0.1} step={0.02} />
-            </p>
-          </footer>
+          {footerText.trim() && (
+            <footer className="py-8 text-center text-xs bg-black/60 backdrop-blur-md text-stone-300">
+              <p className="font-lux tracking-widest">
+                <AnimatedText text={footerText} startDelay={0.1} step={0.02} />
+              </p>
+            </footer>
+          )}
         </div>
       </div>
     </InvitationIntro>

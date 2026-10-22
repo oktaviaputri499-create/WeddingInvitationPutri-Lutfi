@@ -23,10 +23,10 @@ export async function updateSettings(data: {
 }) {
   const { texts, ...rest } = data
 
-  // Keep only the texts that were actually filled in; empty ones fall back to the default
+  // Save every text exactly as typed. An empty text is kept empty, which hides it on the invitation.
   const cleaned: Record<string, string> = {}
   for (const [k, v] of Object.entries(texts || {})) {
-    if (typeof v === 'string' && v.trim()) cleaned[k] = v.trim()
+    if (typeof v === 'string') cleaned[k] = v.trim()
   }
 
   await prisma.eventSettings.update({
