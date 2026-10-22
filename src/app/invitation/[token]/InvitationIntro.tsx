@@ -6,11 +6,11 @@ import { Volume2, VolumeX } from 'lucide-react'
 type Stage = 'closed' | 'seal' | 'flap' | 'fade' | 'done'
 const ORDER: Stage[] = ['closed', 'seal', 'flap', 'fade', 'done']
 
-// Tone-on-tone settings: soft grey outlines instead of gold, raised charcoal fills
+// Tone-on-tone settings: soft grey outlines, raised charcoal fills
 const GOLD = {
-  line: '#8c8983', // outline color
-  lineOpacity: 0.45, // flower outline strength
-  vineOpacity: 0.4, // side vine outline strength
+  line: '#8c8983',
+  lineOpacity: 0.45,
+  vineOpacity: 0.4,
   lineWidth: 0.8,
   vein: '#8c8983',
   dots: '#9a968f',
@@ -173,6 +173,8 @@ function DecorLayer({ items, className }: { items: DecorItem[]; className: strin
   )
 }
 
+// The same vine layer sits on the paper AND on every flap, so the pattern runs
+// continuously across the fold lines.
 function Decor() {
   return (
     <>
@@ -248,7 +250,6 @@ const SPRAY_BERRIES = BRANCHES.flatMap(({ P }, bi) =>
 
 const PETAL = 'M0 0 C-17 -10 -21 -38 0 -62 C21 -38 17 -10 0 0 Z'
 const BUD = 'M0 0 C-8 -7 -8 -20 0 -30 C8 -20 8 -7 0 0 Z'
-// Fine engraved lines on each petal, like the reference
 const VEINS = ['M0 -10 C1 -26 1 -38 0 -52', 'M-5 -14 C-8 -28 -7 -40 -3 -50', 'M5 -14 C8 -28 7 -40 3 -50']
 
 function Petal({ opacity }: { opacity: string }) {
@@ -359,8 +360,17 @@ function Spray({ position }: { position: 'top' | 'bottom' }) {
   )
 }
 
+// Thin light line along the flap's folded edge (the paper catching the light)
+function FlapEdge({ points }: { points: string }) {
+  return (
+    <svg className="edge" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden>
+      <polyline points={points} fill="none" stroke="rgba(255,255,255,.16)" strokeWidth="2" vectorEffect="non-scaling-stroke" />
+    </svg>
+  )
+}
+
 const css = `
-.inv-root{position:fixed;inset:0;z-index:50;overflow:hidden;perspective:1600px;background:#050505;cursor:pointer;
+.inv-root{position:fixed;inset:0;z-index:50;overflow:hidden;perspective:1800px;background:#050505;cursor:pointer;
   --sw0:clamp(130px,42vmin,360px);
   --spw:min(96vw,clamp(300px,74vmin,780px));
   -webkit-tap-highlight-color:transparent;
@@ -369,27 +379,26 @@ const css = `
 .inv-root.is-fade{opacity:0;visibility:hidden;pointer-events:none;}
 .inv-root:focus-visible{outline:none;}
 
-.inv-letter{position:absolute;inset:0;z-index:1;}
+/* ---------- Envelope paper (the back of the envelope body) ---------- */
+.inv-letter{position:absolute;inset:0;z-index:1;overflow:hidden;}
 
 /* ---------- Flaps ---------- */
-.flap{position:absolute;inset:0;backface-visibility:hidden;will-change:transform;
-  filter:drop-shadow(0 4px 10px rgba(0,0,0,.8));}
+.flap{position:absolute;inset:0;backface-visibility:hidden;will-change:transform;}
 .flap-in{position:absolute;inset:0;overflow:hidden;}
-.flap-in::before{content:'';position:absolute;inset:0;pointer-events:none;}
-.f-top{z-index:4;transform-origin:50% 0;}
-.f-top .flap-in{clip-path:polygon(0 0,100% 0,50% 50.15%);}
-.f-top .flap-in::before{background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(0,0,0,.45));}
-.f-bottom{z-index:3;transform-origin:50% 100%;}
-.f-bottom .flap-in{clip-path:polygon(0 100%,100% 100%,50% 49.85%);}
-.f-bottom .flap-in::before{background:linear-gradient(0deg,rgba(255,255,255,.03),rgba(0,0,0,.42));}
-.f-left{z-index:5;transform-origin:0 50%;}
-.f-left .flap-in{clip-path:polygon(0 0,50.1% 50%,0 100%);}
-.f-left .flap-in::before{background:linear-gradient(90deg,rgba(255,255,255,.02),rgba(0,0,0,.48));}
-.f-right{z-index:5;transform-origin:100% 50%;}
-.f-right .flap-in{clip-path:polygon(100% 0,49.9% 50%,100% 100%);}
-.f-right .flap-in::before{background:linear-gradient(270deg,rgba(255,255,255,.02),rgba(0,0,0,.42));}
+.flap-in::before{content:'';position:absolute;inset:0;pointer-events:none;z-index:2;}
+.edge{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:3;}
 
-/* Raised relief (embossed paper): soft light on the top-left edge, shadow on the bottom-right */
+/* Bottom flap: peaked top edge, makes the faint diagonal creases from the sides */
+.f-bottom{z-index:3;transform-origin:50% 100%;filter:drop-shadow(0 -3px 6px rgba(0,0,0,.6));}
+.f-bottom .flap-in{clip-path:polygon(0 100%,100% 100%,100% 62%,50% 46%,0 62%);}
+.f-bottom .flap-in::before{background:linear-gradient(0deg,rgba(255,255,255,.02),rgba(0,0,0,.32));}
+
+/* Top flap: big V pointing down, hinged on the top edge, casts a soft shadow on the paper */
+.f-top{z-index:4;transform-origin:50% 0;filter:drop-shadow(0 8px 12px rgba(0,0,0,.8));}
+.f-top .flap-in{clip-path:polygon(0 0,100% 0,100% 28%,50% 52%,0 28%);}
+.f-top .flap-in::before{background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(0,0,0,.3));}
+
+/* Raised relief (embossed paper): light on the top-left edge, shadow on the bottom-right */
 .decor{position:absolute;inset:0;pointer-events:none;
   filter:drop-shadow(-1px -1px 0 rgba(255,255,255,.1)) drop-shadow(1.6px 2.2px 1.4px rgba(0,0,0,.95));}
 
@@ -413,17 +422,16 @@ const css = `
   50%{transform:rotate(3deg) scale(1.035)}
 }
 
-.is-flap .f-top{animation:openTop 1.5s cubic-bezier(.6,.05,.3,1) forwards;}
-.is-flap .f-bottom{animation:openBottom 1.5s cubic-bezier(.6,.05,.3,1) .12s forwards;}
-.is-flap .f-left{animation:openLeft 1.5s cubic-bezier(.6,.05,.3,1) .24s forwards;}
-.is-flap .f-right{animation:openRight 1.5s cubic-bezier(.6,.05,.3,1) .24s forwards;}
-@keyframes openTop{0%{transform:rotateX(0);opacity:1}75%{opacity:1}100%{transform:rotateX(-105deg);opacity:0}}
-@keyframes openBottom{0%{transform:rotateX(0);opacity:1}75%{opacity:1}100%{transform:rotateX(105deg);opacity:0}}
-@keyframes openLeft{0%{transform:rotateY(0);opacity:1}75%{opacity:1}100%{transform:rotateY(105deg);opacity:0}}
-@keyframes openRight{0%{transform:rotateY(0);opacity:1}75%{opacity:1}100%{transform:rotateY(-105deg);opacity:0}}
+/* Opening: only the top flap swings up and over, like a real envelope */
+.is-flap .f-top{animation:openTop 1.5s cubic-bezier(.55,.05,.3,1) forwards;}
+@keyframes openTop{
+  0%{transform:rotateX(0);opacity:1}
+  80%{opacity:1}
+  100%{transform:rotateX(-170deg);opacity:0}
+}
 
-/* ---------- Tap hint (replaces the seal as the cue to open) ---------- */
-.tap-hint{position:absolute;left:0;right:0;bottom:8%;z-index:10;text-align:center;pointer-events:none;
+/* ---------- Tap hint (sits just under the tip of the top flap) ---------- */
+.tap-hint{position:absolute;left:0;right:0;top:58%;z-index:10;text-align:center;pointer-events:none;
   font-family:Georgia,'Times New Roman',serif;font-size:12px;letter-spacing:.3em;text-transform:uppercase;
   color:rgba(200,196,188,.6);animation:hintPulse 3s ease-in-out infinite;transition:opacity .4s;}
 @keyframes hintPulse{0%,100%{opacity:.35}50%{opacity:.85}}
@@ -500,7 +508,7 @@ export default function InvitationIntro({
       audio.play().catch(() => {})
     }
 
-    // Timeline: hint fades -> flaps open -> fade into the page
+    // Timeline: hint fades -> top flap opens -> fade into the page
     setStage('seal')
     timers.current.push(setTimeout(() => setStage('flap'), 300))
     timers.current.push(setTimeout(() => setStage('fade'), 2500))
@@ -557,35 +565,33 @@ export default function InvitationIntro({
           tabIndex={0}
           aria-label={`Open invitation for ${guestName}`}
         >
+          {/* Envelope paper: shows between the flaps and is revealed when the top flap opens */}
           <div
             className="inv-letter"
-            style={paper('radial-gradient(ellipse at 50% 40%,#131312 0%,#0a0a0a 70%,#050505 100%)')}
-          />
+            style={paper('radial-gradient(ellipse at 50% 40%,#121211 0%,#0a0a0a 70%,#060606 100%)')}
+          >
+            <Decor />
+          </div>
 
+          {/* Bottom flap (peaked top edge) */}
           <div className="flap f-bottom">
-            <div className="flap-in" style={paper('linear-gradient(0deg,#0f0f0e,#090909)')}>
+            <div className="flap-in" style={paper('linear-gradient(0deg,#0f0f0e,#0b0b0a)')}>
               <Decor />
               <div className="decor rich">
                 <Spray position="bottom" />
               </div>
+              <FlapEdge points="0,62 50,46 100,62" />
             </div>
           </div>
+
+          {/* Top flap (big V pointing down) */}
           <div className="flap f-top">
-            <div className="flap-in" style={paper('linear-gradient(180deg,#161615,#0a0a0a)')}>
+            <div className="flap-in" style={paper('linear-gradient(180deg,#171716,#0d0d0c)')}>
               <Decor />
               <div className="decor rich">
                 <Spray position="top" />
               </div>
-            </div>
-          </div>
-          <div className="flap f-left">
-            <div className="flap-in" style={paper('linear-gradient(90deg,#111110,#0a0a0a)')}>
-              <Decor />
-            </div>
-          </div>
-          <div className="flap f-right">
-            <div className="flap-in" style={paper('linear-gradient(270deg,#121211,#0a0a0a)')}>
-              <Decor />
+              <FlapEdge points="0,28 50,52 100,28" />
             </div>
           </div>
 
