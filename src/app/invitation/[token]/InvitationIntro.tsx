@@ -18,7 +18,7 @@ const GOLD = {
   petalMid: '#1b1a18',
   petalLight: '#262421',
   leaf: '#171615',
-  berry: '#1b1a18',
+  berry: '#1e1c1a',
   stem: '#201f1d',
   center: '#201f1d',
   vineLight: '#252320',
@@ -376,22 +376,33 @@ function FlapEdge({ points }: { points: string }) {
 }
 
 // The invitation paper that slides out of the envelope
-function Card({ groom, bride }: { groom?: string; bride?: string }) {
+function Card({ guestName }: { guestName: string }) {
   return (
     <div className="card" aria-hidden>
       <div className="card-bob">
         <div className="card-face" style={{ backgroundImage: `${GRAIN}, linear-gradient(180deg,#1e1d1b,#141413)` }}>
           <div className="card-frame" />
           <div className="card-text">
-            <div className="card-eyebrow">The Wedding of</div>
-            {(groom || bride) && (
-              <div className="card-names">
-                {groom}
-                {groom && bride ? ' & ' : ''}
-                {bride}
-              </div>
-            )}
-            <div className="card-line" />
+            <div className="card-dear">Dear our beloved guest,</div>
+            <div className="card-guest">{guestName}</div>
+
+            <div className="card-rule" />
+            <div className="card-invited">You&apos;re Invited</div>
+            <div className="card-rule" />
+
+            <div className="card-msg">We would love to celebrate this special day with you</div>
+
+            <svg className="card-leaf" viewBox="0 0 24 24" fill="none" aria-hidden>
+              <path
+                d="M4.5 19.5 C3.5 10.5 10 4 20 4 C20.5 13.5 14.5 20 4.5 19.5 Z"
+                stroke="#c9a96a"
+                strokeWidth="1.1"
+                strokeLinejoin="round"
+              />
+              <path d="M4.5 19.5 L15.5 8.5" stroke="#c9a96a" strokeWidth="1" strokeLinecap="round" />
+              <path d="M9.5 14.5 L9 10.8 M12 12 L15.2 12.4" stroke="#c9a96a" strokeWidth=".8" strokeLinecap="round" />
+            </svg>
+
             <div className="card-hint">Tarik undangan</div>
           </div>
         </div>
@@ -440,7 +451,7 @@ const css = `
 .f-bottom .flap-in{clip-path:polygon(0 100%,100% 100%,100% 72%,50% 54%,0 72%);}
 .f-bottom .flap-in::before{background:linear-gradient(0deg,rgba(255,255,255,.02),rgba(0,0,0,.3));}
 
-/* Top flap: big V pointing down, covers everything and opens last-to-first */
+/* Top flap: big V pointing down, covers everything and opens first */
 .f-top{z-index:6;transform-origin:50% 0;filter:drop-shadow(0 10px 14px rgba(0,0,0,.8));}
 .f-top .flap-in{clip-path:polygon(0 0,100% 0,100% 30%,50% 56%,0 30%);}
 .f-top .flap-in::before{background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(0,0,0,.3));}
@@ -482,32 +493,42 @@ const css = `
 .is-open .card{animation:cardRise 1.5s cubic-bezier(.25,.7,.2,1) .9s forwards;}
 @keyframes cardRise{
   from{transform:translate(-50%,86vh) scale(.88)}
-  to{transform:translate(-50%,8vh) scale(.88)}
+  to{transform:translate(-50%,3vh) scale(.88)}
 }
 
 /* ---------- 3) Guest taps: card is pulled out and grows, the envelope slides away ---------- */
 .is-pull .card{animation:cardPull 1.6s cubic-bezier(.55,0,.2,1) forwards;}
 @keyframes cardPull{
-  from{transform:translate(-50%,8vh) scale(.88)}
+  from{transform:translate(-50%,3vh) scale(.88)}
   to{transform:translate(-50%,2vh) scale(1)}
 }
 .is-pull .env-back,.is-pull .env-front{animation:envOut 1.5s cubic-bezier(.65,0,.25,1) forwards;}
 @keyframes envOut{from{transform:translateY(0)}to{transform:translateY(104%)}}
 
-/* Card look: dark paper, thin gold double frame (matches the invitation page) */
+/* ---------- Card look: dark paper, thin gold double frame (matches the invitation page) ---------- */
 .card-bob{position:absolute;inset:0;}
 .is-card:not(.is-pull) .card-bob{animation:bob 2.6s ease-in-out infinite;}
 @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-1.1vh)}}
 .card-face{position:absolute;inset:0;overflow:hidden;border:1px solid rgba(184,152,90,.55);
+  container-type:inline-size;
   box-shadow:0 14px 40px rgba(0,0,0,.65),0 2px 6px rgba(0,0,0,.5);}
 .card-frame{position:absolute;inset:6px;border:1px solid rgba(184,152,90,.26);pointer-events:none;}
-.card-text{position:absolute;left:0;right:0;top:8%;padding:0 8%;text-align:center;
+
+/* All text sizes scale with the card width (cqw), so it fits on phones and desktops alike */
+.card-text{position:absolute;left:0;right:0;top:0;padding:8cqw 8cqw 0;text-align:center;
   font-family:'Cormorant Garamond',Georgia,'Times New Roman',serif;color:#e9dfc8;}
-.card-eyebrow{font-size:clamp(9px,1.35vh,13px);letter-spacing:.42em;text-transform:uppercase;color:rgba(214,198,160,.75);}
-.card-names{margin-top:2.4vh;font-style:italic;font-size:clamp(20px,3.6vh,36px);line-height:1.15;color:#f1e8d3;}
-.card-line{width:34%;height:1px;margin:3vh auto 0;background:linear-gradient(90deg,transparent,rgba(196,164,100,.8),transparent);}
-.card-hint{margin-top:3.2vh;font-size:clamp(9px,1.15vh,12px);letter-spacing:.2em;text-transform:uppercase;white-space:nowrap;
-  color:rgba(214,198,160,.7);animation:hintPulse 3s ease-in-out infinite;}
+.card-dear{font-style:italic;font-size:4.4cqw;line-height:1.3;color:rgba(226,214,184,.88);}
+.card-guest{margin-top:1cqw;font-size:15cqw;line-height:1.15;color:#d8bd82;
+  font-family:'Pinyon Script','Great Vibes','Allura','Snell Roundhand','Brush Script MT',cursive;
+  overflow-wrap:anywhere;}
+.card-rule{width:46%;height:1px;margin:3.4cqw auto;
+  background:linear-gradient(90deg,transparent,rgba(201,169,106,.85),transparent);}
+.card-invited{font-size:6.2cqw;line-height:1.2;letter-spacing:.14em;text-transform:uppercase;color:#f1e9d6;white-space:nowrap;}
+.card-msg{margin:4.2cqw auto 0;max-width:86%;font-style:italic;font-size:4.2cqw;line-height:1.45;
+  color:rgba(226,214,184,.9);text-wrap:balance;}
+.card-leaf{display:block;width:7.5cqw;height:7.5cqw;margin:3.6cqw auto 0;}
+.card-hint{margin-top:4.5cqw;font-size:2.8cqw;letter-spacing:.22em;text-transform:uppercase;white-space:nowrap;
+  color:rgba(214,198,160,.6);animation:hintPulse 3s ease-in-out infinite;}
 
 /* ---------- Tap hint on the closed envelope ---------- */
 .tap-hint{position:absolute;left:0;right:0;top:61%;z-index:10;text-align:center;pointer-events:none;
@@ -544,8 +565,6 @@ const css = `
 
 export default function InvitationIntro({
   guestName,
-  groomName,
-  brideName,
   children,
 }: {
   guestName: string
@@ -647,7 +666,7 @@ export default function InvitationIntro({
           />
 
           {/* The invitation paper, tucked inside */}
-          <Card groom={groomName} bride={brideName} />
+          <Card guestName={guestName} />
 
           {/* Front of the envelope: side flaps + bottom flap */}
           <div className="env-front">
