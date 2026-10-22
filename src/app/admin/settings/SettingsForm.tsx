@@ -4,8 +4,114 @@ import { useState } from 'react'
 import { updateSettings } from '@/actions/settings'
 import { TEXT_GROUPS, parseSavedTexts } from '@/lib/siteTexts'
 
+type FormState = {
+  groomName: string
+  groomParents: string
+  brideName: string
+  brideParents: string
+  weddingDate: string
+  weddingTime: string
+  weddingLocation: string
+  welcomeMessage: string
+  giftMessage: string
+  bank1Name: string
+  bank1Number: string
+  bank1Holder: string
+  bank2Name: string
+  bank2Number: string
+  bank2Holder: string
+}
+
+// A field is either saved data (names, date, bank...) or an editable text from siteTexts.ts
+type Item =
+  | { kind: 'data'; field: keyof FormState; label: string; rows?: number }
+  | { kind: 'text'; key: string; label?: string }
+
+type Section = { title: string; note?: string; items: Item[] }
+
+// Same order as the invitation: envelope -> hero -> couple -> event -> gift -> RSVP -> wishes -> footer
+const SECTIONS: Section[] = [
+  {
+    title: '1. Amplop (Pembuka)',
+    note: 'Tampilan pertama: amplop dan kertas undangan.',
+    items: [
+      { kind: 'text', key: 'envTapHint' },
+      { kind: 'text', key: 'envDear' },
+      { kind: 'text', key: 'envInvited' },
+      { kind: 'text', key: 'envMessage' },
+    ],
+  },
+  {
+    title: '2. Halaman Utama (Hero)',
+    note: 'Nama depan mempelai di halaman ini diambil otomatis dari bagian Mempelai di bawah.',
+    items: [
+      { kind: 'text', key: 'heroEyebrow' },
+      { kind: 'text', key: 'heroTagline' },
+    ],
+  },
+  {
+    title: '3. Mempelai',
+    items: [
+      { kind: 'text', key: 'coupleTitle' },
+      { kind: 'data', field: 'groomName', label: 'Nama mempelai pria' },
+      { kind: 'text', key: 'groomLabel' },
+      { kind: 'data', field: 'groomParents', label: 'Orang tua mempelai pria' },
+      { kind: 'data', field: 'brideName', label: 'Nama mempelai wanita' },
+      { kind: 'text', key: 'brideLabel' },
+      { kind: 'data', field: 'brideParents', label: 'Orang tua mempelai wanita' },
+    ],
+  },
+  {
+    title: '4. Acara',
+    items: [
+      { kind: 'text', key: 'eventTitle' },
+      { kind: 'text', key: 'eventName' },
+      { kind: 'data', field: 'weddingDate', label: 'Tanggal' },
+      { kind: 'data', field: 'weddingTime', label: 'Waktu' },
+      { kind: 'data', field: 'weddingLocation', label: 'Lokasi' },
+      { kind: 'text', key: 'mapsButton' },
+      { kind: 'text', key: 'calendarButton' },
+      { kind: 'text', key: 'calDate' },
+      { kind: 'text', key: 'calStart' },
+      { kind: 'text', key: 'calEnd' },
+    ],
+  },
+  {
+    title: '5. Hadiah',
+    items: [
+      { kind: 'text', key: 'giftTitle' },
+      { kind: 'data', field: 'giftMessage', label: 'Pesan hadiah', rows: 3 },
+      { kind: 'data', field: 'bank1Name', label: 'Rekening 1: Nama bank' },
+      { kind: 'data', field: 'bank1Number', label: 'Rekening 1: Nomor rekening' },
+      { kind: 'data', field: 'bank1Holder', label: 'Rekening 1: Atas nama' },
+      { kind: 'data', field: 'bank2Name', label: 'Rekening 2: Nama bank' },
+      { kind: 'data', field: 'bank2Number', label: 'Rekening 2: Nomor rekening' },
+      { kind: 'data', field: 'bank2Holder', label: 'Rekening 2: Atas nama' },
+    ],
+  },
+  {
+    title: '6. RSVP & Ucapan',
+    items: [
+      { kind: 'text', key: 'rsvpTitle' },
+      { kind: 'text', key: 'wishesTitle' },
+    ],
+  },
+  {
+    title: '7. Footer',
+    items: [{ kind: 'text', key: 'footerText' }],
+  },
+  {
+    title: 'Lainnya',
+    note: 'Pesan sambutan ini belum ditampilkan di undangan. Pesan di kertas amplop diatur di bagian 1.',
+    items: [{ kind: 'data', field: 'welcomeMessage', label: 'Pesan sambutan', rows: 2 }],
+  },
+]
+
+// Look up the text definitions (label, default, hint, input type) by key
+const TEXT_BY_KEY = Object.fromEntries(TEXT_GROUPS.flatMap(g => g.fields.map(f => [f.key, f])))
+
 export default function SettingsForm({ settings }: { settings: any }) {
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<FormState>({
     groomName: settings?.groomName || '',
     groomParents: settings?.groomParents || '',
     brideName: settings?.brideName || '',
@@ -26,7 +132,7 @@ export default function SettingsForm({ settings }: { settings: any }) {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
 
-  const handleChange = (field: string, value: string) => {
+  const handleChange = (field: keyof FormState, value: string) => {
     setForm(prev => ({ ...prev, [field]: value }))
   }
 
@@ -51,97 +157,67 @@ export default function SettingsForm({ settings }: { settings: any }) {
   const labelClass = "block text-sm font-bold mb-1"
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-8">
+      <p className="text-sm text-stone-500">
+        Urutan bagian di bawah sama dengan urutan di undangan. Untuk kolom yang punya teks abu-abu, biarkan kosong jika
+        ingin memakai teks bawaan tersebut.
+      </p>
 
-      <div>
-        <h2 className="text-lg font-bold mb-3 text-gold">Mempelai Pria</h2>
-        <label className={labelClass}>Nama</label>
-        <input className={inputClass} value={form.groomName} onChange={e => handleChange('groomName', e.target.value)} />
-        <label className={labelClass + " mt-3"}>Orang Tua</label>
-        <input className={inputClass} value={form.groomParents} onChange={e => handleChange('groomParents', e.target.value)} />
-      </div>
+      {SECTIONS.map(section => (
+        <div key={section.title}>
+          <h2 className="text-lg font-bold mb-1 text-gold">{section.title}</h2>
+          {section.note && <p className="text-xs text-stone-500 mb-3">{section.note}</p>}
 
-      <div>
-        <h2 className="text-lg font-bold mb-3 text-gold">Mempelai Wanita</h2>
-        <label className={labelClass}>Nama</label>
-        <input className={inputClass} value={form.brideName} onChange={e => handleChange('brideName', e.target.value)} />
-        <label className={labelClass + " mt-3"}>Orang Tua</label>
-        <input className={inputClass} value={form.brideParents} onChange={e => handleChange('brideParents', e.target.value)} />
-      </div>
+          <div className="space-y-3 mt-3">
+            {section.items.map(item => {
+              if (item.kind === 'data') {
+                return (
+                  <div key={item.field}>
+                    <label className={labelClass}>{item.label}</label>
+                    {item.rows ? (
+                      <textarea
+                        rows={item.rows}
+                        className={inputClass}
+                        value={form[item.field]}
+                        onChange={e => handleChange(item.field, e.target.value)}
+                      />
+                    ) : (
+                      <input
+                        className={inputClass}
+                        value={form[item.field]}
+                        onChange={e => handleChange(item.field, e.target.value)}
+                      />
+                    )}
+                  </div>
+                )
+              }
 
-      <div>
-        <h2 className="text-lg font-bold mb-3 text-gold">Acara</h2>
-        <label className={labelClass}>Tanggal</label>
-        <input className={inputClass} value={form.weddingDate} onChange={e => handleChange('weddingDate', e.target.value)} />
-        <label className={labelClass + " mt-3"}>Waktu</label>
-        <input className={inputClass} value={form.weddingTime} onChange={e => handleChange('weddingTime', e.target.value)} />
-        <label className={labelClass + " mt-3"}>Lokasi</label>
-        <input className={inputClass} value={form.weddingLocation} onChange={e => handleChange('weddingLocation', e.target.value)} />
-      </div>
-
-      <div>
-        <h2 className="text-lg font-bold mb-3 text-gold">Pesan</h2>
-        <label className={labelClass}>Pesan Sambutan</label>
-        <textarea rows={2} className={inputClass} value={form.welcomeMessage} onChange={e => handleChange('welcomeMessage', e.target.value)} />
-        <label className={labelClass + " mt-3"}>Pesan Hadiah</label>
-        <textarea rows={3} className={inputClass} value={form.giftMessage} onChange={e => handleChange('giftMessage', e.target.value)} />
-      </div>
-
-      <div>
-        <h2 className="text-lg font-bold mb-3 text-gold">Rekening 1</h2>
-        <label className={labelClass}>Nama Bank</label>
-        <input className={inputClass} value={form.bank1Name} onChange={e => handleChange('bank1Name', e.target.value)} />
-        <label className={labelClass + " mt-3"}>Nomor Rekening</label>
-        <input className={inputClass} value={form.bank1Number} onChange={e => handleChange('bank1Number', e.target.value)} />
-        <label className={labelClass + " mt-3"}>Atas Nama</label>
-        <input className={inputClass} value={form.bank1Holder} onChange={e => handleChange('bank1Holder', e.target.value)} />
-      </div>
-
-      <div>
-        <h2 className="text-lg font-bold mb-3 text-gold">Rekening 2</h2>
-        <label className={labelClass}>Nama Bank</label>
-        <input className={inputClass} value={form.bank2Name} onChange={e => handleChange('bank2Name', e.target.value)} />
-        <label className={labelClass + " mt-3"}>Nomor Rekening</label>
-        <input className={inputClass} value={form.bank2Number} onChange={e => handleChange('bank2Number', e.target.value)} />
-        <label className={labelClass + " mt-3"}>Atas Nama</label>
-        <input className={inputClass} value={form.bank2Holder} onChange={e => handleChange('bank2Holder', e.target.value)} />
-      </div>
-
-      {/* ---------- Teks undangan (kosongkan = pakai teks bawaan) ---------- */}
-      <div className="pt-6 border-t border-stone-200">
-        <h2 className="text-xl font-bold text-dark-brown">Teks Undangan</h2>
-        <p className="text-sm text-stone-500 mt-1">
-          Ubah tulisan yang tampil di undangan. Kosongkan kolom untuk memakai teks bawaan (yang terlihat abu-abu).
-        </p>
-      </div>
-
-      {TEXT_GROUPS.map(group => (
-        <div key={group.title}>
-          <h2 className="text-lg font-bold mb-3 text-gold">{group.title}</h2>
-          <div className="space-y-3">
-            {group.fields.map(f => (
-              <div key={f.key}>
-                <label className={labelClass}>{f.label}</label>
-                {f.multiline ? (
-                  <textarea
-                    rows={2}
-                    className={inputClass}
-                    placeholder={f.def}
-                    value={texts[f.key] ?? ''}
-                    onChange={e => handleTextChange(f.key, e.target.value)}
-                  />
-                ) : (
-                  <input
-                    type={f.input || 'text'}
-                    className={inputClass}
-                    placeholder={f.def}
-                    value={texts[f.key] ?? ''}
-                    onChange={e => handleTextChange(f.key, e.target.value)}
-                  />
-                )}
-                {f.hint && <p className="text-xs text-stone-500 mt-1">{f.hint}</p>}
-              </div>
-            ))}
+              const f = TEXT_BY_KEY[item.key]
+              if (!f) return null
+              return (
+                <div key={item.key}>
+                  <label className={labelClass}>{item.label || f.label}</label>
+                  {f.multiline ? (
+                    <textarea
+                      rows={2}
+                      className={inputClass}
+                      placeholder={f.def}
+                      value={texts[f.key] ?? ''}
+                      onChange={e => handleTextChange(f.key, e.target.value)}
+                    />
+                  ) : (
+                    <input
+                      type={f.input || 'text'}
+                      className={inputClass}
+                      placeholder={f.def}
+                      value={texts[f.key] ?? ''}
+                      onChange={e => handleTextChange(f.key, e.target.value)}
+                    />
+                  )}
+                  {f.hint && <p className="text-xs text-stone-500 mt-1">{f.hint}</p>}
+                </div>
+              )
+            })}
           </div>
         </div>
       ))}
