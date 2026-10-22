@@ -3,8 +3,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { Volume2, VolumeX } from 'lucide-react'
 
-type Stage = 'closed' | 'seal' | 'flap' | 'fade' | 'done'
-const ORDER: Stage[] = ['closed', 'seal', 'flap', 'fade', 'done']
+type Stage = 'closed' | 'opening' | 'card' | 'pull' | 'fade' | 'done'
+const ORDER: Stage[] = ['closed', 'opening', 'card', 'pull', 'fade', 'done']
 
 // Tone-on-tone settings: soft grey outlines, raised charcoal fills
 const GOLD = {
@@ -173,7 +173,7 @@ function DecorLayer({ items, className }: { items: DecorItem[]; className: strin
   )
 }
 
-// The same vine layer sits on the paper AND on every flap, so the pattern runs
+// The same vine layer sits on every flap, so the pattern runs
 // continuously across the fold lines.
 function Decor() {
   return (
@@ -360,12 +360,43 @@ function Spray({ position }: { position: 'top' | 'bottom' }) {
   )
 }
 
-// Thin light line along the flap's folded edge (the paper catching the light)
+// Thin light line along a flap's folded edge (the paper catching the light)
 function FlapEdge({ points }: { points: string }) {
   return (
     <svg className="edge" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden>
-      <polyline points={points} fill="none" stroke="rgba(255,255,255,.16)" strokeWidth="2" vectorEffect="non-scaling-stroke" />
+      <polyline
+        points={points}
+        fill="none"
+        stroke="rgba(255,255,255,.14)"
+        strokeWidth="1.5"
+        vectorEffect="non-scaling-stroke"
+      />
     </svg>
+  )
+}
+
+// The invitation paper that slides out of the envelope
+function Card({ groom, bride }: { groom?: string; bride?: string }) {
+  return (
+    <div className="card" aria-hidden>
+      <div className="card-bob">
+        <div className="card-face" style={{ backgroundImage: `${GRAIN}, linear-gradient(180deg,#1e1d1b,#141413)` }}>
+          <div className="card-frame" />
+          <div className="card-text">
+            <div className="card-eyebrow">The Wedding of</div>
+            {(groom || bride) && (
+              <div className="card-names">
+                {groom}
+                {groom && bride ? ' & ' : ''}
+                {bride}
+              </div>
+            )}
+            <div className="card-line" />
+            <div className="card-hint">Tarik undangan</div>
+          </div>
+        </div>
+      </div>
+    </div>
   )
 }
 
@@ -374,28 +405,44 @@ const css = `
   --sw0:clamp(130px,42vmin,360px);
   --spw:min(96vw,clamp(300px,74vmin,780px));
   -webkit-tap-highlight-color:transparent;
-  transition:opacity 1.1s ease,visibility 1.1s;}
-.inv-root.is-seal{cursor:default;}
+  transition:opacity 1.2s ease,visibility 1.2s;}
+.inv-root.is-open{cursor:default;}
+.inv-root.is-card{cursor:pointer;}
+.inv-root.is-pull{cursor:default;}
 .inv-root.is-fade{opacity:0;visibility:hidden;pointer-events:none;}
 .inv-root:focus-visible{outline:none;}
 
-/* ---------- Envelope paper (the back of the envelope body) ---------- */
-.inv-letter{position:absolute;inset:0;z-index:1;overflow:hidden;}
+/* ---------- Inside of the envelope (a darker lining with a very faint pattern) ---------- */
+.env-back{position:absolute;inset:0;z-index:1;overflow:hidden;}
+.env-back::after{content:'';position:absolute;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(135deg,rgba(184,152,90,.03) 0 1px,transparent 1px 16px);}
+
+/* The front of the envelope: left + right + bottom flaps (this group slides away when the card is pulled out) */
+.env-front{position:absolute;inset:0;z-index:3;}
 
 /* ---------- Flaps ---------- */
 .flap{position:absolute;inset:0;backface-visibility:hidden;will-change:transform;}
 .flap-in{position:absolute;inset:0;overflow:hidden;}
 .flap-in::before{content:'';position:absolute;inset:0;pointer-events:none;z-index:2;}
 .edge{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:3;}
+.shade{position:absolute;inset:0;background:#000;opacity:0;pointer-events:none;z-index:4;}
 
-/* Bottom flap: peaked top edge, makes the faint diagonal creases from the sides */
-.f-bottom{z-index:3;transform-origin:50% 100%;filter:drop-shadow(0 -3px 6px rgba(0,0,0,.6));}
-.f-bottom .flap-in{clip-path:polygon(0 100%,100% 100%,100% 62%,50% 46%,0 62%);}
-.f-bottom .flap-in::before{background:linear-gradient(0deg,rgba(255,255,255,.02),rgba(0,0,0,.32));}
+/* Side flaps: two big triangles folded in from the left and right, tips meeting at the center */
+.f-left{z-index:1;filter:drop-shadow(5px 0 9px rgba(0,0,0,.6));}
+.f-left .flap-in{clip-path:polygon(0 0,50% 54%,0 100%);}
+.f-left .flap-in::before{background:linear-gradient(120deg,rgba(255,255,255,.03),rgba(0,0,0,.34));}
+.f-right{z-index:1;filter:drop-shadow(-5px 0 9px rgba(0,0,0,.6));}
+.f-right .flap-in{clip-path:polygon(100% 0,50% 54%,100% 100%);}
+.f-right .flap-in::before{background:linear-gradient(240deg,rgba(255,255,255,.02),rgba(0,0,0,.4));}
 
-/* Top flap: big V pointing down, hinged on the top edge, casts a soft shadow on the paper */
-.f-top{z-index:4;transform-origin:50% 0;filter:drop-shadow(0 8px 12px rgba(0,0,0,.8));}
-.f-top .flap-in{clip-path:polygon(0 0,100% 0,100% 28%,50% 52%,0 28%);}
+/* Bottom flap: tucked over the side flaps, peaked top edge */
+.f-bottom{z-index:2;filter:drop-shadow(0 -4px 8px rgba(0,0,0,.65));}
+.f-bottom .flap-in{clip-path:polygon(0 100%,100% 100%,100% 72%,50% 54%,0 72%);}
+.f-bottom .flap-in::before{background:linear-gradient(0deg,rgba(255,255,255,.02),rgba(0,0,0,.3));}
+
+/* Top flap: big V pointing down, covers everything and opens last-to-first */
+.f-top{z-index:6;transform-origin:50% 0;filter:drop-shadow(0 10px 14px rgba(0,0,0,.8));}
+.f-top .flap-in{clip-path:polygon(0 0,100% 0,100% 30%,50% 56%,0 30%);}
 .f-top .flap-in::before{background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(0,0,0,.3));}
 
 /* Raised relief (embossed paper): light on the top-left edge, shadow on the bottom-right */
@@ -422,20 +469,52 @@ const css = `
   50%{transform:rotate(3deg) scale(1.035)}
 }
 
-/* Opening: only the top flap swings up and over, like a real envelope */
-.is-flap .f-top{animation:openTop 1.5s cubic-bezier(.55,.05,.3,1) forwards;}
-@keyframes openTop{
-  0%{transform:rotateX(0);opacity:1}
-  80%{opacity:1}
-  100%{transform:rotateX(-170deg);opacity:0}
+/* ---------- 1) Top flap swings open and away (one continuous motion, no fading) ---------- */
+.is-open .f-top{animation:openTop 1.7s cubic-bezier(.5,0,.2,1) forwards;}
+@keyframes openTop{from{transform:rotateX(0)}to{transform:rotateX(-180deg)}}
+.is-open .f-top .shade{animation:shadeIn 1.7s ease-in forwards;}
+@keyframes shadeIn{from{opacity:0}to{opacity:.7}}
+
+/* ---------- 2) The invitation paper rises out of the envelope ---------- */
+.card{position:absolute;left:50%;top:0;z-index:2;
+  width:min(80vw,52vh);height:min(94vh,170vw);
+  transform:translate(-50%,86vh) scale(.88);transform-origin:50% 0;will-change:transform;}
+.is-open .card{animation:cardRise 1.5s cubic-bezier(.25,.7,.2,1) .9s forwards;}
+@keyframes cardRise{
+  from{transform:translate(-50%,86vh) scale(.88)}
+  to{transform:translate(-50%,8vh) scale(.88)}
 }
 
-/* ---------- Tap hint (sits just under the tip of the top flap) ---------- */
-.tap-hint{position:absolute;left:0;right:0;top:58%;z-index:10;text-align:center;pointer-events:none;
+/* ---------- 3) Guest taps: card is pulled out and grows, the envelope slides away ---------- */
+.is-pull .card{animation:cardPull 1.6s cubic-bezier(.55,0,.2,1) forwards;}
+@keyframes cardPull{
+  from{transform:translate(-50%,8vh) scale(.88)}
+  to{transform:translate(-50%,2vh) scale(1)}
+}
+.is-pull .env-back,.is-pull .env-front{animation:envOut 1.5s cubic-bezier(.65,0,.25,1) forwards;}
+@keyframes envOut{from{transform:translateY(0)}to{transform:translateY(104%)}}
+
+/* Card look: dark paper, thin gold double frame (matches the invitation page) */
+.card-bob{position:absolute;inset:0;}
+.is-card:not(.is-pull) .card-bob{animation:bob 2.6s ease-in-out infinite;}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-1.1vh)}}
+.card-face{position:absolute;inset:0;overflow:hidden;border:1px solid rgba(184,152,90,.55);
+  box-shadow:0 14px 40px rgba(0,0,0,.65),0 2px 6px rgba(0,0,0,.5);}
+.card-frame{position:absolute;inset:6px;border:1px solid rgba(184,152,90,.26);pointer-events:none;}
+.card-text{position:absolute;left:0;right:0;top:8%;padding:0 8%;text-align:center;
+  font-family:'Cormorant Garamond',Georgia,'Times New Roman',serif;color:#e9dfc8;}
+.card-eyebrow{font-size:clamp(9px,1.35vh,13px);letter-spacing:.42em;text-transform:uppercase;color:rgba(214,198,160,.75);}
+.card-names{margin-top:2.4vh;font-style:italic;font-size:clamp(20px,3.6vh,36px);line-height:1.15;color:#f1e8d3;}
+.card-line{width:34%;height:1px;margin:3vh auto 0;background:linear-gradient(90deg,transparent,rgba(196,164,100,.8),transparent);}
+.card-hint{margin-top:3.2vh;font-size:clamp(9px,1.15vh,12px);letter-spacing:.2em;text-transform:uppercase;white-space:nowrap;
+  color:rgba(214,198,160,.7);animation:hintPulse 3s ease-in-out infinite;}
+
+/* ---------- Tap hint on the closed envelope ---------- */
+.tap-hint{position:absolute;left:0;right:0;top:61%;z-index:10;text-align:center;pointer-events:none;
   font-family:Georgia,'Times New Roman',serif;font-size:12px;letter-spacing:.3em;text-transform:uppercase;
-  color:rgba(200,196,188,.6);animation:hintPulse 3s ease-in-out infinite;transition:opacity .4s;}
-@keyframes hintPulse{0%,100%{opacity:.35}50%{opacity:.85}}
-.is-seal .tap-hint{animation:none;opacity:0;}
+  color:rgba(200,196,188,.6);animation:hintPulse 3s ease-in-out infinite;}
+@keyframes hintPulse{0%,100%{opacity:.4}50%{opacity:.9}}
+.is-open .tap-hint{animation:none;opacity:0;transition:opacity .5s ease;}
 
 /* ---------- Petals & dust ---------- */
 .petals{position:absolute;inset:0;pointer-events:none;z-index:11;overflow:hidden;}
@@ -457,28 +536,16 @@ const css = `
 }
 
 @media (prefers-reduced-motion:reduce){
-  .tap-hint,.bloom{animation:none;}
+  .tap-hint,.bloom,.card-hint{animation:none;}
+  .is-card:not(.is-pull) .card-bob{animation:none;}
   .petal,.dust{animation:none;opacity:0;}
 }
 `
 
-function RevealedContent({ children }: { children: React.ReactNode }) {
-  const [visible, setVisible] = useState(false)
-
-  useEffect(() => {
-    const raf = requestAnimationFrame(() => setVisible(true))
-    return () => cancelAnimationFrame(raf)
-  }, [])
-
-  return (
-    <div className={`transition-opacity duration-[1200ms] ease-out ${visible ? 'opacity-100' : 'opacity-0'}`}>
-      {children}
-    </div>
-  )
-}
-
 export default function InvitationIntro({
   guestName,
+  groomName,
+  brideName,
   children,
 }: {
   guestName: string
@@ -498,21 +565,27 @@ export default function InvitationIntro({
     return () => list.forEach(clearTimeout)
   }, [])
 
-  const handleOpen = () => {
-    if (stage !== 'closed') return
-
-    // Music must start inside the tap, otherwise the browser blocks it
-    const audio = audioRef.current
-    if (audio) {
-      audio.volume = 0.8
-      audio.play().catch(() => {})
+  const handleTap = () => {
+    // Tap 1: open the envelope
+    if (stage === 'closed') {
+      // Music must start inside the tap, otherwise the browser blocks it
+      const audio = audioRef.current
+      if (audio) {
+        audio.volume = 0.8
+        audio.play().catch(() => {})
+      }
+      setStage('opening')
+      // The card finishes rising at about 2.4s, then it can be pulled out
+      timers.current.push(setTimeout(() => setStage('card'), 2400))
+      return
     }
 
-    // Timeline: hint fades -> top flap opens -> fade into the page
-    setStage('seal')
-    timers.current.push(setTimeout(() => setStage('flap'), 300))
-    timers.current.push(setTimeout(() => setStage('fade'), 2500))
-    timers.current.push(setTimeout(() => setStage('done'), 3700))
+    // Tap 2: pull the card out, then crossfade into the invitation page
+    if (stage === 'card') {
+      setStage('pull')
+      timers.current.push(setTimeout(() => setStage('fade'), 1300))
+      timers.current.push(setTimeout(() => setStage('done'), 2700))
+    }
   }
 
   const toggleMusic = () => {
@@ -527,8 +600,9 @@ export default function InvitationIntro({
 
   const rootClass = [
     'inv-root',
-    reached('seal') && 'is-seal',
-    reached('flap') && 'is-flap',
+    reached('opening') && 'is-open',
+    reached('card') && 'is-card',
+    reached('pull') && 'is-pull',
     reached('fade') && 'is-fade',
   ]
     .filter(Boolean)
@@ -549,49 +623,66 @@ export default function InvitationIntro({
         onPause={() => setPlaying(false)}
       />
 
-      {reached('fade') && <RevealedContent>{children}</RevealedContent>}
+      {/* The page mounts as the intro starts to fade, so the overlay fades straight onto it (no flash) */}
+      {reached('fade') && children}
 
       {stage !== 'done' && (
         <div
           className={rootClass}
-          onClick={handleOpen}
+          onClick={handleTap}
           onKeyDown={e => {
             if (e.key === 'Enter' || e.key === ' ') {
               e.preventDefault()
-              handleOpen()
+              handleTap()
             }
           }}
           role="button"
           tabIndex={0}
           aria-label={`Open invitation for ${guestName}`}
         >
-          {/* Envelope paper: shows between the flaps and is revealed when the top flap opens */}
+          {/* Inside of the envelope */}
           <div
-            className="inv-letter"
-            style={paper('radial-gradient(ellipse at 50% 40%,#121211 0%,#0a0a0a 70%,#060606 100%)')}
-          >
-            <Decor />
-          </div>
+            className="env-back"
+            style={paper('radial-gradient(ellipse at 50% 30%,#0e0e0d 0%,#070707 75%,#040404 100%)')}
+          />
 
-          {/* Bottom flap (peaked top edge) */}
-          <div className="flap f-bottom">
-            <div className="flap-in" style={paper('linear-gradient(0deg,#0f0f0e,#0b0b0a)')}>
-              <Decor />
-              <div className="decor rich">
-                <Spray position="bottom" />
+          {/* The invitation paper, tucked inside */}
+          <Card groom={groomName} bride={brideName} />
+
+          {/* Front of the envelope: side flaps + bottom flap */}
+          <div className="env-front">
+            <div className="flap f-left">
+              <div className="flap-in" style={paper('linear-gradient(90deg,#131312,#0e0e0d)')}>
+                <Decor />
+                <FlapEdge points="0,0 50,54" />
               </div>
-              <FlapEdge points="0,62 50,46 100,62" />
+            </div>
+            <div className="flap f-right">
+              <div className="flap-in" style={paper('linear-gradient(270deg,#141413,#0e0e0d)')}>
+                <Decor />
+                <FlapEdge points="100,0 50,54" />
+              </div>
+            </div>
+            <div className="flap f-bottom">
+              <div className="flap-in" style={paper('linear-gradient(0deg,#10100f,#0c0c0b)')}>
+                <Decor />
+                <div className="decor rich">
+                  <Spray position="bottom" />
+                </div>
+                <FlapEdge points="0,72 50,54 100,72" />
+              </div>
             </div>
           </div>
 
-          {/* Top flap (big V pointing down) */}
+          {/* Top flap (big V pointing down): the one that opens first */}
           <div className="flap f-top">
-            <div className="flap-in" style={paper('linear-gradient(180deg,#171716,#0d0d0c)')}>
+            <div className="flap-in" style={paper('linear-gradient(180deg,#181817,#0e0e0d)')}>
               <Decor />
               <div className="decor rich">
                 <Spray position="top" />
               </div>
-              <FlapEdge points="0,28 50,52 100,28" />
+              <FlapEdge points="0,30 50,56 100,30" />
+              <div className="shade" />
             </div>
           </div>
 
