@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { updateSettings } from '@/actions/settings'
+import { TEXT_GROUPS, parseSavedTexts } from '@/lib/siteTexts'
 
 export default function SettingsForm({ settings }: { settings: any }) {
   const [form, setForm] = useState({
@@ -21,6 +22,7 @@ export default function SettingsForm({ settings }: { settings: any }) {
     bank2Number: settings?.bank2Number || '',
     bank2Holder: settings?.bank2Holder || '',
   })
+  const [texts, setTexts] = useState<Record<string, string>>(() => parseSavedTexts(settings?.texts))
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
 
@@ -28,12 +30,16 @@ export default function SettingsForm({ settings }: { settings: any }) {
     setForm(prev => ({ ...prev, [field]: value }))
   }
 
+  const handleTextChange = (key: string, value: string) => {
+    setTexts(prev => ({ ...prev, [key]: value }))
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSaving(true)
     setSaved(false)
     try {
-      await updateSettings(form)
+      await updateSettings({ ...form, texts })
       setSaved(true)
     } catch (err) {
       alert('Gagal menyimpan perubahan.')
@@ -100,6 +106,45 @@ export default function SettingsForm({ settings }: { settings: any }) {
         <label className={labelClass + " mt-3"}>Atas Nama</label>
         <input className={inputClass} value={form.bank2Holder} onChange={e => handleChange('bank2Holder', e.target.value)} />
       </div>
+
+      {/* ---------- Teks undangan (kosongkan = pakai teks bawaan) ---------- */}
+      <div className="pt-6 border-t border-stone-200">
+        <h2 className="text-xl font-bold text-dark-brown">Teks Undangan</h2>
+        <p className="text-sm text-stone-500 mt-1">
+          Ubah tulisan yang tampil di undangan. Kosongkan kolom untuk memakai teks bawaan (yang terlihat abu-abu).
+        </p>
+      </div>
+
+      {TEXT_GROUPS.map(group => (
+        <div key={group.title}>
+          <h2 className="text-lg font-bold mb-3 text-gold">{group.title}</h2>
+          <div className="space-y-3">
+            {group.fields.map(f => (
+              <div key={f.key}>
+                <label className={labelClass}>{f.label}</label>
+                {f.multiline ? (
+                  <textarea
+                    rows={2}
+                    className={inputClass}
+                    placeholder={f.def}
+                    value={texts[f.key] ?? ''}
+                    onChange={e => handleTextChange(f.key, e.target.value)}
+                  />
+                ) : (
+                  <input
+                    type={f.input || 'text'}
+                    className={inputClass}
+                    placeholder={f.def}
+                    value={texts[f.key] ?? ''}
+                    onChange={e => handleTextChange(f.key, e.target.value)}
+                  />
+                )}
+                {f.hint && <p className="text-xs text-stone-500 mt-1">{f.hint}</p>}
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
 
       <button
         disabled={saving}

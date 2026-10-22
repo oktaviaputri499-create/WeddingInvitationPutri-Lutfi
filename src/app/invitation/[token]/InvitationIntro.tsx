@@ -376,28 +376,43 @@ function FlapEdge({ points }: { points: string }) {
 }
 
 // The invitation paper that slides out of the envelope
-function Card({ guestName }: { guestName: string }) {
+function Card({
+  guestName,
+  texts,
+}: {
+  guestName: string
+  texts?: { dear?: string; invited?: string; message?: string }
+}) {
+  const dear = texts?.dear || 'Dear our beloved guest,'
+  const invited = texts?.invited || "You're Invited"
+  const message = texts?.message || 'We would love to celebrate this special day with you'
+
+  // The gold leaf sits right after the last two words
+  const words = message.trim().split(/\s+/)
+  const tail = words.slice(-2).join(' ')
+  const head = words.slice(0, -2).join(' ')
+
   return (
     <div className="card" aria-hidden>
       <div className="card-bob">
         <div className="card-face" style={{ backgroundImage: `${GRAIN}, linear-gradient(180deg,#1e1d1b,#141413)` }}>
           <div className="card-frame" />
           <div className="card-text">
-            {/* This block is exactly as wide as "YOU'RE INVITED", so the left-aligned line lines up with it */}
+            {/* This block is exactly as wide as the title, so the left-aligned line lines up with it */}
             <div className="card-block">
-              <div className="card-dear">Dear our beloved guest,</div>
+              <div className="card-dear">{dear}</div>
               <div className="card-guest">{guestName}</div>
 
               <div className="card-rule" />
-              <div className="card-invited">You&apos;re Invited</div>
+              <div className="card-invited">{invited}</div>
               <div className="card-rule" />
-              <div className="card-rule card-rule-sub" />
             </div>
 
             <div className="card-msg">
-              We would love to celebrate this special day{' '}
+              {head}
+              {head ? ' ' : ''}
               <span className="card-end">
-                with you
+                {tail}
                 <svg className="card-leaf" viewBox="0 0 24 24" fill="none" aria-hidden>
                   <path
                     d="M4.5 19.5 C3.5 10.5 10 4 20 4 C20.5 13.5 14.5 20 4.5 19.5 Z"
@@ -493,9 +508,9 @@ const css = `
   50%{transform:rotate(3deg) scale(1.035)}
 }
 
-/* ---------- 1) Top flap swings open toward the viewer and up and away (opens to the outside) ---------- */
+/* ---------- 1) Top flap swings open and away (one continuous motion, no fading) ---------- */
 .is-open .f-top{animation:openTop 1.7s cubic-bezier(.5,0,.2,1) forwards;}
-@keyframes openTop{from{transform:rotateX(0)}to{transform:rotateX(180deg)}}
+@keyframes openTop{from{transform:rotateX(0)}to{transform:rotateX(-180deg)}}
 .is-open .f-top .shade{animation:shadeIn 1.7s ease-in forwards;}
 @keyframes shadeIn{from{opacity:0}to{opacity:.7}}
 
@@ -527,29 +542,24 @@ const css = `
   box-shadow:0 14px 40px rgba(0,0,0,.65),0 2px 6px rgba(0,0,0,.5);}
 .card-frame{position:absolute;inset:6px;border:1px solid rgba(184,152,90,.26);pointer-events:none;}
 
-/* All text sizes scale with the card width (cqw), so the proportions match the invitation page on any screen. */
-.card-text{position:absolute;left:0;right:0;top:0;bottom:0;padding:13cqw 6cqw 11cqw;
-  display:flex;flex-direction:column;text-align:center;
+/* All text sizes scale with the card width (cqw), so the proportions match the invitation page on any screen */
+.card-text{position:absolute;left:0;right:0;top:0;padding:9cqw 6cqw 0;text-align:center;
   font-family:'Cormorant Garamond',Georgia,'Times New Roman',serif;font-weight:400;color:#e9dfc8;}
 
-/* The block is as wide as "YOU'RE INVITED"; the first line is aligned to its left edge */
+/* The block is as wide as the title; the first line is aligned to its left edge */
 .card-block{width:fit-content;max-width:100%;margin:0 auto;}
-.card-dear{text-align:left;white-space:nowrap;font-style:italic;font-size:3.6cqw;line-height:1.3;color:rgba(226,214,184,.9);}
-.card-guest{margin-top:3cqw;padding-bottom:.1em;text-align:center;overflow-wrap:anywhere;
+.card-dear{text-align:left;font-style:italic;font-size:3.1cqw;line-height:1.3;color:rgba(226,214,184,.9);}
+.card-guest{margin-top:1.5cqw;padding-bottom:.1em;text-align:center;overflow-wrap:anywhere;
   font-family:'Pinyon Script','Great Vibes','Allura','Snell Roundhand',cursive;font-weight:400;
   font-size:10cqw;line-height:1.3;
   background:linear-gradient(180deg,#f3e3b6,#cfae6c);
   -webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;}
-.card-rule{width:34%;height:1px;margin:6cqw auto;
+.card-rule{width:34%;height:1px;margin:3cqw auto;
   background:linear-gradient(90deg,transparent,rgba(201,169,106,.85),transparent);}
-/* Extra, shorter and fainter line under the lower rule */
-.card-rule-sub{width:18%;margin:-3cqw auto 0;opacity:.6;}
 .card-invited{text-align:center;white-space:nowrap;text-transform:uppercase;
   font-size:9cqw;line-height:1.15;letter-spacing:.06em;color:#f1e9d6;}
 
-/* Closing sentence: sits right under the gold lines, in the part of the card that is still visible
-   above the envelope flaps while the card rises. Change the first value of margin to move it up or down. */
-.card-msg{margin:14cqw auto 0;max-width:92%;text-align:center;
+.card-msg{margin:5cqw auto 0;max-width:92%;text-align:center;
   font-style:italic;font-size:3.1cqw;line-height:1.5;color:rgba(226,214,184,.92);}
 .card-end{white-space:nowrap;}
 .card-leaf{display:inline-block;width:1.7em;height:1.7em;margin-left:.45em;vertical-align:-.55em;}
@@ -589,11 +599,13 @@ const css = `
 
 export default function InvitationIntro({
   guestName,
+  envTexts,
   children,
 }: {
   guestName: string
   groomName?: string
   brideName?: string
+  envTexts?: { tapHint?: string; dear?: string; invited?: string; message?: string }
   children: React.ReactNode
 }) {
   const [stage, setStage] = useState<Stage>('closed')
@@ -690,7 +702,7 @@ export default function InvitationIntro({
           />
 
           {/* The invitation paper, tucked inside */}
-          <Card guestName={guestName} />
+          <Card guestName={guestName} texts={envTexts} />
 
           {/* Front of the envelope: side flaps + bottom flap */}
           <div className="env-front">
@@ -730,7 +742,7 @@ export default function InvitationIntro({
           </div>
 
           <div className="tap-hint" aria-hidden>
-            Ketuk untuk membuka
+            {envTexts?.tapHint || 'Ketuk untuk membuka'}
           </div>
 
           <div className="petals">

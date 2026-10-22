@@ -19,10 +19,19 @@ export async function updateSettings(data: {
   bank2Name: string
   bank2Number: string
   bank2Holder: string
+  texts: Record<string, string>
 }) {
+  const { texts, ...rest } = data
+
+  // Keep only the texts that were actually filled in; empty ones fall back to the default
+  const cleaned: Record<string, string> = {}
+  for (const [k, v] of Object.entries(texts || {})) {
+    if (typeof v === 'string' && v.trim()) cleaned[k] = v.trim()
+  }
+
   await prisma.eventSettings.update({
     where: { id: 'main' },
-    data,
+    data: { ...rest, texts: JSON.stringify(cleaned) },
   })
 
   revalidatePath('/admin/settings')

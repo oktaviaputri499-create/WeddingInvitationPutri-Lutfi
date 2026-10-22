@@ -63,5 +63,7 @@ model EventSettings {
   bank2Number      String   @default("7790476390")
   bank2Holder      String   @default("Lutfi Arlanda")
 
+  texts            String?
+
   updatedAt        DateTime @updatedAt
 }
