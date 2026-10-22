@@ -285,7 +285,7 @@ export default async function InvitationPage({ params }: { params: { token: stri
                     <AnimatedText text="Akad Nikah" startDelay={0.3} step={0.06} />
                   </h3>
 
-                  <div className="font-lux inline-flex flex-col items-start gap-2 text-base mb-7" style={{ color: BODY }}>
+                  <div className="font-lux inline-flex flex-col items-start gap-2 text-base mb-7 text-left" style={{ color: BODY }}>
                     <div className="flex items-center gap-2">
                       <Calendar size={16} className="shrink-0" style={{ color: GOLD }} />
                       <span>
@@ -298,8 +298,8 @@ export default async function InvitationPage({ params }: { params: { token: stri
                         <AnimatedText text={settings?.weddingTime || ''} startDelay={1.4} step={0.04} />
                       </span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <MapPin size={16} className="shrink-0" style={{ color: GOLD }} />
+                    <div className="flex items-start gap-2">
+                      <MapPin size={16} className="shrink-0 mt-1" style={{ color: GOLD }} />
                       <span>
                         <AnimatedText text={settings?.weddingLocation || ''} startDelay={1.9} step={0.03} />
                       </span>
