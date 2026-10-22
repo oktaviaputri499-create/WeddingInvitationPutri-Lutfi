@@ -379,15 +379,15 @@ function Spray({ position }: { position: 'top' | 'bottom' }) {
   )
 }
 
-// Black glossy seal: a domed, bevelled scalloped disc with a raised swan.
-// A faint champagne rim light on the top-left keeps it visible on the black paper.
+// Black glossy seal with a champagne-gold rim, a muted antique-gold swan,
+// and a soft light reflection on the upper-left.
 function Seal() {
   const bumps = Array.from({ length: 20 }, (_, i) => {
     const a = (i / 20) * Math.PI * 2
     return { x: 50 + Math.cos(a) * 41, y: 50 + Math.sin(a) * 41 }
   })
 
-  // Scalloped outline (drawn several times: shadow, rim light, body)
+  // Scalloped outline (drawn several times: shadow, rim, body)
   const outline = (
     <>
       {bumps.map((b, i) => (
@@ -423,40 +423,50 @@ function Seal() {
   return (
     <svg viewBox="0 0 100 100" width="100%" height="100%" aria-hidden>
       <defs>
-        {/* Glossy black body, lit from the top-left */}
+        {/* Glossy black body, lit from the top-left (about 12% brighter than before) */}
         <radialGradient id="sealBody" gradientUnits="userSpaceOnUse" cx="34" cy="26" r="88">
-          <stop offset="0" stopColor="#4d4944" />
-          <stop offset="0.38" stopColor="#2b2927" />
-          <stop offset="0.72" stopColor="#141312" />
-          <stop offset="1" stopColor="#070707" />
+          <stop offset="0" stopColor="#5a554e" />
+          <stop offset="0.38" stopColor="#33302d" />
+          <stop offset="0.72" stopColor="#181716" />
+          <stop offset="1" stopColor="#0a0a09" />
         </radialGradient>
-        {/* Pressed-in center: dark at the top-left, lighter toward the bottom-right */}
-        <linearGradient id="sealDish" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#0a0a09" />
-          <stop offset="1" stopColor="#292724" />
+        {/* Champagne-gold rim: bright top-left, dimmer bottom-right */}
+        <linearGradient id="sealRim" gradientUnits="userSpaceOnUse" x1="14" y1="12" x2="86" y2="88">
+          <stop offset="0" stopColor="#f0dcab" />
+          <stop offset="0.45" stopColor="#c9b27c" />
+          <stop offset="1" stopColor="#7d6a42" />
         </linearGradient>
-        {/* Soft specular glint */}
+        {/* Pressed-in center */}
+        <linearGradient id="sealDish" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#11100f" />
+          <stop offset="1" stopColor="#35322d" />
+        </linearGradient>
+        {/* Soft reflection, upper-left */}
         <radialGradient id="sealSpec" cx="0.5" cy="0.5" r="0.5">
-          <stop offset="0" stopColor="#ffffff" stopOpacity="0.26" />
+          <stop offset="0" stopColor="#fff6dc" stopOpacity="0.4" />
+          <stop offset="0.6" stopColor="#ffffff" stopOpacity="0.1" />
           <stop offset="1" stopColor="#ffffff" stopOpacity="0" />
         </radialGradient>
-        {/* Raised swan: graphite, lighter than the seal body */}
+        {/* Swan: muted antique gold, lit from the top-left */}
         <linearGradient id="swanG" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#47433e" />
-          <stop offset="1" stopColor="#1f1e1c" />
+          <stop offset="0" stopColor="#d2b87a" />
+          <stop offset="0.55" stopColor="#b0945a" />
+          <stop offset="1" stopColor="#7d6638" />
         </linearGradient>
       </defs>
 
-      {/* Edge bevel: cast shadow, champagne rim light, then the body on top */}
+      {/* Edge: cast shadow, champagne rim, then the black body on top.
+          The rim stroke sits under the body, so only its outer half shows
+          as a thin gold line around the scalloped edge. */}
       <g fill="#000" fillOpacity=".55" transform="translate(1.2 1.6)">
         {outline}
       </g>
-      <g fill="#7a6f5a" fillOpacity=".7" transform="translate(-0.8 -0.8)">
+      <g fill="url(#sealRim)" stroke="url(#sealRim)" strokeWidth="1.5">
         {outline}
       </g>
       <g fill="url(#sealBody)">{outline}</g>
 
-      {/* Pressed-in center disc with an inner ring (shadow top-left, light bottom-right) */}
+      {/* Pressed-in center disc with an inner ring */}
       <circle cx="50" cy="50" r="34" fill="url(#sealDish)" />
       <circle
         cx="50"
@@ -472,13 +482,20 @@ function Seal() {
         cy="50"
         r="34"
         fill="none"
-        stroke="rgba(230,210,160,0.32)"
+        stroke="rgba(236,214,160,0.5)"
         strokeWidth="1"
         transform="translate(0.6 0.6)"
       />
 
-      {/* Specular glint */}
-      <ellipse cx="36" cy="26" rx="18" ry="9" fill="url(#sealSpec)" transform="rotate(-35 36 26)" />
+      {/* Upper-left reflection: soft glow plus a thin arc of light along the edge */}
+      <ellipse cx="34" cy="27" rx="21" ry="10.5" fill="url(#sealSpec)" transform="rotate(-35 34 27)" />
+      <path
+        d="M15.2 37.3 A37 37 0 0 1 43.6 13.6"
+        fill="none"
+        stroke="rgba(255,244,214,0.4)"
+        strokeWidth="1.2"
+        strokeLinecap="round"
+      />
 
       {/* Raised swan, centered inside the ring */}
       <g transform="translate(50 50) scale(1.05) translate(-46 -47)">
@@ -486,16 +503,16 @@ function Seal() {
         <g transform="translate(1.1 1.4)" fill="rgba(0,0,0,0.75)" stroke="rgba(0,0,0,0.75)">
           {swan}
         </g>
-        {/* Champagne rim light (top-left edge) */}
-        <g transform="translate(-0.5 -0.5)" fill="rgba(232,208,150,0.55)" stroke="rgba(232,208,150,0.55)">
+        {/* Light edge (top-left) */}
+        <g transform="translate(-0.5 -0.5)" fill="rgba(244,226,176,0.75)" stroke="rgba(244,226,176,0.75)">
           {swan}
         </g>
-        {/* Swan body */}
-        <g fill="url(#swanG)" stroke="rgba(214,190,130,0.35)">
+        {/* Swan body: antique gold */}
+        <g fill="url(#swanG)" stroke="rgba(236,214,160,0.55)">
           {swan}
         </g>
-        {/* Wing feather lines */}
-        <g fill="none" stroke="rgba(225,205,160,0.32)" strokeWidth="0.9" strokeLinecap="round">
+        {/* Wing feather lines: darker than the gold so the detail reads */}
+        <g fill="none" stroke="rgba(52,38,16,0.5)" strokeWidth="0.9" strokeLinecap="round">
           <path d="M33 54 C40 49 50 49 57 55" />
           <path d="M36 58.5 C42 54.5 50 54.5 56 59.5" />
         </g>
@@ -571,7 +588,7 @@ const css = `
 .seal-glow{position:absolute;left:50%;top:50%;z-index:9;pointer-events:none;border-radius:50%;
   width:calc(var(--seal) * 2.4);height:calc(var(--seal) * 2.4);
   margin:calc(var(--seal) * -1.2) 0 0 calc(var(--seal) * -1.2);
-  background:radial-gradient(circle,rgba(196,170,115,.2) 0%,rgba(196,170,115,.07) 40%,rgba(196,170,115,0) 70%);
+  background:radial-gradient(circle,rgba(210,185,125,.28) 0%,rgba(210,185,125,.09) 40%,rgba(210,185,125,0) 70%);
   animation:glowBreath 3.4s ease-in-out infinite;}
 @keyframes glowBreath{0%,100%{opacity:.55;transform:scale(.92)}50%{opacity:1;transform:scale(1.06)}}
 .is-seal .seal-glow{animation:glowOut .9s ease-out forwards;}
@@ -581,11 +598,11 @@ const css = `
 .seal{position:absolute;left:50%;top:50%;z-index:10;width:var(--seal);height:var(--seal);
   margin:calc(var(--seal) / -2) 0 0 calc(var(--seal) / -2);padding:0;border:0;background:none;cursor:pointer;
   -webkit-tap-highlight-color:transparent;
-  filter:drop-shadow(0 0 7px rgba(196,170,115,.16)) drop-shadow(0 6px 10px rgba(0,0,0,.85)) drop-shadow(0 1px 1px rgba(0,0,0,.6));}
+  filter:drop-shadow(0 0 8px rgba(210,185,125,.28)) drop-shadow(0 6px 10px rgba(0,0,0,.85)) drop-shadow(0 1px 1px rgba(0,0,0,.6)) brightness(1.06);}
 .seal.broken{cursor:default;}
 .seal:focus-visible{outline:2px solid #8a7a58;outline-offset:8px;border-radius:50%;}
 .seal:not(.broken){animation:sealPulse 2.6s ease-in-out infinite;}
-.seal:not(.broken):hover{filter:drop-shadow(0 0 9px rgba(196,170,115,.26)) drop-shadow(0 6px 10px rgba(0,0,0,.85)) brightness(1.12);}
+.seal:not(.broken):hover{filter:drop-shadow(0 0 10px rgba(210,185,125,.38)) drop-shadow(0 6px 10px rgba(0,0,0,.85)) brightness(1.16);}
 @keyframes sealPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
 .is-seal .seal{animation:sealFade .6s ease-out forwards;pointer-events:none;}
 @keyframes sealFade{0%{transform:scale(1);opacity:1}100%{transform:scale(.94);opacity:0}}
