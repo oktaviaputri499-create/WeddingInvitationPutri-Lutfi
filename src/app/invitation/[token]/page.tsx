@@ -7,7 +7,7 @@ import ScrollReveal from './ScrollReveal'
 import GuestQrCode from './GuestQrCode'
 import AnimatedText from './AnimatedText'
 import LuxBackground from './LuxBackground'
-import { MapPin, Calendar, Clock, Gift, CreditCard, Leaf, CalendarPlus } from 'lucide-react'
+import { MapPin, Calendar, Clock, Gift, CreditCard, CalendarPlus } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
@@ -145,27 +145,9 @@ export default async function InvitationPage({ params }: { params: { token: stri
               </h1>
 
               <div
-                className="mx-auto mt-8 mb-7 h-px w-28"
+                className="mx-auto mt-8 h-px w-28"
                 style={{ background: 'linear-gradient(90deg,transparent,#d4b26e,transparent)' }}
               />
-
-              <p
-                className="font-lux uppercase"
-                style={{ fontSize: 'clamp(1.6rem, 7.5vw, 2.2rem)', letterSpacing: '0.14em' }}
-              >
-                You&apos;re Invited
-              </p>
-
-              <p className="font-lux italic text-sm mt-8 mb-1" style={{ color: MUTED }}>
-                To Our Beloved Guest,
-              </p>
-              <p className="font-script" style={{ fontSize: '2.6rem', color: TITLE, lineHeight: 1.2 }}>
-                <AnimatedText text={guest.name} startDelay={1.8} step={0.05} />
-              </p>
-              <p className="font-lux italic text-sm mt-4 px-2" style={{ color: BODY }}>
-                {settings?.welcomeMessage}
-              </p>
-              <Leaf className="leaf-sway mx-auto mt-4" size={20} strokeWidth={1.5} fill="none" color={GOLD} />
             </div>
           </section>
 
