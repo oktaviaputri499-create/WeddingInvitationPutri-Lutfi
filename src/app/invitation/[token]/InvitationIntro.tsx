@@ -493,9 +493,9 @@ const css = `
   50%{transform:rotate(3deg) scale(1.035)}
 }
 
-/* ---------- 1) Top flap swings open and away (one continuous motion, no fading) ---------- */
+/* ---------- 1) Top flap swings open toward the viewer and up and away (opens to the outside) ---------- */
 .is-open .f-top{animation:openTop 1.7s cubic-bezier(.5,0,.2,1) forwards;}
-@keyframes openTop{from{transform:rotateX(0)}to{transform:rotateX(-180deg)}}
+@keyframes openTop{from{transform:rotateX(0)}to{transform:rotateX(180deg)}}
 .is-open .f-top .shade{animation:shadeIn 1.7s ease-in forwards;}
 @keyframes shadeIn{from{opacity:0}to{opacity:.7}}
 
