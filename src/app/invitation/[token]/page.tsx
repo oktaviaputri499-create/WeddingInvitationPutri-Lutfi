@@ -7,7 +7,7 @@ import ScrollReveal from './ScrollReveal'
 import GuestQrCode from './GuestQrCode'
 import AnimatedText from './AnimatedText'
 import LuxBackground from './LuxBackground'
-import { MapPin, Calendar, Clock, Gift, CreditCard, CalendarPlus } from 'lucide-react'
+import { MapPin, Calendar, Clock, Gift, CreditCard, CalendarPlus, Heart } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
@@ -61,6 +61,59 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   )
 }
 
+// Thin gold flourish for the top and bottom of the hero (outline only, no fill).
+// The right half is drawn once and mirrored for the left half.
+function HeroOrnament({ id, flip = false }: { id: string; flip?: boolean }) {
+  const half = (
+    <>
+      {/* Line that fades out toward the edge */}
+      <path d="M133 20 H228" stroke={`url(#${id})`} />
+      {/* Curling tendrils */}
+      <path d="M133 20 C141 20 145 11 153 11 C159 11 161 16 157 17.5" />
+      <path d="M133 20 C141 20 145 29 153 29 C159 29 161 24 157 22.5" />
+      {/* Leaves with a center vein */}
+      <path d="M166 19 C169 12 177 10 183 12 C181 18 173 21 166 19 Z" />
+      <path d="M166.5 18.6 C172 15.5 177 13.5 182 12.3" strokeOpacity=".5" />
+      <path d="M190 21 C193 28 201 30 207 28 C205 22 197 19 190 21 Z" />
+      <path d="M190.5 21.4 C196 23.5 201 26 206 28" strokeOpacity=".5" />
+      <circle cx="232" cy="20" r="1.2" fill={GOLD} stroke="none" />
+    </>
+  )
+
+  return (
+    <div
+      aria-hidden
+      className="absolute left-1/2 pointer-events-none"
+      style={{
+        [flip ? 'bottom' : 'top']: 34,
+        width: 'min(70%, 260px)',
+        transform: 'translateX(-50%)',
+        animation: 'heroFade 1.6s ease-out 0.4s both',
+      }}
+    >
+      <svg
+        viewBox="0 0 240 40"
+        width="100%"
+        style={{ display: 'block', overflow: 'visible', transform: flip ? 'scaleY(-1)' : undefined }}
+      >
+        <defs>
+          <linearGradient id={id} gradientUnits="userSpaceOnUse" x1="133" y1="0" x2="228" y2="0">
+            <stop offset="0" stopColor={GOLD} stopOpacity="0.9" />
+            <stop offset="1" stopColor={GOLD} stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        <g fill="none" stroke={GOLD} strokeOpacity=".85" strokeWidth=".8" strokeLinecap="round" strokeLinejoin="round">
+          {/* Center diamond */}
+          <path d="M120 13.5 L126.5 20 L120 26.5 L113.5 20 Z" />
+          <circle cx="120" cy="20" r="1.6" fill={GOLD} stroke="none" />
+          <g>{half}</g>
+          <g transform="translate(240 0) scale(-1 1)">{half}</g>
+        </g>
+      </svg>
+    </div>
+  )
+}
+
 export default async function InvitationPage({ params }: { params: { token: string } }) {
   const guest = await prisma.guest.findUnique({
     where: { token: params.token },
@@ -84,6 +137,8 @@ export default async function InvitationPage({ params }: { params: { token: stri
   const groomDelay = 0.6
   const ampDelay = groomDelay + groomFirst.length * letterStep
   const brideDelay = ampDelay + letterStep * 2
+  // The tagline fades in once both names have been written
+  const taglineDelay = brideDelay + brideFirst.length * letterStep + 0.2
 
   const icsContent = [
     'BEGIN:VCALENDAR',
@@ -114,6 +169,8 @@ export default async function InvitationPage({ params }: { params: { token: stri
         <div className="relative z-10">
           {/* Hero Section */}
           <section className="relative min-h-screen flex flex-col items-center justify-center px-8 py-16 text-center overflow-hidden">
+            <style>{`@keyframes heroFade{from{opacity:0}to{opacity:1}}`}</style>
+
             <div
               className="absolute pointer-events-none"
               style={{ inset: 14, border: '1px solid rgba(212,178,110,0.4)' }}
@@ -122,6 +179,10 @@ export default async function InvitationPage({ params }: { params: { token: stri
               className="absolute pointer-events-none"
               style={{ inset: 20, border: '1px solid rgba(212,178,110,0.16)' }}
             />
+
+            {/* Ornaments at the top and bottom of the frame */}
+            <HeroOrnament id="heroOrnTop" />
+            <HeroOrnament id="heroOrnBottom" flip />
 
             <div
               className="relative w-full flex flex-col items-center"
@@ -148,6 +209,23 @@ export default async function InvitationPage({ params }: { params: { token: stri
                 className="mx-auto mt-8 h-px w-28"
                 style={{ background: 'linear-gradient(90deg,transparent,#d4b26e,transparent)' }}
               />
+
+              <p
+                className="font-lux italic text-sm mt-6 px-2"
+                style={{ color: BODY, animation: `heroFade 1.4s ease-out ${taglineDelay}s both` }}
+              >
+                Two hearts, one beautiful{' '}
+                <span className="whitespace-nowrap">
+                  beginning
+                  <Heart
+                    size={14}
+                    strokeWidth={1.5}
+                    fill="none"
+                    color={GOLD}
+                    className="inline-block ml-1.5 align-middle"
+                  />
+                </span>
+              </p>
             </div>
           </section>
 
