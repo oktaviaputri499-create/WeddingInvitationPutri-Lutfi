@@ -189,7 +189,7 @@ export default async function InvitationPage({ params }: { params: { token: stri
               style={{ color: IVORY, textShadow: '0 2px 24px rgba(0,0,0,0.6)' }}
             >
               <p className="font-lux uppercase text-xs tracking-[0.5em] mb-5" style={{ color: MUTED }}>
-                The Wedding Of
+                <AnimatedText text="The Wedding Of" startDelay={0.2} step={0.05} />
               </p>
 
               <h1
@@ -243,18 +243,28 @@ export default async function InvitationPage({ params }: { params: { token: stri
                   <h3 className="font-lux text-3xl font-semibold mb-3" style={{ color: IVORY }}>
                     <AnimatedText text={settings?.groomName || ''} startDelay={0.3} step={0.05} />
                   </h3>
-                  <p className="font-lux italic text-sm mb-1" style={{ color: MUTED }}>Putra dari:</p>
-                  <p className="font-lux text-sm" style={{ color: BODY }}>{settings?.groomParents}</p>
+                  <p className="font-lux italic text-sm mb-1" style={{ color: MUTED }}>
+                    <AnimatedText text="Putra dari:" startDelay={0.9} step={0.04} />
+                  </p>
+                  <p className="font-lux text-sm" style={{ color: BODY }}>
+                    <AnimatedText text={settings?.groomParents || ''} startDelay={1.3} step={0.03} />
+                  </p>
                 </div>
 
-                <div className="relative text-3xl font-script" style={{ color: GOLD }}>&</div>
+                <div className="relative text-3xl font-script" style={{ color: GOLD }}>
+                  <AnimatedText text="&" startDelay={0.3} step={0.05} />
+                </div>
 
                 <div className="relative px-8 py-8 pb-12">
                   <h3 className="font-lux text-3xl font-semibold mb-3" style={{ color: IVORY }}>
                     <AnimatedText text={settings?.brideName || ''} startDelay={0.3} step={0.05} />
                   </h3>
-                  <p className="font-lux italic text-sm mb-1" style={{ color: MUTED }}>Putri dari:</p>
-                  <p className="font-lux text-sm" style={{ color: BODY }}>{settings?.brideParents}</p>
+                  <p className="font-lux italic text-sm mb-1" style={{ color: MUTED }}>
+                    <AnimatedText text="Putri dari:" startDelay={0.9} step={0.04} />
+                  </p>
+                  <p className="font-lux text-sm" style={{ color: BODY }}>
+                    <AnimatedText text={settings?.brideParents || ''} startDelay={1.3} step={0.03} />
+                  </p>
                 </div>
               </LuxPanel>
             </ScrollReveal>
@@ -278,15 +288,21 @@ export default async function InvitationPage({ params }: { params: { token: stri
                   <div className="font-lux inline-flex flex-col items-start gap-2 text-base mb-7" style={{ color: BODY }}>
                     <div className="flex items-center gap-2">
                       <Calendar size={16} className="shrink-0" style={{ color: GOLD }} />
-                      <span>{settings?.weddingDate}</span>
+                      <span>
+                        <AnimatedText text={settings?.weddingDate || ''} startDelay={0.9} step={0.04} />
+                      </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Clock size={16} className="shrink-0" style={{ color: GOLD }} />
-                      <span>{settings?.weddingTime}</span>
+                      <span>
+                        <AnimatedText text={settings?.weddingTime || ''} startDelay={1.4} step={0.04} />
+                      </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <MapPin size={16} className="shrink-0" style={{ color: GOLD }} />
-                      <span>{settings?.weddingLocation}</span>
+                      <span>
+                        <AnimatedText text={settings?.weddingLocation || ''} startDelay={1.9} step={0.03} />
+                      </span>
                     </div>
                   </div>
 
@@ -299,7 +315,7 @@ export default async function InvitationPage({ params }: { params: { token: stri
                       style={{ backgroundColor: GOLD, color: '#1b1510', textShadow: 'none' }}
                     >
                       <MapPin size={16} />
-                      Buka Google Maps
+                      <AnimatedText text="Buka Google Maps" startDelay={2.6} step={0.04} />
                     </a>
                     <a
                       href={icsHref}
@@ -308,7 +324,7 @@ export default async function InvitationPage({ params }: { params: { token: stri
                       style={{ borderColor: GOLD, color: GOLD, textShadow: 'none' }}
                     >
                       <CalendarPlus size={16} />
-                      Tambah ke Kalender
+                      <AnimatedText text="Tambah ke Kalender" startDelay={3.2} step={0.04} />
                     </a>
                   </div>
                 </div>
@@ -332,7 +348,7 @@ export default async function InvitationPage({ params }: { params: { token: stri
                   </div>
 
                   <p className="font-lux italic text-base mb-8 leading-relaxed" style={{ color: BODY }}>
-                    {settings?.giftMessage}
+                    <AnimatedText text={settings?.giftMessage || ''} startDelay={0.6} step={0.02} />
                   </p>
 
                   <div
@@ -341,10 +357,16 @@ export default async function InvitationPage({ params }: { params: { token: stri
                   >
                     <div className="font-lux flex items-center gap-2 font-bold mb-2" style={{ color: IVORY }}>
                       <CreditCard size={18} style={{ color: GOLD }} />
-                      <span>{settings?.bank1Name}</span>
+                      <span>
+                        <AnimatedText text={settings?.bank1Name || ''} startDelay={2.6} step={0.05} />
+                      </span>
                     </div>
-                    <p className="text-2xl font-mono tracking-widest mb-1" style={{ color: GOLD }}>{settings?.bank1Number}</p>
-                    <p className="font-lux" style={{ color: MUTED }}>{settings?.bank1Holder}</p>
+                    <p className="text-2xl font-mono tracking-widest mb-1" style={{ color: GOLD }}>
+                      <AnimatedText text={settings?.bank1Number || ''} startDelay={3.0} step={0.05} />
+                    </p>
+                    <p className="font-lux" style={{ color: MUTED }}>
+                      <AnimatedText text={settings?.bank1Holder || ''} startDelay={3.7} step={0.04} />
+                    </p>
                   </div>
 
                   <div
@@ -353,10 +375,16 @@ export default async function InvitationPage({ params }: { params: { token: stri
                   >
                     <div className="font-lux flex items-center gap-2 font-bold mb-2" style={{ color: IVORY }}>
                       <CreditCard size={18} style={{ color: GOLD }} />
-                      <span>{settings?.bank2Name}</span>
+                      <span>
+                        <AnimatedText text={settings?.bank2Name || ''} startDelay={4.3} step={0.05} />
+                      </span>
                     </div>
-                    <p className="text-2xl font-mono tracking-widest mb-1" style={{ color: GOLD }}>{settings?.bank2Number}</p>
-                    <p className="font-lux" style={{ color: MUTED }}>{settings?.bank2Holder}</p>
+                    <p className="text-2xl font-mono tracking-widest mb-1" style={{ color: GOLD }}>
+                      <AnimatedText text={settings?.bank2Number || ''} startDelay={4.7} step={0.05} />
+                    </p>
+                    <p className="font-lux" style={{ color: MUTED }}>
+                      <AnimatedText text={settings?.bank2Holder || ''} startDelay={5.4} step={0.04} />
+                    </p>
                   </div>
                 </div>
               </LuxPanel>
@@ -416,8 +444,12 @@ export default async function InvitationPage({ params }: { params: { token: stri
                       color: IVORY,
                     }}
                   >
-                    <p className="font-lux font-semibold text-base" style={{ color: TITLE }}>{wish.guest.name}</p>
-                    <p className="font-lux italic text-base mt-2" style={{ color: BODY }}>{wish.message}</p>
+                    <p className="font-lux font-semibold text-base" style={{ color: TITLE }}>
+                      <AnimatedText text={wish.guest.name} startDelay={0.2} step={0.04} />
+                    </p>
+                    <p className="font-lux italic text-base mt-2" style={{ color: BODY }}>
+                      <AnimatedText text={wish.message} startDelay={0.6} step={0.015} />
+                    </p>
                   </div>
                 </ScrollReveal>
               ))}
@@ -426,7 +458,11 @@ export default async function InvitationPage({ params }: { params: { token: stri
 
           <footer className="py-8 text-center text-xs bg-black/60 backdrop-blur-md text-stone-300">
             <p className="font-lux tracking-widest">
-              &copy; 2026 {settings?.groomName?.split(' ')[0]} & {settings?.brideName?.split(' ')[0]}. All rights reserved.
+              <AnimatedText
+                text={`© 2026 ${settings?.groomName?.split(' ')[0] || ''} & ${settings?.brideName?.split(' ')[0] || ''}. All rights reserved.`}
+                startDelay={0.2}
+                step={0.03}
+              />
             </p>
           </footer>
         </div>
