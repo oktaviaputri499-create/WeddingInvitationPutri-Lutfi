@@ -527,9 +527,7 @@ const css = `
   box-shadow:0 14px 40px rgba(0,0,0,.65),0 2px 6px rgba(0,0,0,.5);}
 .card-frame{position:absolute;inset:6px;border:1px solid rgba(184,152,90,.26);pointer-events:none;}
 
-/* All text sizes scale with the card width (cqw), so the proportions match the invitation page on any screen.
-   The text area fills the whole card as a column: the main block sits near the top,
-   and the closing sentence is pushed to the bottom. */
+/* All text sizes scale with the card width (cqw), so the proportions match the invitation page on any screen. */
 .card-text{position:absolute;left:0;right:0;top:0;bottom:0;padding:13cqw 6cqw 11cqw;
   display:flex;flex-direction:column;text-align:center;
   font-family:'Cormorant Garamond',Georgia,'Times New Roman',serif;font-weight:400;color:#e9dfc8;}
@@ -549,8 +547,9 @@ const css = `
 .card-invited{text-align:center;white-space:nowrap;text-transform:uppercase;
   font-size:9cqw;line-height:1.15;letter-spacing:.06em;color:#f1e9d6;}
 
-/* margin-top:auto pushes this sentence down to the bottom of the card */
-.card-msg{margin:auto auto 0;max-width:92%;text-align:center;
+/* Closing sentence: sits right under the gold lines, in the part of the card that is still visible
+   above the envelope flaps while the card rises. Change the first value of margin to move it up or down. */
+.card-msg{margin:14cqw auto 0;max-width:92%;text-align:center;
   font-style:italic;font-size:3.1cqw;line-height:1.5;color:rgba(226,214,184,.92);}
 .card-end{white-space:nowrap;}
 .card-leaf{display:inline-block;width:1.7em;height:1.7em;margin-left:.45em;vertical-align:-.55em;}
