@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { notFound } from 'next/navigation'
+import { Cinzel } from 'next/font/google'
 import RsvpForm from './RsvpForm'
 import WishForm from './WishForm'
 import InvitationIntro from './InvitationIntro'
@@ -11,6 +12,9 @@ import { getTexts } from '@/lib/siteTexts'
 import { MapPin, Calendar, Clock, Gift, CreditCard, CalendarPlus, Heart } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
+
+// Font for the groom and bride names
+const cinzel = Cinzel({ subsets: ['latin'], weight: ['500'] })
 
 const GOLD = '#d4b26e'
 const IVORY = '#f3ece0'
@@ -264,7 +268,10 @@ export default async function InvitationPage({ params }: { params: { token: stri
                 <GoldLine />
 
                 <div className="relative px-8 py-8">
-                  <h3 className="font-name text-3xl font-semibold mb-3" style={{ color: IVORY }}>
+                  <h3
+                    className={`${cinzel.className} text-2xl font-medium tracking-[0.08em] mb-3`}
+                    style={{ color: IVORY }}
+                  >
                     <AnimatedText text={settings?.groomName || ''} startDelay={0.2} step={0.03} />
                   </h3>
                   <p className="font-lux italic text-sm mb-1" style={{ color: MUTED }}>
@@ -280,7 +287,10 @@ export default async function InvitationPage({ params }: { params: { token: stri
                 </div>
 
                 <div className="relative px-8 py-8 pb-12">
-                  <h3 className="font-name text-3xl font-semibold mb-3" style={{ color: IVORY }}>
+                  <h3
+                    className={`${cinzel.className} text-2xl font-medium tracking-[0.08em] mb-3`}
+                    style={{ color: IVORY }}
+                  >
                     <AnimatedText text={settings?.brideName || ''} startDelay={0.2} step={0.03} />
                   </h3>
                   <p className="font-lux italic text-sm mb-1" style={{ color: MUTED }}>
