@@ -181,6 +181,109 @@ function PixelOrnament({ position }: { position: 'top' | 'bottom' }) {
   )
 }
 
+// ===== Pixel avatars for the couple section =====
+// Same idea as the ornament: one character = one square pixel (16 x 16 grid).
+// . = empty, K = groom hair, Y = bride hair, S = skin, E = eye (blinks), C = cheek, M = mouth
+// B/b = suit, W = shirt, R = bow tie, V = veil, D/d = dress
+const AV_COLORS: Record<string, string> = {
+  K: '#3b2a2a',
+  Y: '#7a4a32',
+  S: '#ffd9b8',
+  E: '#23446b',
+  C: '#f59ab9',
+  M: '#c4607f',
+  B: '#2f5d8c',
+  b: '#4a90d9',
+  W: '#ffffff',
+  R: '#f59ab9',
+  V: '#bcd9f3',
+  D: '#ffffff',
+  d: '#cfe4f7',
+}
+
+const AV_GROOM = [
+  '................',
+  '.....KKKKKK.....',
+  '....KKKKKKKK....',
+  '....KSSSSSSK....',
+  '....SSSSSSSS....',
+  '....SESSSSES....',
+  '....SSSSSSSS....',
+  '....SCSMMSCS....',
+  '.....SSSSSS.....',
+  '......SSSS......',
+  '...BBBWRRWBBB...',
+  '..BBBBBWWBBBBB..',
+  '.BBBBBBbbBBBBBB.',
+  '.BBBBBBbbBBBBBB.',
+  '.BBBBBBbbBBBBBB.',
+  '................',
+]
+
+const AV_BRIDE = [
+  '................',
+  '.....YYYYYY.....',
+  '....YYYYYYYY....',
+  '...VYYSSSSYYV...',
+  '...VYSSSSSSYV...',
+  '...VYSESSESYV...',
+  '...VYSSSSSSYV...',
+  '...VYSCMMCSYV...',
+  '...VYYSSSSYYV...',
+  '...VYYYSSYYYV...',
+  '...VYYDDDDYYV...',
+  '....YDDDDDDY....',
+  '...VDDDDDDDDV...',
+  '..VDDDDDDDDDDV..',
+  '.dDDDDDDDDDDDDd.',
+  '................',
+]
+
+function PixelAvatar({ rows, delay = 0 }: { rows: string[]; delay?: number }) {
+  const h = rows.length
+  const w = rows[0].length
+  return (
+    <div
+      aria-hidden
+      className="mx-auto mb-5 p-2"
+      style={{
+        width: 112,
+        backgroundColor: 'rgba(255,255,255,0.6)',
+        border: '2px solid rgba(74,144,217,0.5)',
+        boxShadow: '0 0 0 3px rgba(74,144,217,0.15)',
+      }}
+    >
+      <svg viewBox={`0 0 ${w} ${h}`} width="100%" shapeRendering="crispEdges" style={{ display: 'block' }}>
+        <g className="px-bob" style={{ animationDelay: `${delay}s` }}>
+          {rows.map((row, y) =>
+            row.split('').map((c, x) => {
+              if (c === '.') return null
+              // Eyes: draw skin underneath, then the eye on top so it can blink
+              if (c === 'E') {
+                return (
+                  <g key={`${x}-${y}`}>
+                    <rect x={x} y={y} width={1} height={1} fill={AV_COLORS.S} />
+                    <rect
+                      x={x}
+                      y={y}
+                      width={1}
+                      height={1}
+                      fill={AV_COLORS.E}
+                      className="px-blink"
+                      style={{ animationDelay: `${delay}s` }}
+                    />
+                  </g>
+                )
+              }
+              return <rect key={`${x}-${y}`} x={x} y={y} width={1} height={1} fill={AV_COLORS[c]} />
+            })
+          )}
+        </g>
+      </svg>
+    </div>
+  )
+}
+
 // Turns the admin's date + time (WIB) into an .ics timestamp (UTC)
 function icsStamp(date: string, time: string, fallback: string) {
   const d = new Date(`${date}T${time}:00+07:00`)
@@ -332,6 +435,15 @@ export default async function InvitationPage({ params }: { params: { token: stri
 
           {/* Couple Section */}
           <section className="py-12 px-6 text-center">
+            {/* Avatar animations: gentle bob + blink (steps keep the pixel look) */}
+            <style>{`
+              @keyframes pxBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-1px)}}
+              @keyframes pxBlink{0%,90%,100%{opacity:1}93%,97%{opacity:0}}
+              .px-bob{animation:pxBob 1.2s steps(1,end) infinite}
+              .px-blink{animation:pxBlink 3.6s steps(1,end) infinite}
+              @media (prefers-reduced-motion:reduce){.px-bob,.px-blink{animation:none}}
+            `}</style>
+
             <ScrollReveal>
               <LuxPanel>
                 {t.coupleTitle && (
@@ -343,6 +455,7 @@ export default async function InvitationPage({ params }: { params: { token: stri
                 <BlueLine />
 
                 <div className="relative px-8 py-8">
+                  <PixelAvatar rows={AV_GROOM} />
                   <h3
                     className={`${cinzel.className} text-2xl font-medium tracking-[0.08em] mb-3`}
                     style={{ color: INK }}
@@ -364,6 +477,8 @@ export default async function InvitationPage({ params }: { params: { token: stri
                 </div>
 
                 <div className="relative px-8 py-8 pb-12">
+                  {/* delay makes the bride bob and blink out of sync with the groom */}
+                  <PixelAvatar rows={AV_BRIDE} delay={0.6} />
                   <h3
                     className={`${cinzel.className} text-2xl font-medium tracking-[0.08em] mb-3`}
                     style={{ color: INK }}
