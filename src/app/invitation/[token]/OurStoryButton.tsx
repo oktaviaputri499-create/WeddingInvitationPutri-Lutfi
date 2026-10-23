@@ -4,13 +4,13 @@ import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { BookOpen, X } from 'lucide-react'
 
-const GOLD = '#d4b26e'
+const ACCENT = '#4a90d9'
 
 /* ---------- Pixel couple ---------- */
 
 const PAL: Record<string, string> = {
-  H: '#5a4638', B: '#9a6a48', S: '#ffd9b8', E: '#1a1a1a', C: '#f7a8bd', K: '#454a6b',
-  W: '#fff4e0', T: '#d4b26e', D: '#d9cdb8', V: '#cfc3ae', F: '#f2a0b8', P: '#1b1a22',
+  H: '#5a4638', B: '#9a6a48', S: '#ffd9b8', E: '#1a1a1a', C: '#f7a8bd', K: '#3d6fa8',
+  W: '#ffffff', T: '#9cc3ea', D: '#cfe0f2', V: '#dbe9f7', F: '#f2a0b8', P: '#23324a',
 }
 
 const GROOM = [
@@ -62,12 +62,12 @@ function ornamentSvg() {
   }
   for (let i = 0; i < 7; i++) {
     const o = (0.3 + i * 0.1).toFixed(2)
-    r.push(`<rect x="${i * 2}" y="4" width="1" height="1" fill="#d4b26e" opacity="${o}"/>`)
-    r.push(`<rect x="${60 - i * 2}" y="4" width="1" height="1" fill="#d4b26e" opacity="${o}"/>`)
+    r.push(`<rect x="${i * 2}" y="4" width="1" height="1" fill="#4a90d9" opacity="${o}"/>`)
+    r.push(`<rect x="${60 - i * 2}" y="4" width="1" height="1" fill="#4a90d9" opacity="${o}"/>`)
   }
   put(HEART, 16, 1, '#f2a0b8')
   put(HEART, 38, 1, '#f2a0b8')
-  put(DIAMOND, 28, 2, '#d4b26e')
+  put(DIAMOND, 28, 2, '#4a90d9')
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 61 9" shape-rendering="crispEdges">${r.join('')}</svg>`
 }
 
@@ -146,14 +146,14 @@ function Couple() {
         <span
           key={i}
           className="cp-tw absolute"
-          style={{ left: s.l, top: s.t, width: 4, height: 4, background: GOLD, animationDelay: s.d }}
+          style={{ left: s.l, top: s.t, width: 4, height: 4, background: ACCENT, animationDelay: s.d }}
           aria-hidden
         />
       ))}
 
       <div
         className="absolute left-0 right-0 bottom-0 h-px"
-        style={{ background: 'linear-gradient(90deg,transparent,#d4b26e,transparent)' }}
+        style={{ background: 'linear-gradient(90deg,transparent,#4a90d9,transparent)' }}
       />
     </div>
   )
@@ -171,12 +171,13 @@ export default function OurStoryButton() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="font-lux inline-flex items-center justify-center gap-2 px-7 py-2 mt-6 text-sm border-2 transition hover:bg-[#d4b26e] hover:text-[#1b1510]"
+        className="font-lux inline-flex items-center justify-center gap-2 px-7 py-2 mt-6 text-sm border-2 transition hover:bg-[#4a90d9] hover:text-white"
         style={{
-          borderColor: GOLD,
-          color: GOLD,
+          borderColor: ACCENT,
+          color: ACCENT,
+          backgroundColor: 'rgba(255,255,255,0.7)',
           textShadow: 'none',
-          boxShadow: '3px 3px 0 rgba(212,178,110,0.3)',
+          boxShadow: '3px 3px 0 rgba(74,144,217,0.3)',
           animation: 'heroFade 1.4s ease-out 3.2s both',
         }}
       >
@@ -186,12 +187,12 @@ export default function OurStoryButton() {
 
       {open &&
         createPortal(
-          <div className="fixed inset-0 z-[100] bg-black/80">
+          <div className="fixed inset-0 z-[100] bg-[#23446b]/80">
             <button
               type="button"
               onClick={() => setOpen(false)}
               aria-label="Close"
-              className="absolute right-4 top-4 z-10 w-10 h-10 bg-white/90 text-black flex items-center justify-center"
+              className="absolute right-4 top-4 z-10 w-10 h-10 bg-white/90 text-[#23446b] flex items-center justify-center"
             >
               <X size={20} />
             </button>

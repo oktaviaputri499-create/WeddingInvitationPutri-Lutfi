@@ -3,11 +3,10 @@
 import { useState } from 'react'
 import { submitRsvp } from '@/actions/guest'
 
-const GOLD = '#d4b26e'
-const IVORY = '#f3ece0'
-const TITLE = '#e6d3a6'
-const MUTED = '#cdbfa8'
-const BODY = '#d9cdb8'
+const ACCENT = '#4a90d9'
+const INK = '#23446b'
+const TITLE = '#2f5d8c'
+const BODY = '#35577f'
 
 export default function RsvpForm({ token, initialRsvp, guestName }: { token: string, initialRsvp: any, guestName: string }) {
   const [status, setStatus] = useState(initialRsvp?.status || 'pending')
@@ -39,7 +38,7 @@ export default function RsvpForm({ token, initialRsvp, guestName }: { token: str
         <button
           onClick={() => setSuccess(false)}
           className="text-sm mt-4 underline underline-offset-4 hover:opacity-80 transition"
-          style={{ color: GOLD }}
+          style={{ color: ACCENT }}
         >
           Ubah RSVP
         </button>
@@ -49,7 +48,7 @@ export default function RsvpForm({ token, initialRsvp, guestName }: { token: str
 
   return (
     <form onSubmit={handleSubmit} className="font-lux text-left">
-      <p className="mb-4 text-base font-semibold" style={{ color: IVORY }}>
+      <p className="mb-4 text-base font-semibold" style={{ color: INK }}>
         Apakah Anda akan hadir?
       </p>
 
@@ -62,7 +61,7 @@ export default function RsvpForm({ token, initialRsvp, guestName }: { token: str
             checked={status === 'attending'}
             onChange={() => setStatus('attending')}
             className="w-4 h-4"
-            style={{ accentColor: GOLD }}
+            style={{ accentColor: ACCENT }}
             required
           />
           <span className="text-base" style={{ color: BODY }}>Ya, saya akan hadir</span>
@@ -75,7 +74,7 @@ export default function RsvpForm({ token, initialRsvp, guestName }: { token: str
             checked={status === 'not_attending'}
             onChange={() => setStatus('not_attending')}
             className="w-4 h-4"
-            style={{ accentColor: GOLD }}
+            style={{ accentColor: ACCENT }}
             required
           />
           <span className="text-base" style={{ color: BODY }}>Maaf, saya tidak dapat hadir</span>
@@ -84,7 +83,7 @@ export default function RsvpForm({ token, initialRsvp, guestName }: { token: str
 
       {status === 'attending' && (
         <div className="mb-6 animate-fade-in-up">
-          <p className="text-sm font-semibold text-center italic" style={{ color: '#f0a898' }}>
+          <p className="text-sm font-semibold text-center italic" style={{ color: '#d6537a' }}>
             * Mohon maaf, undangan ini hanya berlaku untuk 1 orang.
           </p>
         </div>
@@ -94,7 +93,11 @@ export default function RsvpForm({ token, initialRsvp, guestName }: { token: str
         disabled={loading}
         type="submit"
         className="w-full py-3 rounded-md font-semibold transition hover:opacity-90 disabled:opacity-50"
-        style={{ backgroundColor: GOLD, color: '#1b1510' }}
+        style={{
+          background: 'linear-gradient(180deg,#6fb1ec,#4a90d9)',
+          color: '#ffffff',
+          boxShadow: '0 3px 10px rgba(74,144,217,0.35)',
+        }}
       >
         {loading ? 'Menyimpan...' : 'Kirim Konfirmasi'}
       </button>

@@ -7,12 +7,12 @@ type Stage = 'closed' | 'opening' | 'card' | 'pull' | 'fade' | 'done'
 const ORDER: Stage[] = ['closed', 'opening', 'card', 'pull', 'fade', 'done']
 
 /* ---------- Pixel palette (change the colors here) ---------- */
-const DARK = '#3a3947' // outlines
-const SIDE = '#f2b8cc' // left and right folds
-const BOTTOM = '#f8d2e0' // bottom fold
-const LINING = '#c9799a' // inside of the envelope
-const FLAP = '#f9d9e5' // top flap (outside)
-const FLAP_BACK = '#d98aa8' // top flap (inside, once opened)
+const DARK = '#2f5d8c' // outlines
+const SIDE = '#dcecfb' // left and right folds
+const BOTTOM = '#eaf4fd' // bottom fold
+const LINING = '#7fb2e5' // inside of the envelope
+const FLAP = '#f2f8ff' // top flap (outside)
+const FLAP_BACK = '#a9cdf0' // top flap (inside, once opened)
 const SEAL = '#e0456f' // heart seal
 const SEAL_HI = '#ff9db9'
 
@@ -30,12 +30,12 @@ const HEARTS = Array.from({ length: 10 }, (_, i) => ({
   duration: 10 + ((i * 13) % 7),
   delay: -((i * 29) % 12),
   dx: (i % 2 ? 1 : -1) * (20 + ((i * 11) % 50)),
-  color: ['#f4a0bf', '#ffd6e4', '#d4b26e', '#f08aa4'][i % 4],
+  color: ['#f4a0bf', '#ffd6e4', '#ffffff', '#9cc3ea'][i % 4],
 }))
 
 // Fine paper grain (used on the invitation card)
 const GRAIN = `url("data:image/svg+xml;utf8,${encodeURIComponent(
-  "<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.06 0'/></filter><rect width='100%' height='100%' filter='url(#n)'/></svg>"
+  "<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.3 0 0 0 0 0.5 0 0 0 0 0.8 0 0 0 0.06 0'/></filter><rect width='100%' height='100%' filter='url(#n)'/></svg>"
 )}")`
 
 /* ---------- Pixel helpers ---------- */
@@ -295,7 +295,7 @@ function Card({
   const invited = texts?.invited ?? "You're Invited"
   const message = texts?.message ?? 'We would love to celebrate this special day with you'
 
-  // The gold leaf sits right after the last two words
+  // The blue leaf sits right after the last two words
   const words = message.trim().split(/\s+/).filter(Boolean)
   const tail = words.slice(-2).join(' ')
   const head = words.slice(0, -2).join(' ')
@@ -303,7 +303,7 @@ function Card({
   return (
     <div className="card" aria-hidden>
       <div className="card-bob">
-        <div className="card-face" style={{ backgroundImage: `${GRAIN}, linear-gradient(180deg,#1e1d1b,#141413)` }}>
+        <div className="card-face" style={{ backgroundImage: `${GRAIN}, linear-gradient(180deg,#ffffff,#e6f2fd)` }}>
           <div className="card-frame" />
           <div className="card-text">
             {/* This block is as wide as the title, so the left-aligned line lines up with it */}
@@ -329,14 +329,14 @@ function Card({
                   <svg className="card-leaf" viewBox="0 0 24 24" fill="none" aria-hidden>
                     <path
                       d="M4.5 19.5 C3.5 10.5 10 4 20 4 C20.5 13.5 14.5 20 4.5 19.5 Z"
-                      stroke="#c9a96a"
+                      stroke="#4a90d9"
                       strokeWidth="1.1"
                       strokeLinejoin="round"
                     />
-                    <path d="M4.5 19.5 L15.5 8.5" stroke="#c9a96a" strokeWidth="1" strokeLinecap="round" />
+                    <path d="M4.5 19.5 L15.5 8.5" stroke="#4a90d9" strokeWidth="1" strokeLinecap="round" />
                     <path
                       d="M9.5 14.5 L9 10.8 M12 12 L15.2 12.4"
-                      stroke="#c9a96a"
+                      stroke="#4a90d9"
                       strokeWidth=".8"
                       strokeLinecap="round"
                     />
@@ -355,7 +355,7 @@ const css = `
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=Pinyon+Script&family=Pixelify+Sans:wght@400;600&display=swap');
 
 /* --u is the size of one pixel. The envelope is 40 x 26 pixels, the cat 22 x 14. */
-.inv-root{position:fixed;inset:0;z-index:50;overflow:hidden;background:#1b1a2b;cursor:pointer;
+.inv-root{position:fixed;inset:0;z-index:50;overflow:hidden;background:#8ec5f5;cursor:pointer;
   --u:calc(min(88vw,560px,100vh) / 40);
   --ew:calc(var(--u) * 40);
   --eh:calc(var(--u) * 26);
@@ -371,11 +371,11 @@ const css = `
 .inv-root.is-fade{opacity:0;visibility:hidden;pointer-events:none;}
 .inv-root:focus-visible{outline:none;}
 
-/* ---------- Night sky with pixel stars ---------- */
+/* ---------- Soft blue sky with pixel sparkles ---------- */
 .px-bg{position:absolute;inset:0;z-index:0;
-  background:linear-gradient(#171527 0 25%,#1c1a30 25% 50%,#211e38 50% 75%,#26223f 75%);}
-.px-star{position:absolute;background:#d9d4ff;animation:pxTwinkle 3s steps(1,end) infinite;}
-@keyframes pxTwinkle{0%{opacity:.9}50%{opacity:.25}100%{opacity:.9}}
+  background:linear-gradient(#7fbcf2 0 25%,#98cbf6 25% 50%,#b6dafa 50% 75%,#d3e9fc 75%);}
+.px-star{position:absolute;background:#ffffff;animation:pxTwinkle 3s steps(1,end) infinite;}
+@keyframes pxTwinkle{0%{opacity:.95}50%{opacity:.3}100%{opacity:.95}}
 
 /* ---------- Envelope layers (all share the same box) ---------- */
 .px-svg{position:absolute;display:block;
@@ -383,7 +383,7 @@ const css = `
   width:var(--ew);height:var(--eh);}
 .px-back{z-index:2;}
 .px-front{z-index:4;}
-.px-shadow{position:absolute;z-index:0;background:rgba(0,0,0,.35);
+.px-shadow{position:absolute;z-index:0;background:rgba(47,93,140,.28);
   left:calc(50% - var(--ew) / 2 + var(--u) * 2);width:calc(var(--ew) - var(--u) * 4);
   top:calc(var(--ey) + var(--eh) / 2);height:calc(var(--u) * 1.5);}
 
@@ -468,34 +468,34 @@ const css = `
 .is-pull .px-slide{animation:pxEnvOut 1.5s cubic-bezier(.65,0,.25,1) forwards;}
 @keyframes pxEnvOut{from{transform:translateY(0)}to{transform:translateY(120vh)}}
 
-/* ---------- Card look: dark paper, thin gold double frame (matches the invitation page) ---------- */
+/* ---------- Card look: light paper, thin blue double frame (matches the invitation page) ---------- */
 .card-bob{position:absolute;inset:0;}
 .is-card:not(.is-pull) .card-bob{animation:bob 2.6s ease-in-out infinite;}
 @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-1.1vh)}}
-.card-face{position:absolute;inset:0;overflow:hidden;border:1px solid rgba(184,152,90,.55);
+.card-face{position:absolute;inset:0;overflow:hidden;border:1px solid rgba(74,144,217,.6);
   container-type:inline-size;
-  box-shadow:0 14px 40px rgba(0,0,0,.65),0 2px 6px rgba(0,0,0,.5);}
-.card-frame{position:absolute;inset:6px;border:1px solid rgba(184,152,90,.26);pointer-events:none;}
+  box-shadow:0 14px 40px rgba(47,93,140,.35),0 2px 6px rgba(47,93,140,.25);}
+.card-frame{position:absolute;inset:6px;border:1px solid rgba(74,144,217,.3);pointer-events:none;}
 
 /* All text sizes scale with the card width (cqw), so the proportions match the invitation page on any screen */
 .card-text{position:absolute;left:0;right:0;top:0;padding:9cqw 6cqw 0;text-align:center;
-  font-family:'Cormorant Garamond',Georgia,'Times New Roman',serif;font-weight:400;color:#e9dfc8;}
+  font-family:'Cormorant Garamond',Georgia,'Times New Roman',serif;font-weight:400;color:#23446b;}
 
 /* The block is as wide as the title; the first line is aligned to its left edge */
 .card-block{width:fit-content;max-width:100%;margin:0 auto;}
-.card-dear{text-align:left;font-style:italic;font-size:3.1cqw;line-height:1.3;color:rgba(226,214,184,.9);}
+.card-dear{text-align:left;font-style:italic;font-size:3.1cqw;line-height:1.3;color:#4f759f;}
 .card-guest{margin-top:1.5cqw;padding-bottom:.1em;text-align:center;overflow-wrap:anywhere;
   font-family:'Pinyon Script','Great Vibes','Allura','Snell Roundhand',cursive;font-weight:400;
   font-size:10cqw;line-height:1.3;
-  background:linear-gradient(180deg,#f3e3b6,#cfae6c);
+  background:linear-gradient(180deg,#5aa0e6,#2f5d8c);
   -webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;}
 .card-rule{width:34%;height:1px;margin:3cqw auto;
-  background:linear-gradient(90deg,transparent,rgba(201,169,106,.85),transparent);}
+  background:linear-gradient(90deg,transparent,rgba(74,144,217,.85),transparent);}
 .card-invited{text-align:center;white-space:nowrap;text-transform:uppercase;
-  font-size:9cqw;line-height:1.15;letter-spacing:.06em;color:#f1e9d6;}
+  font-size:9cqw;line-height:1.15;letter-spacing:.06em;color:#23446b;}
 
 .card-msg{margin:5cqw auto 0;max-width:92%;text-align:center;
-  font-style:italic;font-size:3.1cqw;line-height:1.5;color:rgba(226,214,184,.92);}
+  font-style:italic;font-size:3.1cqw;line-height:1.5;color:#35577f;}
 .card-end{white-space:nowrap;}
 .card-leaf{display:inline-block;width:1.7em;height:1.7em;margin-left:.45em;vertical-align:-.55em;}
 
@@ -503,7 +503,7 @@ const css = `
 .px-hint{position:absolute;left:0;right:0;z-index:6;text-align:center;pointer-events:none;
   top:calc(var(--ey) + var(--eh) / 2 + var(--u) * 3);
   font-family:'Pixelify Sans','Courier New',monospace;font-size:clamp(12px,calc(var(--u) * 1.6),18px);
-  letter-spacing:.12em;text-transform:uppercase;color:#f3c6d8;text-shadow:2px 2px 0 #12101f;
+  letter-spacing:.12em;text-transform:uppercase;color:#ffffff;text-shadow:2px 2px 0 #2f5d8c;
   animation:pxBlink 1.6s steps(1,end) infinite;}
 @keyframes pxBlink{0%{opacity:1}50%{opacity:.35}100%{opacity:1}}
 .is-open .px-hint{animation:none;opacity:0;}
@@ -624,7 +624,7 @@ export default function InvitationIntro({
           tabIndex={0}
           aria-label={`Open invitation for ${guestName}`}
         >
-          {/* Night sky */}
+          {/* Sky */}
           <div className="px-bg" aria-hidden>
             {STARS.map((s, i) => (
               <span
@@ -702,7 +702,7 @@ export default function InvitationIntro({
           type="button"
           onClick={toggleMusic}
           aria-label={playing ? 'Matikan musik' : 'Putar musik'}
-          className="fixed bottom-5 right-5 z-[60] w-11 h-11 rounded-full bg-dark-brown/90 text-white shadow-lg flex items-center justify-center hover:bg-gold transition"
+          className="fixed bottom-5 right-5 z-[60] w-11 h-11 rounded-full bg-[#4a90d9] hover:bg-[#2f5d8c] text-white shadow-lg flex items-center justify-center transition"
         >
           {playing ? <Volume2 size={20} /> : <VolumeX size={20} />}
         </button>
