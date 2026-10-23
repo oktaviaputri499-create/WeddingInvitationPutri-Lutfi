@@ -11,6 +11,7 @@ import AnimatedText from './AnimatedText'
 import LuxBackground from './LuxBackground'
 import CopyButton from './CopyButton'
 import GuestbookWall from './GuestbookWall'
+import DayNightToggle from './DayNightToggle'
 import { getTexts } from '@/lib/siteTexts'
 import { MapPin, Calendar, Clock, Gift, CreditCard, CalendarPlus, Heart } from 'lucide-react'
 
@@ -183,9 +184,9 @@ function PixelOrnament({ position }: { position: 'top' | 'bottom' }) {
   )
 }
 
-// ===== Pixel avatars for the couple section =====
+// ===== Pixel avatars for the couple section (still, no animation) =====
 // Same idea as the ornament: one character = one square pixel (16 x 16 grid).
-// . = empty, K = groom hair, Y/y = bride hair (y = highlight), S = skin, E = eye (blinks)
+// . = empty, K = groom hair, Y/y = bride hair (y = highlight), S = skin, E = eye
 // C/c = cheek, M/m = mouth, B/b = suit, W = shirt, R = bow tie
 // V = veil, D/d = dress, F/f = hair flower
 const AV_COLORS: Record<string, string> = {
@@ -248,11 +249,9 @@ const AV_BRIDE = [
   '.dDDDDDDDDDDDDd.',
 ]
 
-function PixelAvatar({ rows, delay = 0 }: { rows: string[]; delay?: number }) {
+function PixelAvatar({ rows }: { rows: string[] }) {
   const h = rows.length
   const w = rows[0].length
-  // The last row is repeated once below, so the body still reaches the edge of the circle while bobbing
-  const drawn = [...rows, rows[h - 1]]
   return (
     <div
       aria-hidden
@@ -272,33 +271,15 @@ function PixelAvatar({ rows, delay = 0 }: { rows: string[]; delay?: number }) {
         width="100%"
         height="100%"
         shapeRendering="crispEdges"
-        style={{ display: 'block', overflow: 'visible' }}
+        style={{ display: 'block' }}
       >
-        <g className="px-bob" style={{ animationDelay: `${delay}s` }}>
-          {drawn.map((row, y) =>
-            row.split('').map((c, x) => {
-              if (c === '.') return null
-              // Eyes: draw skin underneath, then the eye on top so it can blink
-              if (c === 'E') {
-                return (
-                  <g key={`${x}-${y}`}>
-                    <rect x={x} y={y} width={1} height={1} fill={AV_COLORS.S} />
-                    <rect
-                      x={x}
-                      y={y}
-                      width={1}
-                      height={1}
-                      fill={AV_COLORS.E}
-                      className="px-blink"
-                      style={{ animationDelay: `${delay}s` }}
-                    />
-                  </g>
-                )
-              }
-              return <rect key={`${x}-${y}`} x={x} y={y} width={1} height={1} fill={AV_COLORS[c]} />
-            })
-          )}
-        </g>
+        {rows.map((row, y) =>
+          row.split('').map((c, x) =>
+            c === '.' ? null : (
+              <rect key={`${x}-${y}`} x={x} y={y} width={1} height={1} fill={AV_COLORS[c]} />
+            )
+          )
+        )}
       </svg>
     </div>
   )
@@ -379,10 +360,13 @@ export default async function InvitationPage({ params }: { params: { token: stri
       <div className="max-w-md mx-auto min-h-screen overflow-hidden relative">
         <LuxBackground />
 
+        {/* Sun / moon button + night sky (tint and stars) */}
+        <DayNightToggle />
+
         {/* Content wrapper */}
         <div className="relative z-10">
           {/* Hero Section */}
-          <section className="relative min-h-screen flex flex-col items-center justify-center px-8 py-16 text-center overflow-hidden">
+          <section className="hero-section relative min-h-screen flex flex-col items-center justify-center px-8 py-16 text-center overflow-hidden">
             <style>{`
               @keyframes heroFade{from{opacity:0}to{opacity:1}}
               @keyframes pxTwinkle{0%,100%{opacity:1}50%{opacity:.2}}
@@ -455,15 +439,6 @@ export default async function InvitationPage({ params }: { params: { token: stri
 
           {/* Couple Section */}
           <section className="py-12 px-6 text-center">
-            {/* Avatar animations: gentle bob + blink (steps keep the pixel look) */}
-            <style>{`
-              @keyframes pxBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-1px)}}
-              @keyframes pxBlink{0%,90%,100%{opacity:1}93%,97%{opacity:0}}
-              .px-bob{animation:pxBob 1.2s steps(1,end) infinite}
-              .px-blink{animation:pxBlink 3.6s steps(1,end) infinite}
-              @media (prefers-reduced-motion:reduce){.px-bob,.px-blink{animation:none}}
-            `}</style>
-
             <ScrollReveal>
               <LuxPanel>
                 {t.coupleTitle && (
@@ -497,8 +472,7 @@ export default async function InvitationPage({ params }: { params: { token: stri
                 </div>
 
                 <div className="relative px-8 py-8 pb-12">
-                  {/* delay makes the bride bob and blink out of sync with the groom */}
-                  <PixelAvatar rows={AV_BRIDE} delay={0.6} />
+                  <PixelAvatar rows={AV_BRIDE} />
                   <h3
                     className={`${cinzel.className} text-2xl font-medium tracking-[0.08em] mb-3`}
                     style={{ color: INK }}
