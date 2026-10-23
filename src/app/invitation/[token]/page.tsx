@@ -4,6 +4,7 @@ import { Cinzel } from 'next/font/google'
 import RsvpForm from './RsvpForm'
 import WishForm from './WishForm'
 import InvitationIntro from './InvitationIntro'
+import OurStoryButton from './OurStoryButton'
 import ScrollReveal from './ScrollReveal'
 import GuestQrCode from './GuestQrCode'
 import AnimatedText from './AnimatedText'
@@ -259,6 +260,9 @@ export default async function InvitationPage({ params }: { params: { token: stri
                   </span>
                 </p>
               )}
+
+              {/* Our Story button */}
+              <OurStoryButton />
             </div>
           </section>
 
