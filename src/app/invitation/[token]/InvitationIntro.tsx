@@ -33,11 +33,6 @@ const HEARTS = Array.from({ length: 10 }, (_, i) => ({
   color: ['#f4a0bf', '#ffd6e4', '#ffffff', '#9cc3ea'][i % 4],
 }))
 
-// Fine paper grain (used on the invitation card)
-const GRAIN = `url("data:image/svg+xml;utf8,${encodeURIComponent(
-  "<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.3 0 0 0 0 0.5 0 0 0 0 0.8 0 0 0 0.06 0'/></filter><rect width='100%' height='100%' filter='url(#n)'/></svg>"
-)}")`
-
 /* ---------- Pixel helpers ---------- */
 
 type Run = { x: number; y: number; w: number }
@@ -282,6 +277,62 @@ function PixelHeart({ color, scale, style }: { color: string; scale: number; sty
   )
 }
 
+/* ---------- Pixel ornament at the bottom of the invitation card ---------- */
+// X = pink, h = light pink, B = blue, w = ice white, S = sparkle, g = pale blue
+const ORN_COLORS: Record<string, string> = {
+  X: '#f59ab9',
+  h: '#ffd3e2',
+  B: '#4a90d9',
+  w: '#e6f3ff',
+  S: '#7fb2e5',
+  g: '#9cc3ea',
+}
+const ORN_H = 6
+
+const ORN_HEART = ['.hX.XX.', 'XXXXXXX', 'XXXXXXX', '.XXXXX.', '..XXX..', '...X...']
+const ORN_DIAMOND = ['..B..', '.BBB.', 'BBwBB', '.BBB.', '..B..']
+const ORN_SPARKLE = ['.S.', 'SSS', '.S.']
+
+// Pads a piece to the full ornament height (top = how many blank rows go above it)
+const ornPad = (rows: string[], top: number) =>
+  Array.from({ length: ORN_H }, (_, y) => rows[y - top] ?? '.'.repeat(rows[0].length))
+const ornGap = (w: number) => Array.from({ length: ORN_H }, () => '.'.repeat(w))
+const ornDash = (s: string) =>
+  Array.from({ length: ORN_H }, (_, r) => (r === 2 ? s : '.'.repeat(s.length)))
+
+const ORN_DASH_L = 'g.g.B.B.B.'
+const ORN_DASH_R = reverseStr(ORN_DASH_L)
+
+const ORN_PIECES = [
+  ornDash(ORN_DASH_L),
+  ornGap(2),
+  ornPad(ORN_HEART, 0),
+  ornGap(2),
+  ornPad(ORN_SPARKLE, 1),
+  ornGap(2),
+  ornPad(ORN_DIAMOND, 0),
+  ornGap(2),
+  ornPad(ORN_SPARKLE, 1),
+  ornGap(2),
+  ornPad(ORN_HEART, 0),
+  ornGap(2),
+  ornDash(ORN_DASH_R),
+]
+
+const ORN_ROWS = Array.from({ length: ORN_H }, (_, r) => ORN_PIECES.map(p => p[r]).join(''))
+const ORN_COLS = ORN_ROWS[0].length
+const ORN_RECTS = patternRects(ORN_ROWS, ch => ch in ORN_COLORS)
+
+function CardOrnament() {
+  return (
+    <svg viewBox={`0 0 ${ORN_COLS} ${ORN_H}`} width="100%" shapeRendering="crispEdges" style={{ display: 'block' }}>
+      {ORN_RECTS.map((r, i) => (
+        <rect key={i} x={r.x} y={r.y} width={r.w} height={1} fill={ORN_COLORS[r.ch]} />
+      ))}
+    </svg>
+  )
+}
+
 /* ---------- The invitation paper that slides out of the envelope ---------- */
 // A text that is empty is not shown (the guest name always is).
 function Card({
@@ -295,7 +346,7 @@ function Card({
   const invited = texts?.invited ?? "You're Invited"
   const message = texts?.message ?? 'We would love to celebrate this special day with you'
 
-  // The blue leaf sits right after the last two words
+  // The pixel heart sits right after the last two words
   const words = message.trim().split(/\s+/).filter(Boolean)
   const tail = words.slice(-2).join(' ')
   const head = words.slice(0, -2).join(' ')
@@ -303,47 +354,43 @@ function Card({
   return (
     <div className="card" aria-hidden>
       <div className="card-bob">
-        <div className="card-face" style={{ backgroundImage: `${GRAIN}, linear-gradient(180deg,#ffffff,#e6f2fd)` }}>
-          <div className="card-frame" />
-          <div className="card-text">
-            {/* This block is as wide as the title, so the left-aligned line lines up with it */}
-            <div className="card-block">
-              {dear && <div className="card-dear">{dear}</div>}
-              <div className="card-guest">{guestName}</div>
+        <div className="card-face">
+          <div className="card-paper">
+            <div className="card-frame" />
+            <div className="card-text">
+              {/* This block is as wide as the title, so the left-aligned line lines up with it */}
+              <div className="card-block">
+                {dear && <div className="card-dear">{dear}</div>}
+                <div className="card-guest">{guestName}</div>
 
-              {invited && (
-                <>
-                  <div className="card-rule" />
-                  <div className="card-invited">{invited}</div>
-                  <div className="card-rule" />
-                </>
+                {invited && (
+                  <>
+                    <div className="card-rule" />
+                    <div className="card-invited">{invited}</div>
+                    <div className="card-rule" />
+                  </>
+                )}
+              </div>
+
+              {words.length > 0 && (
+                <div className="card-msg">
+                  {head}
+                  {head ? ' ' : ''}
+                  <span className="card-end">
+                    {tail}
+                    <svg className="card-leaf" viewBox="0 0 6 5" shapeRendering="crispEdges" aria-hidden>
+                      {HEART_RECTS.map((r, i) => (
+                        <rect key={i} x={r.x} y={r.y} width={r.w} height={1} fill="#f59ab9" />
+                      ))}
+                    </svg>
+                  </span>
+                </div>
               )}
             </div>
 
-            {words.length > 0 && (
-              <div className="card-msg">
-                {head}
-                {head ? ' ' : ''}
-                <span className="card-end">
-                  {tail}
-                  <svg className="card-leaf" viewBox="0 0 24 24" fill="none" aria-hidden>
-                    <path
-                      d="M4.5 19.5 C3.5 10.5 10 4 20 4 C20.5 13.5 14.5 20 4.5 19.5 Z"
-                      stroke="#4a90d9"
-                      strokeWidth="1.1"
-                      strokeLinejoin="round"
-                    />
-                    <path d="M4.5 19.5 L15.5 8.5" stroke="#4a90d9" strokeWidth="1" strokeLinecap="round" />
-                    <path
-                      d="M9.5 14.5 L9 10.8 M12 12 L15.2 12.4"
-                      stroke="#4a90d9"
-                      strokeWidth=".8"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                </span>
-              </div>
-            )}
+            <div className="card-orn">
+              <CardOrnament />
+            </div>
           </div>
         </div>
       </div>
@@ -352,7 +399,7 @@ function Card({
 }
 
 const css = `
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=Pinyon+Script&family=Pixelify+Sans:wght@400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600&display=swap');
 
 /* --u is the size of one pixel. The envelope is 40 x 26 pixels, the cat 22 x 14. */
 .inv-root{position:fixed;inset:0;z-index:50;overflow:hidden;background:#8ec5f5;cursor:pointer;
@@ -468,36 +515,57 @@ const css = `
 .is-pull .px-slide{animation:pxEnvOut 1.5s cubic-bezier(.65,0,.25,1) forwards;}
 @keyframes pxEnvOut{from{transform:translateY(0)}to{transform:translateY(120vh)}}
 
-/* ---------- Card look: light paper, thin blue double frame (matches the invitation page) ---------- */
-.card-bob{position:absolute;inset:0;}
+/* ---------- Pixel paper card: stepped outline, hard pixel shadow, dithered paper ---------- */
+.card-bob{position:absolute;inset:0;filter:drop-shadow(6px 6px 0 rgba(47,93,140,.32));}
 .is-card:not(.is-pull) .card-bob{animation:bob 2.6s ease-in-out infinite;}
 @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-1.1vh)}}
-.card-face{position:absolute;inset:0;overflow:hidden;border:1px solid rgba(74,144,217,.6);
-  container-type:inline-size;
-  box-shadow:0 14px 40px rgba(47,93,140,.35),0 2px 6px rgba(47,93,140,.25);}
-.card-frame{position:absolute;inset:6px;border:1px solid rgba(74,144,217,.3);pointer-events:none;}
 
-/* All text sizes scale with the card width (cqw), so the proportions match the invitation page on any screen */
+/* Outer layer = the dark outline, cut with notched pixel corners */
+.card-face{position:absolute;inset:0;background:#2f5d8c;container-type:inline-size;
+  clip-path:polygon(
+    0 8px,4px 8px,4px 4px,8px 4px,8px 0,
+    calc(100% - 8px) 0,calc(100% - 8px) 4px,calc(100% - 4px) 4px,calc(100% - 4px) 8px,100% 8px,
+    100% calc(100% - 8px),calc(100% - 4px) calc(100% - 8px),calc(100% - 4px) calc(100% - 4px),calc(100% - 8px) calc(100% - 4px),calc(100% - 8px) 100%,
+    8px 100%,8px calc(100% - 4px),4px calc(100% - 4px),4px calc(100% - 8px),0 calc(100% - 8px));}
+
+/* Inner layer = the paper, with a light checker dither */
+.card-paper{position:absolute;inset:4px;overflow:hidden;
+  background:
+    conic-gradient(rgba(74,144,217,.07) 25%,transparent 0 50%,rgba(74,144,217,.07) 0 75%,transparent 0) 0 0 / 8px 8px,
+    linear-gradient(180deg,#ffffff,#e3f0fc);
+  image-rendering:pixelated;
+  clip-path:polygon(
+    4px 0,calc(100% - 4px) 0,calc(100% - 4px) 4px,100% 4px,
+    100% calc(100% - 4px),calc(100% - 4px) calc(100% - 4px),calc(100% - 4px) 100%,
+    4px 100%,4px calc(100% - 4px),0 calc(100% - 4px),0 4px,4px 4px);}
+
+/* Dashed pixel frame inside the paper */
+.card-frame{position:absolute;inset:8px;border:2px dashed rgba(74,144,217,.5);pointer-events:none;}
+
+/* All text sizes scale with the card width (cqw), so the proportions stay the same on any screen */
 .card-text{position:absolute;left:0;right:0;top:0;padding:9cqw 6cqw 0;text-align:center;
-  font-family:'Cormorant Garamond',Georgia,'Times New Roman',serif;font-weight:400;color:#23446b;}
+  font-family:'Pixelify Sans','Courier New',monospace;font-weight:400;color:#23446b;
+  -webkit-font-smoothing:none;}
 
 /* The block is as wide as the title; the first line is aligned to its left edge */
 .card-block{width:fit-content;max-width:100%;margin:0 auto;}
-.card-dear{text-align:left;font-style:italic;font-size:3.1cqw;line-height:1.3;color:#4f759f;}
-.card-guest{margin-top:1.5cqw;padding-bottom:.1em;text-align:center;overflow-wrap:anywhere;
-  font-family:'Pinyon Script','Great Vibes','Allura','Snell Roundhand',cursive;font-weight:400;
-  font-size:10cqw;line-height:1.3;
-  background:linear-gradient(180deg,#5aa0e6,#2f5d8c);
-  -webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;}
-.card-rule{width:34%;height:1px;margin:3cqw auto;
-  background:linear-gradient(90deg,transparent,rgba(74,144,217,.85),transparent);}
-.card-invited{text-align:center;white-space:nowrap;text-transform:uppercase;
-  font-size:9cqw;line-height:1.15;letter-spacing:.06em;color:#23446b;}
+.card-dear{text-align:left;font-size:3.3cqw;line-height:1.3;color:#4f759f;letter-spacing:.02em;}
+.card-guest{margin-top:2cqw;text-align:center;overflow-wrap:anywhere;
+  font-weight:600;font-size:8.5cqw;line-height:1.25;letter-spacing:.02em;color:#2f5d8c;
+  text-shadow:.6cqw .6cqw 0 rgba(74,144,217,.32);}
+.card-rule{width:42%;height:.9cqw;margin:3.2cqw auto;
+  background:repeating-linear-gradient(90deg,#4a90d9 0 1.2cqw,transparent 1.2cqw 2.4cqw);}
+.card-invited{text-align:center;white-space:nowrap;text-transform:uppercase;font-weight:600;
+  font-size:7.6cqw;line-height:1.2;letter-spacing:.05em;color:#23446b;
+  text-shadow:.6cqw .6cqw 0 rgba(74,144,217,.3);}
 
 .card-msg{margin:5cqw auto 0;max-width:92%;text-align:center;
-  font-style:italic;font-size:3.1cqw;line-height:1.5;color:#35577f;}
+  font-size:3.4cqw;line-height:1.5;color:#35577f;}
 .card-end{white-space:nowrap;}
-.card-leaf{display:inline-block;width:1.7em;height:1.7em;margin-left:.45em;vertical-align:-.55em;}
+.card-leaf{display:inline-block;width:1.5em;height:1.25em;margin-left:.5em;vertical-align:-.15em;}
+
+/* Pixel ornament near the bottom of the card */
+.card-orn{position:absolute;left:50%;bottom:10cqw;width:60cqw;transform:translateX(-50%);}
 
 /* ---------- Tap hint under the envelope ---------- */
 .px-hint{position:absolute;left:0;right:0;z-index:6;text-align:center;pointer-events:none;
