@@ -3,8 +3,11 @@
 import { useState, useEffect, useRef } from 'react'
 import { Volume2, VolumeX } from 'lucide-react'
 
-type Stage = 'closed' | 'opening' | 'card' | 'pull' | 'fade' | 'done'
-const ORDER: Stage[] = ['closed', 'opening', 'card', 'pull', 'fade', 'done']
+type Stage = 'closed' | 'opening' | 'card' | 'loading' | 'pull' | 'fade' | 'done'
+const ORDER: Stage[] = ['closed', 'opening', 'card', 'loading', 'pull', 'fade', 'done']
+
+// How long the loading bar takes (ms). Keep it equal to the 3.4s in the CSS (.ld-cat, .ld-fill).
+const LOAD_MS = 3400
 
 /* ---------- Pixel palette (change the colors here) ---------- */
 const DARK = '#2f5d8c' // outlines
@@ -176,7 +179,7 @@ function FlapFace({ className, fill, seal }: { className?: string; fill: string;
   )
 }
 
-/* ---------- The pixel cat (22 x 14 pixels) ---------- */
+/* ---------- The pixel cat that peeks from behind the envelope (22 x 14 pixels) ---------- */
 
 // Left half of the head; the right half is mirrored automatically
 const CAT_HALF = [
@@ -251,6 +254,55 @@ function Cat() {
         <rect x={5} y={6} width={1} height={2} fill="#22222c" />
         <rect x={16} y={6} width={1} height={2} fill="#22222c" />
       </g>
+    </svg>
+  )
+}
+
+/* ---------- The small side-view cat that hops along the loading bar (16 x 11 pixels) ---------- */
+// O = outline, G = gray, L = light belly and muzzle, P = pink ear, N = eye
+const SIDECAT = [
+  '..........O...O.',
+  '..........OPGPO.',
+  '..........OGGNO.',
+  '.O........OGGLLO',
+  '.OO..OOOOOOGGGO.',
+  '.OOGGGGGGGGGGO..',
+  '..OGGGGGGGGGGO..',
+  '..OGGLLLLLLGGO..',
+  '..OOOOOOOOOOOO..',
+  '...GG......GG...',
+  '...OO......OO...',
+]
+const SIDECAT_COLORS: Record<string, string> = {
+  O: '#2f4a73',
+  G: '#b7b7c4',
+  L: '#e6e6ee',
+  P: '#f4a3b8',
+  N: '#1f2a44',
+}
+const SIDECAT_RECTS = patternRects(SIDECAT, ch => ch in SIDECAT_COLORS)
+
+function SideCat() {
+  return (
+    <svg viewBox="0 0 16 11" width="100%" shapeRendering="crispEdges" style={{ display: 'block' }} aria-hidden>
+      {SIDECAT_RECTS.map((r, i) => (
+        <rect key={i} x={r.x} y={r.y} width={r.w} height={1} fill={SIDECAT_COLORS[r.ch]} />
+      ))}
+    </svg>
+  )
+}
+
+/* ---------- Small pixel arrow on the "Click to Open" button ---------- */
+
+const ARROW = ['X....', 'XX...', 'XXX..', 'XXXX.', 'XXX..', 'XX...', 'X....']
+const ARROW_RECTS = patternRects(ARROW, ch => ch === 'X')
+
+function OpenArrow() {
+  return (
+    <svg className="open-arrow" viewBox="0 0 5 7" shapeRendering="crispEdges" aria-hidden>
+      {ARROW_RECTS.map((r, i) => (
+        <rect key={i} x={r.x} y={r.y} width={r.w} height={1} fill="#ffffff" />
+      ))}
     </svg>
   )
 }
@@ -338,13 +390,21 @@ function CardOrnament() {
 function Card({
   guestName,
   texts,
+  loading,
+  canOpen,
+  onOpen,
 }: {
   guestName: string
-  texts?: { dear?: string; invited?: string; message?: string }
+  texts?: { dear?: string; invited?: string; message?: string; openButton?: string; loading?: string }
+  loading: boolean
+  canOpen: boolean
+  onOpen: () => void
 }) {
   const dear = texts?.dear ?? 'Dear our beloved guest,'
   const invited = texts?.invited ?? "You're Invited"
   const message = texts?.message ?? 'We would love to celebrate this special day with you'
+  const openText = texts?.openButton ?? 'Click to Open'
+  const loadingText = texts?.loading ?? 'Loading'
 
   // The pixel heart sits right after the last two words
   const words = message.trim().split(/\s+/).filter(Boolean)
@@ -352,7 +412,7 @@ function Card({
   const head = words.slice(0, -2).join(' ')
 
   return (
-    <div className="card" aria-hidden>
+    <div className="card">
       <div className="card-bob">
         <div className="card-face">
           <div className="card-paper">
@@ -386,6 +446,43 @@ function Card({
                   </span>
                 </div>
               )}
+
+              {/* The "Click to Open" button, which turns into the loading bar with the hopping cat */}
+              <div className="card-action">
+                {loading ? (
+                  <div className="ld" role="status" aria-live="polite">
+                    <div className="ld-text">
+                      {loadingText}
+                      <span className="ld-dot">.</span>
+                      <span className="ld-dot">.</span>
+                      <span className="ld-dot">.</span>
+                    </div>
+                    <div className="ld-lane">
+                      <div className="ld-cat">
+                        <div className="ld-cat-in">
+                          <SideCat />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="ld-bar">
+                      <div className="ld-fill" />
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    className="open-btn"
+                    disabled={!canOpen}
+                    onClick={e => {
+                      e.stopPropagation()
+                      onOpen()
+                    }}
+                  >
+                    <OpenArrow />
+                    <span>{openText}</span>
+                  </button>
+                )}
+              </div>
             </div>
 
             <div className="card-orn">
@@ -413,7 +510,7 @@ const css = `
   .inv-root{--u:round(down,calc(min(88vw,560px,100vh) / 40),1px);}
 }
 .inv-root.is-open{cursor:default;}
-.inv-root.is-card{cursor:pointer;}
+.inv-root.is-card{cursor:default;}
 .inv-root.is-pull{cursor:default;}
 .inv-root.is-fade{opacity:0;visibility:hidden;pointer-events:none;}
 .inv-root:focus-visible{outline:none;}
@@ -433,6 +530,8 @@ const css = `
 .px-shadow{position:absolute;z-index:0;background:rgba(47,93,140,.28);
   left:calc(50% - var(--ew) / 2 + var(--u) * 2);width:calc(var(--ew) - var(--u) * 4);
   top:calc(var(--ey) + var(--eh) / 2);height:calc(var(--u) * 1.5);}
+/* The envelope layers never catch clicks, so the button on the card stays clickable */
+.px-svg,.px-shadow,.px-cat-box,.px-flap-box{pointer-events:none;}
 
 /* ---------- The cat: pops up behind the envelope, peeks left and right, ducks down ---------- */
 .px-cat-box{position:absolute;z-index:1;
@@ -500,7 +599,7 @@ const css = `
   to{transform:translate(-50%,3vh) scale(.88)}
 }
 
-/* ---------- Guest taps again: card grows, the envelope slides away ---------- */
+/* ---------- Guest finished loading: card grows, the envelope slides away ---------- */
 .is-pull .card{animation:cardPull 1.6s cubic-bezier(.55,0,.2,1) forwards;}
 @keyframes cardPull{
   from{transform:translate(-50%,3vh) scale(.88)}
@@ -517,7 +616,7 @@ const css = `
 
 /* ---------- Pixel paper card: stepped outline, hard pixel shadow, dithered paper ---------- */
 .card-bob{position:absolute;inset:0;filter:drop-shadow(6px 6px 0 rgba(47,93,140,.32));}
-.is-card:not(.is-pull) .card-bob{animation:bob 2.6s ease-in-out infinite;}
+.is-card:not(.is-pull):not(.is-loading) .card-bob{animation:bob 2.6s ease-in-out infinite;}
 @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-1.1vh)}}
 
 /* Outer layer = the dark outline, cut with notched pixel corners */
@@ -567,6 +666,52 @@ const css = `
 /* Pixel ornament near the bottom of the card */
 .card-orn{position:absolute;left:50%;bottom:10cqw;width:60cqw;transform:translateX(-50%);}
 
+/* ---------- "Click to Open" button and loading bar (the red area on the card) ---------- */
+.card-action{margin:12cqw auto 0;width:60cqw;pointer-events:auto;}
+
+.open-btn{display:flex;align-items:center;justify-content:center;gap:2.6cqw;width:100%;
+  font-family:'Pixelify Sans','Courier New',monospace;font-weight:600;font-size:4.6cqw;line-height:1;
+  letter-spacing:.06em;text-transform:uppercase;color:#ffffff;
+  background:#4a90d9;border:.9cqw solid #2f5d8c;padding:3.4cqw 2cqw;cursor:pointer;
+  box-shadow:1.2cqw 1.2cqw 0 rgba(47,93,140,.35),inset 0 .9cqw 0 rgba(255,255,255,.35);
+  text-shadow:.5cqw .5cqw 0 rgba(35,68,107,.55);
+  animation:openPulse 1.2s steps(1,end) infinite;}
+.open-btn:hover:not(:disabled){background:#5aa0e6;}
+.open-btn:active:not(:disabled){transform:translate(.9cqw,.9cqw);
+  box-shadow:.3cqw .3cqw 0 rgba(47,93,140,.35),inset 0 .9cqw 0 rgba(255,255,255,.35);}
+.open-btn:disabled{opacity:.55;cursor:default;animation:none;}
+.open-btn:focus-visible{outline:.9cqw dashed #23446b;outline-offset:1cqw;}
+.open-arrow{width:2.6cqw;height:3.64cqw;flex:none;}
+@keyframes openPulse{0%{transform:translateY(0)}50%{transform:translateY(-.8cqw)}100%{transform:translateY(0)}}
+
+.ld{width:100%;text-align:center;font-family:'Pixelify Sans','Courier New',monospace;color:#4a6fb5;}
+.ld-text{font-weight:600;font-size:6.4cqw;line-height:1;letter-spacing:.04em;
+  text-shadow:.5cqw .5cqw 0 rgba(74,144,217,.28);}
+.ld-dot{animation:ldDot 1.2s steps(1,end) infinite;}
+.ld-dot:nth-child(2){animation-delay:.2s;}
+.ld-dot:nth-child(3){animation-delay:.4s;}
+@keyframes ldDot{0%{opacity:.15}50%{opacity:1}100%{opacity:1}}
+
+/* The lane above the bar: the cat runs along it in steps and hops all the way */
+.ld-lane{position:relative;height:13cqw;margin-top:1cqw;}
+.ld-cat{position:absolute;left:0;bottom:0;width:10cqw;animation:ldRun 3.4s steps(14,end) forwards;}
+.ld-cat-in{animation:ldHop .5s steps(1,end) infinite;}
+@keyframes ldRun{from{left:0}to{left:calc(100% - 10cqw)}}
+@keyframes ldHop{
+  0%{transform:translateY(0)}
+  25%{transform:translateY(-3cqw)}
+  50%{transform:translateY(-5cqw)}
+  75%{transform:translateY(-3cqw)}
+  100%{transform:translateY(0)}
+}
+
+.ld-bar{height:8cqw;border:1.2cqw solid #4a6fb5;background:#ffffff;padding:.8cqw;
+  box-shadow:.9cqw .9cqw 0 rgba(47,93,140,.25);}
+.ld-fill{height:100%;width:0;
+  background:repeating-linear-gradient(90deg,#4a90d9 0 2.4cqw,#7fb2e5 2.4cqw 3cqw);
+  animation:ldFill 3.4s steps(14,end) forwards;}
+@keyframes ldFill{to{width:100%}}
+
 /* ---------- Tap hint under the envelope ---------- */
 .px-hint{position:absolute;left:0;right:0;z-index:6;text-align:center;pointer-events:none;
   top:calc(var(--ey) + var(--eh) / 2 + var(--u) * 3);
@@ -590,6 +735,7 @@ const css = `
   .px-pupils,.px-star,.px-hint{animation:none;}
   .px-heart{animation:none;opacity:0;}
   .is-card:not(.is-pull) .card-bob{animation:none;}
+  .open-btn,.ld-dot,.ld-cat-in{animation:none;}
 }
 `
 
@@ -601,13 +747,21 @@ export default function InvitationIntro({
   guestName: string
   groomName?: string
   brideName?: string
-  envTexts?: { tapHint?: string; dear?: string; invited?: string; message?: string }
+  envTexts?: {
+    tapHint?: string
+    dear?: string
+    invited?: string
+    message?: string
+    openButton?: string
+    loading?: string
+  }
   children: React.ReactNode
 }) {
   const [stage, setStage] = useState<Stage>('closed')
   const [playing, setPlaying] = useState(false)
   const audioRef = useRef<HTMLAudioElement>(null)
   const timers = useRef<ReturnType<typeof setTimeout>[]>([])
+  const startedRef = useRef(false)
 
   const reached = (s: Stage) => ORDER.indexOf(stage) >= ORDER.indexOf(s)
 
@@ -619,27 +773,34 @@ export default function InvitationIntro({
     return () => list.forEach(clearTimeout)
   }, [])
 
+  // Tap the envelope: open it
   const handleTap = () => {
-    // Tap 1: open the envelope
-    if (stage === 'closed') {
-      // Music must start inside the tap, otherwise the browser blocks it
-      const audio = audioRef.current
-      if (audio) {
-        audio.volume = 0.8
-        audio.play().catch(() => {})
-      }
-      setStage('opening')
-      // The card finishes rising at about 2.6s, then it can be pulled out
-      timers.current.push(setTimeout(() => setStage('card'), 2700))
-      return
-    }
+    if (stage !== 'closed') return
 
-    // Tap 2: pull the card out, then crossfade into the invitation page
-    if (stage === 'card') {
-      setStage('pull')
-      timers.current.push(setTimeout(() => setStage('fade'), 1300))
-      timers.current.push(setTimeout(() => setStage('done'), 2700))
+    // Music must start inside the tap, otherwise the browser blocks it
+    const audio = audioRef.current
+    if (audio) {
+      audio.volume = 0.8
+      audio.play().catch(() => {})
     }
+    setStage('opening')
+    // The card finishes rising at about 2.6s, then the button can be pressed
+    timers.current.push(setTimeout(() => setStage('card'), 2700))
+  }
+
+  // Press "Click to Open": the loading bar runs, then the card is pulled out and fades into the page
+  const startLoading = () => {
+    if (stage !== 'card' || startedRef.current) return
+    startedRef.current = true
+    setStage('loading')
+
+    timers.current.push(
+      setTimeout(() => {
+        setStage('pull')
+        timers.current.push(setTimeout(() => setStage('fade'), 1300))
+        timers.current.push(setTimeout(() => setStage('done'), 2700))
+      }, LOAD_MS + 400)
+    )
   }
 
   const toggleMusic = () => {
@@ -656,6 +817,7 @@ export default function InvitationIntro({
     'inv-root',
     reached('opening') && 'is-open',
     reached('card') && 'is-card',
+    stage === 'loading' && 'is-loading',
     reached('pull') && 'is-pull',
     reached('fade') && 'is-fade',
   ]
@@ -683,14 +845,14 @@ export default function InvitationIntro({
           className={rootClass}
           onClick={handleTap}
           onKeyDown={e => {
-            if (e.key === 'Enter' || e.key === ' ') {
+            if (stage === 'closed' && (e.key === 'Enter' || e.key === ' ')) {
               e.preventDefault()
               handleTap()
             }
           }}
-          role="button"
-          tabIndex={0}
-          aria-label={`Open invitation for ${guestName}`}
+          role={stage === 'closed' ? 'button' : undefined}
+          tabIndex={stage === 'closed' ? 0 : -1}
+          aria-label={stage === 'closed' ? `Open invitation for ${guestName}` : undefined}
         >
           {/* Sky */}
           <div className="px-bg" aria-hidden>
@@ -725,7 +887,13 @@ export default function InvitationIntro({
 
           {/* The invitation paper, tucked inside */}
           <div className="px-cardclip">
-            <Card guestName={guestName} texts={envTexts} />
+            <Card
+              guestName={guestName}
+              texts={envTexts}
+              loading={reached('loading')}
+              canOpen={stage === 'card'}
+              onOpen={startLoading}
+            />
           </div>
 
           {/* Front of the envelope: side folds + bottom fold */}
