@@ -185,22 +185,28 @@ function PixelOrnament({ position }: { position: 'top' | 'bottom' }) {
 
 // ===== Pixel avatars for the couple section =====
 // Same idea as the ornament: one character = one square pixel (16 x 16 grid).
-// . = empty, K = groom hair, Y = bride hair, S = skin, E = eye (blinks), C = cheek, M = mouth
-// B/b = suit, W = shirt, R = bow tie, V = veil, D/d = dress
+// . = empty, K = groom hair, Y/y = bride hair (y = highlight), S = skin, E = eye (blinks)
+// C/c = cheek, M/m = mouth, B/b = suit, W = shirt, R = bow tie
+// V = veil, D/d = dress, F/f = hair flower
 const AV_COLORS: Record<string, string> = {
   K: '#3b2a2a',
   Y: '#7a4a32',
+  y: '#9a6445',
   S: '#ffd9b8',
   E: '#23446b',
   C: '#f59ab9',
+  c: '#ffc2d2',
   M: '#c4607f',
+  m: '#e8798f',
   B: '#2f5d8c',
   b: '#4a90d9',
   W: '#ffffff',
   R: '#f59ab9',
-  V: '#bcd9f3',
+  V: '#eef6fe',
   D: '#ffffff',
-  d: '#cfe4f7',
+  d: '#d4e6f8',
+  F: '#f59ab9',
+  f: '#ffe3ec',
 }
 
 const AV_GROOM = [
@@ -219,45 +225,57 @@ const AV_GROOM = [
   '.BBBBBBbbBBBBBB.',
   '.BBBBBBbbBBBBBB.',
   '.BBBBBBbbBBBBBB.',
-  '................',
+  '.BBBBBBbbBBBBBB.',
 ]
 
+// Bride: oval face, taller eyes, soft blush, small mouth, veil and a little flower
 const AV_BRIDE = [
   '................',
   '.....YYYYYY.....',
-  '....YYYYYYYY....',
-  '...VYYSSSSYYV...',
-  '...VYSSSSSSYV...',
-  '...VYSESSESYV...',
-  '...VYSSSSSSYV...',
-  '...VYSCMMCSYV...',
-  '...VYYSSSSYYV...',
-  '...VYYYSSYYYV...',
-  '...VYYDDDDYYV...',
-  '....YDDDDDDY....',
-  '...VDDDDDDDDV...',
+  '....YYyYYYYY....',
+  '...YYYYYYYFfY...',
+  '..VYYYSSSSYYYV..',
+  '..VYYSSSSSSYYV..',
+  '..VYSESSSSESYV..',
+  '..VYSESSSSESYV..',
+  '..VYScSSSScSYV..',
+  '..VYSSSmmSSSYV..',
+  '..VYYSSSSSSYYV..',
+  '..VYYYSSSSYYYV..',
+  '..VYYDDDDDDYYV..',
+  '..VYDDDDDDDDYV..',
   '..VDDDDDDDDDDV..',
   '.dDDDDDDDDDDDDd.',
-  '................',
 ]
 
 function PixelAvatar({ rows, delay = 0 }: { rows: string[]; delay?: number }) {
   const h = rows.length
   const w = rows[0].length
+  // The last row is repeated once below, so the body still reaches the edge of the circle while bobbing
+  const drawn = [...rows, rows[h - 1]]
   return (
     <div
       aria-hidden
-      className="mx-auto mb-5 p-2"
+      className="mx-auto mb-5"
       style={{
         width: 112,
-        backgroundColor: 'rgba(255,255,255,0.6)',
-        border: '2px solid rgba(74,144,217,0.5)',
-        boxShadow: '0 0 0 3px rgba(74,144,217,0.15)',
+        height: 112,
+        borderRadius: '50%',
+        overflow: 'hidden',
+        background: 'linear-gradient(180deg,#e3f1fd 0%,#b3d4f3 100%)',
+        border: '3px solid rgba(74,144,217,0.55)',
+        boxShadow: '0 0 0 4px rgba(74,144,217,0.15), 0 4px 12px rgba(74,144,217,0.2)',
       }}
     >
-      <svg viewBox={`0 0 ${w} ${h}`} width="100%" shapeRendering="crispEdges" style={{ display: 'block' }}>
+      <svg
+        viewBox={`0 0 ${w} ${h}`}
+        width="100%"
+        height="100%"
+        shapeRendering="crispEdges"
+        style={{ display: 'block', overflow: 'visible' }}
+      >
         <g className="px-bob" style={{ animationDelay: `${delay}s` }}>
-          {rows.map((row, y) =>
+          {drawn.map((row, y) =>
             row.split('').map((c, x) => {
               if (c === '.') return null
               // Eyes: draw skin underneath, then the eye on top so it can blink
