@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Our Story</title>
+<link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#262857;--panel:#31346b;--ink:#fff4e0;--pink:#f7a8bd;--gold:#ffd36e;--line:#555aa8;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:dark}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#171938;--panel:#22254f;--line:#444a93}}
+:root[data-theme="dark"]{--bg:#171938;--panel:#22254f;--line:#444a93}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:'Pixelify Sans',ui-monospace,Menlo,monospace;min-height:100%;display:flex;justify-content:center}
+main{width:100%;max-width:560px;padding:28px 18px 40px}
+h1{font-size:44px;font-weight:600;margin:0 0 28px;text-align:center;color:var(--gold);line-height:1.05}
+.names{text-align:center;color:var(--pink);font-size:20px;margin:8px 0 28px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.card{font:inherit;color:inherit;text-align:left;background:var(--panel);border:3px solid var(--line);padding:16px;cursor:pointer;display:flex;gap:12px;align-items:center;box-shadow:4px 4px 0 var(--line);transition:transform .12s}
+.card:hover{transform:translate(-2px,-2px)}
+.card:focus-visible,button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+.card .ic{font-size:30px}
+.card small{display:block;color:var(--pink);font-size:15px}
+.card b{font-size:20px;font-weight:600}
+.card.seen{border-color:var(--gold)}
+.card.seen small::after{content:" ★ seen"}
+.bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.btn{font:inherit;font-size:17px;color:var(--bg);background:var(--gold);border:0;padding:8px 14px;cursor:pointer;box-shadow:3px 3px 0 var(--line)}
+.btn.alt{background:var(--panel);color:var(--ink);border:2px solid var(--line)}
+svg{width:100%;height:auto;display:block;border:3px solid var(--line);image-rendering:pixelated}
+#box{display:block;width:100%;font:inherit;color:var(--ink);text-align:left;background:var(--panel);border:3px solid var(--gold);padding:16px 18px;margin-top:12px;min-height:96px;font-size:20px;line-height:1.35;cursor:pointer;position:relative;box-shadow:4px 4px 0 var(--line)}
+#nxt{position:absolute;right:12px;bottom:8px;color:var(--gold);animation:blink .8s steps(2) infinite}
+#end{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px;justify-content:center}
+[hidden]{display:none!important}
+.ch .bob{animation:idle 1.6s ease-in-out infinite alternate}
+.walk .bob{animation:bob .25s infinite alternate}
+.walk .l{animation:step .25s infinite alternate}
+.walk .r{animation:step .25s infinite alternate-reverse}
+.low .bob{animation:none;transform:translateY(9px) scaleY(.84)}
+.hop .bob{animation:hop .4s ease-out 4}
+.pop{font-size:16px;text-anchor:middle;animation:pop 1.8s ease-out both}
+.fall{animation:fall 2.6s linear both;transform-box:fill-box;transform-origin:center}
+.steam{animation:steam 1.6s ease-in-out infinite}
+@keyframes idle{to{transform:translateY(-1.5px)}}
+@keyframes bob{to{transform:translateY(-3px)}}
+@keyframes step{to{transform:translateY(-4px)}}
+@keyframes hop{50%{transform:translateY(-16px)}}
+@keyframes pop{0%{opacity:0;transform:translateY(0)}20%{opacity:1}100%{opacity:0;transform:translateY(-46px)}}
+@keyframes fall{to{transform:translateY(260px) rotate(540deg)}}
+@keyframes steam{0%{opacity:0;transform:translateY(4px)}50%{opacity:.8}100%{opacity:0;transform:translateY(-8px)}}
+@keyframes blink{50%{opacity:0}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+</head>
+<body>
+<main>
+  <section id="menu">
+    <h1>Our Story</h1>
+    <div class="grid" id="grid"></div>
+  </section>
+  <section id="stage" hidden>
+    <div class="bar"><button class="btn alt" id="back">← Chapters</button><span id="ttl"></span></div>
+    <svg id="sv" viewBox="0 0 400 240" role="img" aria-label="Animated story scene">
+      <g id="bg"></g><g id="G"></g><g id="B"></g><g id="fx"></g>
+    </svg>
+    <button id="box" aria-live="polite"><span id="dlg"></span><span id="nxt" hidden>▼</span></button>
+    <div id="end" hidden>
+      <button class="btn alt" id="again">Replay</button>
+      <button class="btn" id="next">Next chapter</button>
+      <button class="btn alt" id="menuBtn">Chapters</button>
+    </div>
+  </section>
+</main>
+<script>
+const CH=[
+{ic:"👋",t:"How we met",sub:"Chapter 1",S:[
+ {bg:"class",look:"uni",t:"We used to be classmates, and back then it was nothing special.",a:async x=>{x.at(110,290);x.low();await x.w(600);x.pop(110,105,"✏️",1);x.pop(290,105,"📖",1);await x.w(1800);}},
+ {bg:"street",look:"casual",t:"Years later, we met again in the same city, and this time it felt different.",a:async x=>{x.at(-40,440);await x.w(300);await Promise.all([x.go(x.G,150,2400),x.go(x.B,250,2400)]);x.pop(200,100);}}
+]},
+{ic:"🎤",t:"Our first date",sub:"Chapter 2",S:[
+ {bg:"concert",look:"casual",t:"I took her to see her favorite singer live, her very first time seeing her idol in person.",a:async x=>{x.at(-40,440);await x.w(300);await Promise.all([x.go(x.G,165,2000),x.go(x.B,235,2000)]);x.pop(200,70,"🎶",3);}},
+ {bg:"concert",look:"casual",t:"She was the happiest I had ever seen her.",a:async x=>{x.at(165,235);x.hop(x.B);x.pop(235,105,"💖",5);x.pop(235,75,"✨",3);await x.w(2200);}}
+]},
+{ic:"💐",t:"How we became us",sub:"Chapter 3",S:[
+ {bg:"gate",look:"casual",t:"One year later, we went to another concert together.",a:async x=>{x.at(-40,440);await x.w(300);await Promise.all([x.go(x.G,170,2200),x.go(x.B,230,2200)]);x.pop(200,120,"🎫",1);}},
+ {bg:"gate",look:"casual",t:"Five minutes before the show, I gave her flowers and asked her to be my girlfriend.",a:async x=>{x.at(140,235);x.pop(200,30,"⏰",1);await x.w(900);await x.go(x.G,195,1400);x.pop(212,115,"💐",1);await x.w(1200);}},
+ {bg:"gate",look:"casual",t:"She said yes!",a:async x=>{x.at(195,235);x.hop(x.B);x.pop(215,100,"💖",5);x.rain();await x.w(2400);}}
+]},
+{ic:"🎉",t:"Our new chapter",sub:"Chapter 4",S:[
+ {bg:"path",look:"casual",t:"Day by day, through tears and laughter, we chose to fight for our future together.",a:async x=>{x.at(40,80);const m=Promise.all([x.go(x.G,280,3600),x.go(x.B,320,3600)]);await x.w(800);x.pop(95,105,"😂",1);await x.w(900);x.pop(150,105,"😢",1);await x.w(900);x.pop(220,105,"💪",1);await m;}},
+ {bg:"arch",look:"wed",t:"Now the day has finally come.",a:async x=>{x.at(-40,440);await x.w(300);await Promise.all([x.go(x.G,172,2200),x.go(x.B,228,2200)]);x.rain();x.pop(200,100);}},
+ {bg:"arch",look:"wed",t:"We’re ready to start our new chapter, and we’d love for you to be in it.",a:async x=>{x.at(172,228);x.hop(x.G);x.hop(x.B);x.pop(200,70,"💌",1);x.pop(200,100);x.rain();await x.w(2600);}}
+]}
+];
+const BG={
+class:`<rect width="400" height="190" fill="#e9d9b5"/><rect x="60" y="30" width="170" height="70" fill="#2f5d4a" stroke="#8a5a2b" stroke-width="4"/><text x="145" y="72" fill="#fff4e0" font-size="14" text-anchor="middle" font-family="Pixelify Sans,monospace">Class 12-A</text><rect x="280" y="35" width="70" height="60" fill="#9ad0e8" stroke="#8a5a2b" stroke-width="4"/><rect y="190" width="400" height="50" fill="#b98a55"/><rect x="80" y="150" width="60" height="6" fill="#8a5a2b"/><rect x="92" y="156" width="6" height="34" fill="#8a5a2b"/><rect x="260" y="150" width="60" height="6" fill="#8a5a2b"/><rect x="302" y="156" width="6" height="34" fill="#8a5a2b"/>`,
+path:`<rect width="400" height="190" fill="#f4b183"/><circle cx="330" cy="70" r="26" fill="#ffd36e"/><path d="M0 150Q80 100 160 140T320 130T400 140V190H0Z" fill="#8f7fc7"/><rect y="190" width="400" height="50" fill="#6b9a74"/><rect y="190" width="400" height="6" fill="#8bbf92"/>`,
+street:`<rect width="400" height="190" fill="#4b4f9e"/><circle cx="330" cy="40" r="18" fill="#ffd36e"/><g fill="#2b2d5b"><rect x="10" y="90" width="60" height="100"/><rect x="80" y="60" width="50" height="130"/><rect x="290" y="80" width="70" height="110"/><rect x="215" y="105" width="55" height="85"/></g><g fill="#ffd36e"><rect x="24" y="106" width="8" height="10"/><rect x="46" y="106" width="8" height="10"/><rect x="94" y="80" width="8" height="10"/><rect x="108" y="110" width="8" height="10"/><rect x="305" y="100" width="8" height="10"/><rect x="335" y="100" width="8" height="10"/></g><rect y="190" width="400" height="50" fill="#2f4f4a"/><rect y="190" width="400" height="6" fill="#3f6b62"/>`,
+concert:`<rect width="400" height="190" fill="#1a1230"/><g opacity=".35"><path d="M120 0L60 190H180Z" fill="#f7a8bd"/><path d="M280 0L220 190H340Z" fill="#8fd3ff"/><path d="M200 0L170 190H230Z" fill="#ffd36e"/></g><rect x="130" y="110" width="140" height="80" fill="#2b2d5b"/><circle cx="200" cy="92" r="7" fill="#ffd9b8"/><rect x="194" y="99" width="12" height="22" rx="3" fill="#f7a8bd"/><rect y="190" width="400" height="50" fill="#120c22"/><g fill="#ffd36e"><circle cx="30" cy="30" r="2"/><circle cx="360" cy="50" r="2"/><circle cx="90" cy="60" r="2"/></g>`,
+gate:`<rect width="400" height="190" fill="#2a1f4d"/><rect x="110" y="40" width="180" height="60" rx="4" fill="#ffd36e"/><rect x="118" y="48" width="164" height="44" rx="2" fill="#31346b"/><path d="M135 70h130" stroke="#f7a8bd" stroke-width="6" stroke-dasharray="14 8"/><g fill="#fff4e0"><circle cx="40" cy="30" r="2"/><circle cx="350" cy="25" r="2"/><circle cx="70" cy="80" r="2"/><circle cx="330" cy="90" r="2"/></g><rect y="190" width="400" height="50" fill="#1b1436"/><rect y="190" width="400" height="6" fill="#3a2d66"/>`,
+cafe:`<rect width="400" height="190" fill="#6b4a5e"/><rect x="150" y="30" width="100" height="70" rx="4" fill="#9ad0e8"/><path d="M200 30V100M150 65H250" stroke="#6b4a5e" stroke-width="4"/><rect y="190" width="400" height="50" fill="#4a3040"/><rect x="172" y="152" width="56" height="6" fill="#d9a066"/><rect x="196" y="158" width="8" height="32" fill="#d9a066"/><rect x="180" y="142" width="10" height="10" fill="#fff4e0"/><rect x="210" y="142" width="10" height="10" fill="#fff4e0"/><g stroke="#fff4e0" fill="none" stroke-width="2"><path class="steam" d="M185 138q-3-5 0-9"/><path class="steam" d="M215 138q-3-5 0-9" style="animation-delay:.6s"/></g>`,
+sunset:`<rect width="400" height="190" fill="#f08a7a"/><circle cx="200" cy="140" r="42" fill="#ffd36e"/><rect y="140" width="400" height="50" fill="#c25a7a"/><rect y="190" width="400" height="50" fill="#e8b97a"/>`,
+arch:`<rect width="400" height="190" fill="#bfe3f2"/><rect y="190" width="400" height="50" fill="#8fc7a5"/><path d="M145 190V110A55 55 0 0 1 255 110V190" fill="none" stroke="#ffd36e" stroke-width="6"/><g fill="#f7a8bd"><circle cx="145" cy="150" r="7"/><circle cx="145" cy="115" r="7"/><circle cx="160" cy="70" r="7"/><circle cx="200" cy="55" r="7"/><circle cx="240" cy="70" r="7"/><circle cx="255" cy="115" r="7"/><circle cx="255" cy="150" r="7"/></g>`
+};
+const person=(hair,outfit,bride)=>`<g class="bob"><rect class="lg l" x="-8" y="-16" width="6" height="16" fill="#3a3560"/><rect class="lg r" x="2" y="-16" width="6" height="16" fill="#3a3560"/>${bride?`<path d="M-15 -14L-9 -40H9L15 -14Z" fill="${outfit}"/>`:`<rect x="-10" y="-40" width="20" height="26" rx="4" fill="${outfit}"/>`}<circle cy="-53" r="13" fill="#ffd9b8"/><path d="M-14 -53A14 14 0 0 1 14 -53Z" fill="${hair}"/>${bride?`<rect x="-15" y="-56" width="5" height="22" rx="2" fill="${hair}"/><rect x="10" y="-56" width="5" height="22" rx="2" fill="${hair}"/>`:''}<circle cx="-5" cy="-52" r="1.8" fill="#222"/><circle cx="5" cy="-52" r="1.8" fill="#222"/><circle cx="-8" cy="-47" r="2.4" fill="#f7a8bd" opacity=".8"/><circle cx="8" cy="-47" r="2.4" fill="#f7a8bd" opacity=".8"/></g>`;
+const $=id=>document.getElementById(id), NS="http://www.w3.org/2000/svg";
+const G=$("G"),B=$("B"),fx=$("fx"),box=$("box"),dlg=$("dlg"),nxt=$("nxt"),end=$("end");
+G.setAttribute("class","ch");B.setAttribute("class","ch");
+G.innerHTML=person("#2a2233","#5a6bd6",false);
+B.innerHTML=person("#6b3a2a","#fff4e0",true);
+const seen=new Set();let tok=0,cur=0;
+
+function buildMenu(){
+  $("grid").innerHTML="";
+  CH.forEach((c,i)=>{
+    const b=document.createElement("button");
+    b.className="card"+(seen.has(i)?" seen":"");
+    b.innerHTML=`<span class="ic">${c.ic}</span><span><small>${c.sub}</small><b>${c.t}</b></span>`;
+    b.onclick=()=>play(i);
+    $("grid").append(b);
+  });
+}
+function toMenu(){tok++;$("stage").hidden=true;$("menu").hidden=false;buildMenu();}
+$("back").onclick=$("menuBtn").onclick=toMenu;
+$("again").onclick=()=>play(cur);
+$("next").onclick=()=>play(cur+1);
+
+function place(el,x){el.style.transition="none";el.style.transform=`translate(${x}px,190px)`;el.getBoundingClientRect();}
+const pop=(x,y,e="💖",n=5)=>{for(let k=0;k<n;k++){const t=document.createElementNS(NS,"text");t.setAttribute("x",x+(k-(n-1)/2)*16);t.setAttribute("y",y);t.setAttribute("class","pop");t.style.animationDelay=k*.12+"s";t.textContent=e;fx.append(t);}};
+const rain=()=>{for(let k=0;k<36;k++){const r=document.createElementNS(NS,"rect");r.setAttribute("x",Math.random()*400);r.setAttribute("y",-10);r.setAttribute("width",5);r.setAttribute("height",8);r.setAttribute("fill",["#ffd36e","#f7a8bd","#8fc7a5","#fff4e0"][k%4]);r.setAttribute("class","fall");r.style.animationDelay=Math.random()*1.5+"s";fx.append(r);}};
+
+const LOOKS={casual:["#2a2233","#5a6bd6","#6b3a2a","#f7a8bd"],uni:["#2a2233","#ffffff","#6b3a2a","#ffffff"],wed:["#2a2233","#3a3f7a","#6b3a2a","#fff4e0"]};
+const dress=k=>{const l=LOOKS[k],u=k==="uni";G.innerHTML=person(l[0],l[1],false).replace(/<\/g>$/,(u?'<rect x="-2" y="-40" width="4" height="12" fill="#d33"/>':'')+'</g>');B.innerHTML=person(l[2],l[3],true).replace(/<\/g>$/,(u?'<circle cy="-39" r="3" fill="#d33"/>':'')+'</g>');};
+async function play(i){
+  cur=i;const c=CH[i];
+  $("menu").hidden=true;$("stage").hidden=false;end.hidden=true;$("ttl").textContent=c.t;
+  try{
+    for(const s of c.S){
+      const my=++tok;
+      const w=ms=>new Promise((r,j)=>setTimeout(()=>tok===my?r():j(),ms));
+      const go=(el,px,ms)=>{el.classList.add("walk");el.style.transition=`transform ${ms}ms linear`;el.style.transform=`translate(${px}px,190px)`;return w(ms).then(()=>el.classList.remove("walk"));};
+      const say=text=>new Promise((res,rej)=>{
+        dlg.textContent="";nxt.hidden=true;let n=0;
+        const done=()=>{nxt.hidden=false;box.onclick=()=>{box.onclick=null;res();};};
+        const iv=setInterval(()=>{if(tok!==my){clearInterval(iv);rej();return;}dlg.textContent=text.slice(0,++n);if(n>=text.length){clearInterval(iv);done();}},28);
+        box.onclick=()=>{if(n<text.length){clearInterval(iv);n=text.length;dlg.textContent=text;done();}};
+      });
+      [G,B].forEach(e=>e.classList.remove("low","hop","walk"));
+      fx.innerHTML="";nxt.hidden=true;dlg.textContent="";
+      $("bg").innerHTML=BG[s.bg];dress(s.look);
+      const x={G,B,w,go,pop,rain,at:(a,b)=>{place(G,a);place(B,b);},low:()=>[G,B].forEach(e=>e.classList.add("low")),hop:e=>e.classList.add("hop")};
+      await Promise.all([s.a(x),say(s.t)]);
+    }
+    seen.add(i);$("next").hidden=i>=CH.length-1;end.hidden=false;
+  }catch(e){}
+}
+buildMenu();
+</script>
+</body>
+</html>
