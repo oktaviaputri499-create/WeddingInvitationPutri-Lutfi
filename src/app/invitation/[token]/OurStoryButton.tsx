@@ -44,6 +44,63 @@ function Sprite({ rows }: { rows: string[] }) {
   )
 }
 
+/* ---------- Pixel cat that sits between the couple ---------- */
+
+// O = outline, G = gray, L = light gray, P = pink ear, B = blush, N = nose
+const CAT_COLORS: Record<string, string> = {
+  O: '#2f4a73',
+  G: '#a9a9b5',
+  L: '#d7d7e0',
+  P: '#f4a3b8',
+  B: '#f7b6c8',
+  N: '#f08aa4',
+}
+
+const CAT = [
+  '.OO.......OO.',
+  '.OPO.....OPO.',
+  '.OPPOOOOOPPO.',
+  'OGGGGGGGGGGGO',
+  'OGGGGGGGGGGGO',
+  'OGGGGGGGGGGGO',
+  'OGBGGLNLGGBGO',
+  'OGGGGLOLGGGGO',
+  '.OGGGGGGGGGO.',
+  '.OGGGLLLGGGO.',
+  '.OGGGLLLGGGO.',
+  '.OLLOGGGOLLO.',
+  '.OOOOOOOOOOO.',
+]
+
+function Cat() {
+  const rects: React.ReactNode[] = []
+  CAT.forEach((row, y) => {
+    for (let x = 0; x < row.length; x++) {
+      const c = row.charAt(x)
+      if (c in CAT_COLORS) {
+        rects.push(<rect key={`${x}-${y}`} x={x} y={y} width={1.02} height={1.02} fill={CAT_COLORS[c]} />)
+      }
+    }
+  })
+  return (
+    <svg viewBox="0 0 17 13" width="100%" shapeRendering="crispEdges" aria-hidden style={{ display: 'block', overflow: 'visible' }}>
+      {/* Tail (wags) */}
+      <g className="cat-tail" style={{ transformOrigin: '13px 11.5px' }}>
+        <rect x={13} y={11} width={2} height={1.02} fill="#8e8e9c" />
+        <rect x={14} y={10} width={2} height={1.02} fill="#8e8e9c" />
+        <rect x={15} y={9} width={1.02} height={1.02} fill="#8e8e9c" />
+        <rect x={15} y={8} width={1.02} height={1.02} fill="#d7d7e0" />
+      </g>
+
+      {rects}
+
+      {/* Eyes (blink) */}
+      <rect className="cat-eye" x={3} y={4} width={1.02} height={2.04} fill="#1f2a44" />
+      <rect className="cat-eye" x={9} y={4} width={1.02} height={2.04} fill="#1f2a44" />
+    </svg>
+  )
+}
+
 /* ---------- Pixel ornament (replaces the thin flourishes at the top and bottom) ---------- */
 
 const HEART = ['.XX.XX.', 'XXXXXXX', 'XXXXXXX', '.XXXXX.', '..XXX..', '...X...']
@@ -87,6 +144,16 @@ html body input,html body textarea,html body select,html body button,
 h1.font-script{font-size:clamp(1.9rem,9vw,2.8rem) !important;line-height:1.3 !important;}
 h2.font-script{font-size:30px !important;line-height:1.3 !important;}
 
+/* Hero names: bold pixel capitals with extra spacing and a hard pixel shadow, so they stay readable */
+html body section h1.hero-names{
+  font-family:'Pixelify Sans',ui-monospace,Menlo,monospace !important;
+  font-weight:600 !important;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  font-size:clamp(1.6rem,6.8vw,2.2rem) !important;
+  line-height:1.25 !important;
+  text-shadow:2px 2px 0 rgba(74,144,217,.28) !important;}
+
 /* square pixel corners */
 .rounded-full,.rounded-sm,.rounded-lg,.rounded-md,.rounded-xl{border-radius:0 !important;}
 
@@ -107,10 +174,14 @@ const coupleCss = `
 @keyframes cpBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
 @keyframes cpHeart{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-5px) scale(1.25)}}
 @keyframes cpTw{0%,100%{opacity:.15}50%{opacity:1}}
+@keyframes catTail{from{transform:rotate(-14deg)}to{transform:rotate(12deg)}}
+@keyframes catBlink{0%,90%,100%{transform:scaleY(1)}94%{transform:scaleY(.15)}}
 .cp-bob{animation:cpBob 2.2s ease-in-out infinite;}
 .cp-heart{animation:cpHeart 1.8s ease-in-out infinite;}
 .cp-tw{animation:cpTw 2.4s ease-in-out infinite;}
-@media (prefers-reduced-motion:reduce){.cp-bob,.cp-heart,.cp-tw{animation:none;}}
+.cat-tail{animation:catTail 1.1s ease-in-out infinite alternate;}
+.cat-eye{transform-box:fill-box;transform-origin:50% 50%;animation:catBlink 4.5s ease-in-out infinite;}
+@media (prefers-reduced-motion:reduce){.cp-bob,.cp-heart,.cp-tw,.cat-tail,.cat-eye{animation:none;}}
 `
 
 function Couple() {
@@ -135,6 +206,22 @@ function Couple() {
 
       <div className="cp-bob" style={{ animationDelay: '-1.1s' }}>
         <Sprite rows={BRIDE} />
+      </div>
+
+      {/* The cat sits on the ground between the two */}
+      <div
+        className="absolute"
+        style={{
+          left: '50%',
+          marginLeft: -29,
+          bottom: 1,
+          width: 42,
+          zIndex: 2,
+          animation: 'cpFade 1.2s ease-out 3.2s both',
+        }}
+        aria-hidden
+      >
+        <Cat />
       </div>
 
       {[
