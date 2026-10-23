@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { notFound } from 'next/navigation'
-import { Cinzel } from 'next/font/google'
+import { Cinzel, Cormorant_Garamond } from 'next/font/google'
 import RsvpForm from './RsvpForm'
 import WishForm from './WishForm'
 import InvitationIntro from './InvitationIntro'
@@ -14,8 +14,11 @@ import { MapPin, Calendar, Clock, Gift, CreditCard, CalendarPlus, Heart } from '
 
 export const dynamic = 'force-dynamic'
 
-// Font for the groom and bride names
+// Font for the groom and bride names (couple section)
 const cinzel = Cinzel({ subsets: ['latin'], weight: ['500'] })
+
+// Font for the hero names (same as the "You're Invited" title)
+const cormorant = Cormorant_Garamond({ subsets: ['latin'], weight: ['400'], variable: '--font-cormorant' })
 
 // ===== Soft blue palette =====
 const ACCENT = '#4a90d9'   // main blue accent (icons, buttons, ampersand)
@@ -262,6 +265,7 @@ export default async function InvitationPage({ params }: { params: { token: stri
               @keyframes pxTwinkle{0%,100%{opacity:1}50%{opacity:.2}}
               .px-twinkle{animation:pxTwinkle 1.6s steps(1,end) infinite}
               @media (prefers-reduced-motion:reduce){.px-twinkle{animation:none}}
+              html body h1.hero-names{font-family:var(--font-cormorant),'Cormorant Garamond',Georgia,serif !important;font-weight:400 !important;text-transform:uppercase;letter-spacing:.06em;font-size:clamp(1.7rem,7.5vw,2.5rem) !important;line-height:1.2 !important;}
             `}</style>
 
             <div
@@ -287,10 +291,7 @@ export default async function InvitationPage({ params }: { params: { token: stri
                 </p>
               )}
 
-              <h1
-                className="font-script"
-                style={{ fontSize: 'clamp(2.9rem, 13.5vw, 4.4rem)', lineHeight: 1.15 }}
-              >
+              <h1 className={`hero-names ${cormorant.variable}`}>
                 <AnimatedText text={groomFirst} startDelay={groomDelay} step={letterStep} />
                 {' '}
                 <span style={{ fontSize: '0.72em', color: ACCENT }}>
