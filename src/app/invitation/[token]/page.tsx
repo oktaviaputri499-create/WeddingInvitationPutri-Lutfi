@@ -67,6 +67,112 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   )
 }
 
+// ===== Pixel ornament for the top and bottom of the hero =====
+// Drawn pixel by pixel: every character below is one square pixel.
+// . = empty, P = pink, H = light pink, G = gold, g = dim gold, I = ivory, S = sparkle
+const PX_COLORS: Record<string, string> = {
+  P: '#f4a0bf',
+  H: '#ffd6e4',
+  G: '#d4b26e',
+  g: '#8a7447',
+  I: '#fff1cf',
+  S: '#f0d9a0',
+}
+
+const PX_HEART = [
+  '.......',
+  '.HP.PP.',
+  'PPPPPPP',
+  'PPPPPPP',
+  '.PPPPP.',
+  '..PPP..',
+  '...P...',
+]
+
+const PX_DIAMOND = [
+  '.....',
+  '..G..',
+  '.GGG.',
+  'GGIGG',
+  '.GGG.',
+  '..G..',
+  '.....',
+]
+
+const PX_SPARKLE = [
+  '...',
+  '...',
+  '.S.',
+  'SSS',
+  '.S.',
+  '...',
+  '...',
+]
+
+const pxBlank = (w: number) => Array.from({ length: 7 }, () => '.'.repeat(w))
+const pxDashed = (s: string) =>
+  Array.from({ length: 7 }, (_, r) => (r === 3 ? s : '.'.repeat(s.length)))
+
+const PX_LINE_LEFT = 'g.g.G.G.G.'
+const PX_LINE_RIGHT = [...PX_LINE_LEFT].reverse().join('')
+
+const PX_PIECES = [
+  pxDashed(PX_LINE_LEFT),
+  pxBlank(2),
+  PX_HEART,
+  pxBlank(2),
+  PX_SPARKLE,
+  pxBlank(2),
+  PX_DIAMOND,
+  pxBlank(2),
+  PX_SPARKLE,
+  pxBlank(2),
+  PX_HEART,
+  pxBlank(2),
+  pxDashed(PX_LINE_RIGHT),
+]
+
+const PX_ROWS = Array.from({ length: 7 }, (_, r) => PX_PIECES.map(p => p[r]).join(''))
+const PX_COLS = PX_ROWS[0].length
+
+function PixelOrnament({ position }: { position: 'top' | 'bottom' }) {
+  return (
+    <div
+      aria-hidden
+      className="absolute left-1/2 pointer-events-none"
+      style={{
+        [position]: 40,
+        width: 'min(285px, 80%)',
+        transform: 'translateX(-50%)',
+        animation: 'heroFade 1.6s ease-out 0.4s both',
+      }}
+    >
+      <svg
+        viewBox={`0 0 ${PX_COLS} 7`}
+        width="100%"
+        shapeRendering="crispEdges"
+        style={{ display: 'block' }}
+      >
+        {PX_ROWS.map((row, y) =>
+          [...row].map((c, x) =>
+            c === '.' ? null : (
+              <rect
+                key={`${x}-${y}`}
+                x={x}
+                y={y}
+                width={1}
+                height={1}
+                fill={PX_COLORS[c]}
+                className={c === 'S' ? 'px-twinkle' : undefined}
+              />
+            )
+          )
+        )}
+      </svg>
+    </div>
+  )
+}
+
 // Turns the admin's date + time (WIB) into an .ics timestamp (UTC)
 function icsStamp(date: string, time: string, fallback: string) {
   const d = new Date(`${date}T${time}:00+07:00`)
@@ -146,7 +252,12 @@ export default async function InvitationPage({ params }: { params: { token: stri
         <div className="relative z-10">
           {/* Hero Section */}
           <section className="relative min-h-screen flex flex-col items-center justify-center px-8 py-16 text-center overflow-hidden">
-            <style>{`@keyframes heroFade{from{opacity:0}to{opacity:1}}`}</style>
+            <style>{`
+              @keyframes heroFade{from{opacity:0}to{opacity:1}}
+              @keyframes pxTwinkle{0%,100%{opacity:1}50%{opacity:.2}}
+              .px-twinkle{animation:pxTwinkle 1.6s steps(1,end) infinite}
+              @media (prefers-reduced-motion:reduce){.px-twinkle{animation:none}}
+            `}</style>
 
             <div
               className="absolute pointer-events-none"
@@ -156,6 +267,10 @@ export default async function InvitationPage({ params }: { params: { token: stri
               className="absolute pointer-events-none"
               style={{ inset: 20, border: '1px solid rgba(212,178,110,0.16)' }}
             />
+
+            {/* Pixel ornaments at the top and bottom of the frame */}
+            <PixelOrnament position="top" />
+            <PixelOrnament position="bottom" />
 
             <div
               className="relative w-full flex flex-col items-center"
