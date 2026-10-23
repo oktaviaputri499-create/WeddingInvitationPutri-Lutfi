@@ -9,6 +9,8 @@ import ScrollReveal from './ScrollReveal'
 import GuestQrCode from './GuestQrCode'
 import AnimatedText from './AnimatedText'
 import LuxBackground from './LuxBackground'
+import CopyButton from './CopyButton'
+import GuestbookWall from './GuestbookWall'
 import { getTexts } from '@/lib/siteTexts'
 import { MapPin, Calendar, Clock, Gift, CreditCard, CalendarPlus, Heart } from 'lucide-react'
 
@@ -604,9 +606,14 @@ export default async function InvitationPage({ params }: { params: { token: stri
                         <AnimatedText text={settings?.bank1Name || ''} startDelay={1.5} step={0.03} />
                       </span>
                     </div>
-                    <p className="text-2xl font-mono tracking-widest mb-1" style={{ color: ACCENT }}>
-                      <AnimatedText text={settings?.bank1Number || ''} startDelay={1.8} step={0.03} />
-                    </p>
+                    <div className="flex items-center justify-center gap-2 mb-1">
+                      <p className="text-2xl font-mono tracking-widest" style={{ color: ACCENT }}>
+                        <AnimatedText text={settings?.bank1Number || ''} startDelay={1.8} step={0.03} />
+                      </p>
+                      {settings?.bank1Number && (
+                        <CopyButton value={settings.bank1Number} label="Copy account number" />
+                      )}
+                    </div>
                     <p className="font-lux" style={{ color: MUTED }}>
                       <AnimatedText text={settings?.bank1Holder || ''} startDelay={2.2} step={0.025} />
                     </p>
@@ -622,9 +629,14 @@ export default async function InvitationPage({ params }: { params: { token: stri
                         <AnimatedText text={settings?.bank2Name || ''} startDelay={2.6} step={0.03} />
                       </span>
                     </div>
-                    <p className="text-2xl font-mono tracking-widest mb-1" style={{ color: ACCENT }}>
-                      <AnimatedText text={settings?.bank2Number || ''} startDelay={2.9} step={0.03} />
-                    </p>
+                    <div className="flex items-center justify-center gap-2 mb-1">
+                      <p className="text-2xl font-mono tracking-widest" style={{ color: ACCENT }}>
+                        <AnimatedText text={settings?.bank2Number || ''} startDelay={2.9} step={0.03} />
+                      </p>
+                      {settings?.bank2Number && (
+                        <CopyButton value={settings.bank2Number} label="Copy account number" />
+                      )}
+                    </div>
                     <p className="font-lux" style={{ color: MUTED }}>
                       <AnimatedText text={settings?.bank2Holder || ''} startDelay={3.3} step={0.025} />
                     </p>
@@ -660,17 +672,15 @@ export default async function InvitationPage({ params }: { params: { token: stri
             </ScrollReveal>
           </section>
 
-          {/* Wishes */}
+          {/* Guestbook Wall */}
           <section className="py-12 px-6">
             <ScrollReveal>
               <LuxPanel>
-                {t.wishesTitle && (
-                  <div className="text-center">
-                    <SectionTitle>
-                      <AnimatedText text={t.wishesTitle} startDelay={0.1} step={0.035} />
-                    </SectionTitle>
-                  </div>
-                )}
+                <div className="text-center">
+                  <SectionTitle>
+                    <AnimatedText text="Guestbook Wall" startDelay={0.1} step={0.035} />
+                  </SectionTitle>
+                </div>
 
                 <BlueLine />
 
@@ -680,26 +690,9 @@ export default async function InvitationPage({ params }: { params: { token: stri
               </LuxPanel>
             </ScrollReveal>
 
-            <div className="mt-6 space-y-4 max-h-[500px] overflow-y-auto pr-2">
-              {wishes.map((wish, i) => (
-                <ScrollReveal key={wish.id} delay={Math.min(i * 60, 400)}>
-                  <div
-                    className="p-4 rounded-sm"
-                    style={{
-                      backgroundColor: 'rgba(255,255,255,0.65)',
-                      border: '1px solid rgba(74,144,217,0.3)',
-                      color: INK,
-                    }}
-                  >
-                    <p className="font-lux font-semibold text-base" style={{ color: TITLE }}>
-                      <AnimatedText text={wish.guest.name} startDelay={0.1} step={0.025} />
-                    </p>
-                    <p className="font-lux italic text-base mt-2" style={{ color: BODY }}>
-                      <AnimatedText text={wish.message} startDelay={0.3} step={0.01} />
-                    </p>
-                  </div>
-                </ScrollReveal>
-              ))}
+            {/* Messages appear here as pixel profiles with dialog boxes */}
+            <div className="mt-8">
+              <GuestbookWall wishes={wishes} />
             </div>
           </section>
 
