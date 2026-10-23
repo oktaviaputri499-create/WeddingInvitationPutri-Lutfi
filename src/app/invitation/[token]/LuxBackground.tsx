@@ -76,12 +76,12 @@ const CLOUD_B = [
 const CLOUD_A_RECTS = toRects(CLOUD_A, CLOUD_COLORS)
 const CLOUD_B_RECTS = toRects(CLOUD_B, CLOUD_COLORS)
 
-// Top left and top right of the screen
+// Top left and top right of the screen. dx = how far the cloud floats to each side.
 const CLOUDS = [
-  { kind: 'A', style: { left: '3%', top: '5%', width: 'clamp(140px, 17vw, 330px)' }, dur: 42, delay: 0 },
-  { kind: 'B', style: { left: '19%', top: '24%', width: 'clamp(100px, 11vw, 210px)' }, dur: 34, delay: -9 },
-  { kind: 'B', style: { right: '5%', top: '7%', width: 'clamp(110px, 12vw, 230px)' }, dur: 36, delay: -15 },
-  { kind: 'A', style: { right: '17%', top: '25%', width: 'clamp(140px, 16vw, 310px)' }, dur: 46, delay: -22 },
+  { kind: 'A', style: { left: '3%', top: '5%', width: 'clamp(140px, 17vw, 330px)' }, dx: '5vw', dur: 32, delay: 0 },
+  { kind: 'B', style: { left: '19%', top: '24%', width: 'clamp(100px, 11vw, 210px)' }, dx: '4vw', dur: 26, delay: -9 },
+  { kind: 'B', style: { right: '5%', top: '7%', width: 'clamp(110px, 12vw, 230px)' }, dx: '5vw', dur: 28, delay: -15 },
+  { kind: 'A', style: { right: '17%', top: '25%', width: 'clamp(140px, 16vw, 310px)' }, dx: '4vw', dur: 36, delay: -22 },
 ]
 
 /* ---------- Pixel garden ---------- */
@@ -100,13 +100,15 @@ const GW = 56
 const GH = 20
 
 type FlowerKind = 'round' | 'tulip'
+type FlowerPx = [number, number, string]
+type Flower = { px: FlowerPx[]; bx: number; by: number; dur: number; delay: number }
 
-// Builds a garden strip. The left side is tall, and it slopes down toward the right side.
+// Builds a garden: static ground (bushes, soil, grass) plus flowers that sway on their own.
 function buildGarden(
   seed: number,
   bushes: Array<[number, number]>,
   flowers: Array<[number, number, FlowerKind]>
-): string[] {
+): { rows: string[]; flowers: Flower[] } {
   const g: string[][] = Array.from({ length: GH }, () => Array<string>(GW).fill('.'))
   const set = (x: number, y: number, c: string) => {
     if (x >= 0 && x < GW && y >= 0 && y < GH) g[y][x] = c
@@ -157,38 +159,52 @@ function buildGarden(
     }
   }
 
-  // Red flowers with stems and leaves
-  flowers.forEach(([x, h, kind]) => {
+  // Red flowers: each one is collected as its own group of pixels so it can sway
+  const flowerList: Flower[] = flowers.map(([x, h, kind], idx) => {
     const t = top(x)
     const ty = t - h
-    for (let y = ty + 1; y < t; y++) set(x, y, 'g')
-    const ly = t - Math.max(2, Math.floor(h / 2))
-    set(x - 1, ly, 'G')
-    set(x - 2, ly - 1, 'G')
-    set(x + 1, ly + 1, 'G')
-    set(x + 2, ly, 'G')
+    const px: FlowerPx[] = []
+    const add = (fx: number, fy: number, c: string) => px.push([fx, fy, c])
 
+    // Stem and leaves
+    for (let y = ty + 1; y < t; y++) add(x, y, 'g')
+    const ly = t - Math.max(2, Math.floor(h / 2))
+    add(x - 1, ly, 'G')
+    add(x - 2, ly - 1, 'G')
+    add(x + 1, ly + 1, 'G')
+    add(x + 2, ly, 'G')
+
+    // Flower head
     if (kind === 'round') {
-      set(x, ty - 1, 'R')
-      set(x - 1, ty, 'R')
-      set(x + 1, ty, 'R')
-      set(x, ty + 1, 'R')
-      set(x - 1, ty - 1, 'r')
-      set(x + 1, ty - 1, 'r')
-      set(x - 1, ty + 1, 'r')
-      set(x + 1, ty + 1, 'r')
-      set(x, ty, 'Y')
+      add(x, ty - 1, 'R')
+      add(x - 1, ty, 'R')
+      add(x + 1, ty, 'R')
+      add(x, ty + 1, 'R')
+      add(x - 1, ty - 1, 'r')
+      add(x + 1, ty - 1, 'r')
+      add(x - 1, ty + 1, 'r')
+      add(x + 1, ty + 1, 'r')
+      add(x, ty, 'Y')
     } else {
-      set(x - 1, ty - 1, 'R')
-      set(x + 1, ty - 1, 'R')
-      set(x - 1, ty, 'R')
-      set(x, ty, 'R')
-      set(x + 1, ty, 'R')
-      set(x, ty + 1, 'r')
+      add(x - 1, ty - 1, 'R')
+      add(x + 1, ty - 1, 'R')
+      add(x - 1, ty, 'R')
+      add(x, ty, 'R')
+      add(x + 1, ty, 'R')
+      add(x, ty + 1, 'r')
+    }
+
+    const k = idx + (seed % 5)
+    return {
+      px,
+      bx: x + 0.5,
+      by: t + 0.5,
+      dur: 2.4 + ((k * 0.7) % 1.8),
+      delay: -((k * 0.9) % 3),
     }
   })
 
-  return g.map(row => row.join(''))
+  return { rows: g.map(row => row.join('')), flowers: flowerList }
 }
 
 const GARDEN_L = buildGarden(
@@ -209,8 +225,47 @@ const GARDEN_R = buildGarden(
   ]
 )
 
-const GARDEN_L_RECTS = toRects(GARDEN_L, GARDEN_COLORS)
-const GARDEN_R_RECTS = toRects(GARDEN_R, GARDEN_COLORS)
+const GARDEN_L_RECTS = toRects(GARDEN_L.rows, GARDEN_COLORS)
+const GARDEN_R_RECTS = toRects(GARDEN_R.rows, GARDEN_COLORS)
+
+function Garden({
+  garden,
+  rects,
+}: {
+  garden: { rows: string[]; flowers: Flower[] }
+  rects: Rect[]
+}) {
+  return (
+    <svg
+      viewBox={`0 0 ${GW} ${GH}`}
+      width="100%"
+      shapeRendering="crispEdges"
+      style={{ display: 'block', overflow: 'visible' }}
+    >
+      {/* Ground, bushes and grass (still) */}
+      {rects.map((r, i) => (
+        <rect key={i} x={r.x} y={r.y} width={r.w + 0.02} height={1.02} fill={r.c} />
+      ))}
+
+      {/* Flowers (each one sways from its base) */}
+      {garden.flowers.map((f, i) => (
+        <g
+          key={i}
+          className="px-sway"
+          style={{
+            transformOrigin: `${f.bx}px ${f.by}px`,
+            animationDuration: `${f.dur}s`,
+            animationDelay: `${f.delay}s`,
+          }}
+        >
+          {f.px.map(([x, y, c], j) => (
+            <rect key={j} x={x} y={y} width={1.02} height={1.02} fill={GARDEN_COLORS[c]} />
+          ))}
+        </g>
+      ))}
+    </svg>
+  )
+}
 
 /* ---------- Vines ---------- */
 
@@ -272,25 +327,39 @@ export default function LuxBackground() {
       }}
     >
       <style>{`
-        @keyframes pxCloudDrift{from{transform:translateX(-18px)}to{transform:translateX(22px)}}
-        .px-cloud{opacity:.96}
+        @keyframes pxCloudDrift{
+          from{transform:translateX(calc(var(--dx) * -1))}
+          to{transform:translateX(var(--dx))}
+        }
+        @keyframes pxSway{
+          from{transform:skewX(-7deg)}
+          to{transform:skewX(7deg)}
+        }
+        .px-cloud{opacity:.96;animation-name:pxCloudDrift;animation-timing-function:ease-in-out;animation-iteration-count:infinite;animation-direction:alternate}
         .px-garden{opacity:1}
+        .px-sway{animation-name:pxSway;animation-timing-function:ease-in-out;animation-iteration-count:infinite;animation-direction:alternate}
         @media (max-width:640px){
           .px-cloud{opacity:.55}
           .px-garden{opacity:.55}
         }
-        @media (prefers-reduced-motion:reduce){.px-cloud{animation:none !important}}
+        @media (prefers-reduced-motion:reduce){
+          .px-cloud,.px-sway{animation:none !important}
+        }
       `}</style>
 
-      {/* Pixel clouds (top left and top right) */}
+      {/* Pixel clouds (top left and top right), floating side to side */}
       {CLOUDS.map((c, i) => (
         <div
           key={i}
           className="absolute px-cloud"
-          style={{
-            ...c.style,
-            animation: `pxCloudDrift ${c.dur}s ease-in-out ${c.delay}s infinite alternate`,
-          }}
+          style={
+            {
+              ...c.style,
+              ['--dx' as string]: c.dx,
+              animationDuration: `${c.dur}s`,
+              animationDelay: `${c.delay}s`,
+            } as React.CSSProperties
+          }
         >
           {c.kind === 'A' ? (
             <PixelArt rows={CLOUD_A} rects={CLOUD_A_RECTS} />
@@ -303,18 +372,18 @@ export default function LuxBackground() {
       <Vine />
       <Vine flip />
 
-      {/* Pixel garden (bottom left and bottom right) */}
+      {/* Pixel garden (bottom left and bottom right), flowers swaying */}
       <div
         className="absolute px-garden"
         style={{ left: 0, bottom: 0, width: 'clamp(260px, 36vw, 700px)' }}
       >
-        <PixelArt rows={GARDEN_L} rects={GARDEN_L_RECTS} />
+        <Garden garden={GARDEN_L} rects={GARDEN_L_RECTS} />
       </div>
       <div
         className="absolute px-garden"
         style={{ right: 0, bottom: 0, width: 'clamp(260px, 36vw, 700px)', transform: 'scaleX(-1)' }}
       >
-        <PixelArt rows={GARDEN_R} rects={GARDEN_R_RECTS} />
+        <Garden garden={GARDEN_R} rects={GARDEN_R_RECTS} />
       </div>
 
       {/* Falling petals */}
