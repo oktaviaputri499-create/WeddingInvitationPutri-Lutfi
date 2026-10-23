@@ -114,7 +114,7 @@ const pxDashed = (s: string) =>
   Array.from({ length: 7 }, (_, r) => (r === 3 ? s : '.'.repeat(s.length)))
 
 const PX_LINE_LEFT = 'g.g.G.G.G.'
-const PX_LINE_RIGHT = [...PX_LINE_LEFT].reverse().join('')
+const PX_LINE_RIGHT = PX_LINE_LEFT.split('').reverse().join('')
 
 const PX_PIECES = [
   pxDashed(PX_LINE_LEFT),
@@ -154,7 +154,7 @@ function PixelOrnament({ position }: { position: 'top' | 'bottom' }) {
         style={{ display: 'block' }}
       >
         {PX_ROWS.map((row, y) =>
-          [...row].map((c, x) =>
+          row.split('').map((c, x) =>
             c === '.' ? null : (
               <rect
                 key={`${x}-${y}`}
