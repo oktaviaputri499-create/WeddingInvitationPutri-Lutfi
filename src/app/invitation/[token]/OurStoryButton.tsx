@@ -100,7 +100,7 @@ function Couple() {
   return (
     <div
       className="relative mt-10 flex items-end justify-center gap-3"
-      style={{ animation: 'cpFade 1.6s ease-out 3s both' }}
+      style={{ animation: 'cpFade 1.6s ease-out 2.4s both' }}
     >
       <style>{coupleCss}</style>
 
@@ -156,22 +156,22 @@ export default function OurStoryButton() {
 
   return (
     <>
+      <Couple />
+
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="font-lux inline-flex items-center justify-center gap-2 px-7 py-2 mt-10 text-sm rounded-full border transition hover:bg-[#d4b26e] hover:text-[#1b1510]"
+        className="font-lux inline-flex items-center justify-center gap-2 px-7 py-2 mt-6 text-sm rounded-full border transition hover:bg-[#d4b26e] hover:text-[#1b1510]"
         style={{
           borderColor: GOLD,
           color: GOLD,
           textShadow: 'none',
-          animation: 'heroFade 1.4s ease-out 2.4s both',
+          animation: 'heroFade 1.4s ease-out 3.2s both',
         }}
       >
         <BookOpen size={16} />
         Our Story
       </button>
-
-      <Couple />
 
       {open &&
         createPortal(
