@@ -31,7 +31,7 @@ function Sprite({ rows }: { rows: string[] }) {
   const rects: React.ReactNode[] = []
   rows.forEach((row, y) => {
     for (let x = 0; x < row.length; x++) {
-      const c = row[x]
+      const c = row.charAt(x)
       if (c !== '.') {
         rects.push(<rect key={`${x}-${y}`} x={x} y={y} width={1.02} height={1.02} fill={PAL[c]} />)
       }
@@ -51,12 +51,15 @@ const DIAMOND = ['..X..', '.XXX.', 'XXXXX', '.XXX.', '..X..']
 
 function ornamentSvg() {
   const r: string[] = []
-  const put = (g: string[], ox: number, oy: number, fill: string) =>
-    g.forEach((row, y) =>
-      [...row].forEach((c, x) => {
-        if (c === 'X') r.push(`<rect x="${ox + x}" y="${oy + y}" width="1" height="1" fill="${fill}"/>`)
-      })
-    )
+  const put = (g: string[], ox: number, oy: number, fill: string) => {
+    g.forEach((row, y) => {
+      for (let x = 0; x < row.length; x++) {
+        if (row.charAt(x) === 'X') {
+          r.push(`<rect x="${ox + x}" y="${oy + y}" width="1" height="1" fill="${fill}"/>`)
+        }
+      }
+    })
+  }
   for (let i = 0; i < 7; i++) {
     const o = (0.3 + i * 0.1).toFixed(2)
     r.push(`<rect x="${i * 2}" y="4" width="1" height="1" fill="#d4b26e" opacity="${o}"/>`)
