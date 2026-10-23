@@ -6,376 +6,283 @@ import { Volume2, VolumeX } from 'lucide-react'
 type Stage = 'closed' | 'opening' | 'card' | 'pull' | 'fade' | 'done'
 const ORDER: Stage[] = ['closed', 'opening', 'card', 'pull', 'fade', 'done']
 
-// Tone-on-tone settings: soft grey outlines, raised charcoal fills
-const GOLD = {
-  line: '#8c8983',
-  lineOpacity: 0.45,
-  vineOpacity: 0.4,
-  lineWidth: 0.8,
-  vein: '#8c8983',
-  dots: '#9a968f',
-  petalDark: '#121211',
-  petalMid: '#1b1a18',
-  petalLight: '#262421',
-  leaf: '#171615',
-  berry: '#1e1c1a',
-  stem: '#201f1d',
-  center: '#201f1d',
-  vineLight: '#252320',
-  vineDark: '#121211',
-  vineStem: '#252320',
-}
+/* ---------- Pixel palette (change the colors here) ---------- */
+const DARK = '#3a3947' // outlines
+const SIDE = '#f2b8cc' // left and right folds
+const BOTTOM = '#f8d2e0' // bottom fold
+const LINING = '#c9799a' // inside of the envelope
+const FLAP = '#f9d9e5' // top flap (outside)
+const FLAP_BACK = '#d98aa8' // top flap (inside, once opened)
+const SEAL = '#e0456f' // heart seal
+const SEAL_HI = '#ff9db9'
 
-const THIN = { vectorEffect: 'non-scaling-stroke' as const }
+const STARS = Array.from({ length: 40 }, (_, i) => ({
+  left: (i * 37 + 11) % 100,
+  top: (i * 53 + 7) % 100,
+  size: i % 5 === 0 ? 6 : 4,
+  duration: 2 + (i % 4),
+  delay: -((i * 7) % 5),
+}))
 
-const PETALS = Array.from({ length: 12 }, (_, i) => ({
+const HEARTS = Array.from({ length: 10 }, (_, i) => ({
   left: (i * 37) % 100,
-  size: 9 + ((i * 7) % 11),
-  duration: 8 + ((i * 13) % 7),
+  scale: 3 + (i % 3),
+  duration: 10 + ((i * 13) % 7),
   delay: -((i * 29) % 12),
-  dx: (i % 2 ? 1 : -1) * (30 + ((i * 11) % 60)),
-  color: ['#f3dcdc', '#ead3a6', '#ffffff', '#ebcfcf'][i % 4],
+  dx: (i % 2 ? 1 : -1) * (20 + ((i * 11) % 50)),
+  color: ['#f4a0bf', '#ffd6e4', '#d4b26e', '#f08aa4'][i % 4],
 }))
 
-const DUST = Array.from({ length: 22 }, (_, i) => ({
-  left: (i * 53) % 100,
-  top: (i * 31) % 100,
-  size: 2 + ((i * 5) % 4),
-  duration: 5 + ((i * 7) % 6),
-  delay: -((i * 17) % 10),
-}))
-
-// Fine paper grain
+// Fine paper grain (used on the invitation card)
 const GRAIN = `url("data:image/svg+xml;utf8,${encodeURIComponent(
   "<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.06 0'/></filter><rect width='100%' height='100%' filter='url(#n)'/></svg>"
 )}")`
 
-// Geometry of one botanical sprig (a curved stem with alternating leaves)
-const SPRIG = (() => {
-  const P = [
-    [20, 290],
-    [30, 190],
-    [70, 110],
-    [130, 20],
-  ]
-  const at = (t: number) => {
-    const u = 1 - t
-    return [0, 1].map(
-      k => u * u * u * P[0][k] + 3 * u * u * t * P[1][k] + 3 * u * t * t * P[2][k] + t * t * t * P[3][k]
-    )
-  }
-  const dir = (t: number) => {
-    const u = 1 - t
-    return [0, 1].map(
-      k => 3 * u * u * (P[1][k] - P[0][k]) + 6 * u * t * (P[2][k] - P[1][k]) + 3 * t * t * (P[3][k] - P[2][k])
-    )
-  }
-  const leaves = Array.from({ length: 10 }, (_, i) => {
-    const t = 0.1 + i * 0.085
-    const [x, y] = at(t)
-    const [dx, dy] = dir(t)
-    const side = i % 2 === 0 ? 1 : -1
-    const a = (Math.atan2(dy, dx) * 180) / Math.PI + side * 52
-    const s = 1.3 - t * 0.65
-    return { x, y, a, s }
-  })
-  const berries = [0.28, 0.5, 0.72].map((t, i) => {
-    const [x, y] = at(t)
-    const [dx, dy] = dir(t)
-    const n = Math.atan2(dy, dx) + (i % 2 ? 1 : -1) * (Math.PI / 2)
-    return { x: x + Math.cos(n) * 13, y: y + Math.sin(n) * 13 }
-  })
-  const tip = at(1)
-  const tipAngle = (Math.atan2(dir(1)[1], dir(1)[0]) * 180) / Math.PI
-  return { leaves, berries, tip, tipAngle }
-})()
+/* ---------- Pixel helpers ---------- */
 
-const LEAF = 'M0 0 C6 -9 20 -9 28 0 C20 9 6 9 0 0 Z'
-const LEAF_VEIN = 'M3 0 C10 -0.6 18 -0.6 25 0'
-const SPRIG_STEM = 'M20 290 C30 190 70 110 130 20'
+type Run = { x: number; y: number; w: number }
+type Rect = Run & { c: string }
+type PRect = { x: number; y: number; w: number; ch: string }
 
-function Sprig({ style }: { style: React.CSSProperties }) {
+// Turns rows of characters into horizontal runs (one <rect> per run)
+function patternRects(rows: string[], has: (ch: string) => boolean): PRect[] {
+  const out: PRect[] = []
+  for (let y = 0; y < rows.length; y++) {
+    const row = rows[y]
+    let x = 0
+    while (x < row.length) {
+      const ch = row.charAt(x)
+      if (!has(ch)) {
+        x += 1
+        continue
+      }
+      let e = x + 1
+      while (e < row.length && row.charAt(e) === ch) e += 1
+      out.push({ x, y, w: e - x, ch })
+      x = e
+    }
+  }
+  return out
+}
+
+const reverseStr = (s: string) => s.split('').reverse().join('')
+
+/* ---------- Envelope geometry (40 x 26 pixels) ---------- */
+
+const W = 40
+const H = 26
+const ARM = 11 // row where the V of the top flap ends
+const LOW = 13 // rows used by the lower diagonals
+
+const armX = (y: number) => Math.round((19 * y) / ARM)
+const lowX = (t: number) => Math.round((19 * t) / LOW)
+const mirrorRun = (r: Run): Run => ({ x: W - r.x - r.w, y: r.y, w: r.w })
+
+// Left half of the V (top flap edge), one run per row
+const UPPER: Run[] = Array.from({ length: ARM + 1 }, (_, y) => {
+  const lo = armX(y)
+  const hi = y < ARM ? Math.max(lo, armX(y + 1) - 1) : lo
+  return { x: lo, y, w: hi - lo + 1 }
+})
+
+// Left half of the lower diagonals (bottom corner to the center), indexed from the bottom row up
+const LOWER: Run[] = Array.from({ length: LOW + 1 }, (_, t) => {
+  const lo = lowX(t)
+  const hi = t < LOW ? Math.max(lo, lowX(t + 1) - 1) : lo
+  return { x: lo, y: H - 1 - t, w: hi - lo + 1 }
+})
+
+const ARMS: Run[] = UPPER.concat(UPPER.map(mirrorRun), LOWER, LOWER.map(mirrorRun))
+
+// Fills of the front pocket: two side folds and the bottom fold
+const FRONT_FILLS: Rect[] = []
+for (let y = 0; y < H; y++) {
+  if (y <= ARM) {
+    const lo = UPPER[y].x
+    if (lo > 1) {
+      FRONT_FILLS.push({ x: 1, y, w: lo - 1, c: SIDE })
+      FRONT_FILLS.push({ x: W - lo, y, w: lo - 1, c: SIDE })
+    }
+  } else {
+    const run = LOWER[H - 1 - y]
+    const lo = run.x
+    if (lo > 1) {
+      FRONT_FILLS.push({ x: 1, y, w: lo - 1, c: SIDE })
+      FRONT_FILLS.push({ x: W - lo, y, w: lo - 1, c: SIDE })
+    }
+    const start = lo + run.w
+    const width = W - 2 * start
+    if (width > 0) FRONT_FILLS.push({ x: start, y, w: width, c: BOTTOM })
+  }
+}
+
+// Fill of the top flap (the triangle between the two arms of the V)
+const FLAP_FILLS: Run[] = []
+for (let y = 1; y < ARM; y++) {
+  const start = UPPER[y].x + UPPER[y].w
+  const width = W - 2 * start
+  if (width > 0) FLAP_FILLS.push({ x: start, y, w: width })
+}
+
+const SEAL_ROWS = ['XX..XX', 'XhXXXX', 'XXXXXX', '.XXXX.', '..XX..']
+const SEAL_RECTS = patternRects(SEAL_ROWS, ch => ch !== '.')
+
+function EnvBack({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 200 300" style={{ overflow: 'visible', ...style }} aria-hidden>
-      <defs>
-        <linearGradient id="vineG" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor={GOLD.vineLight} />
-          <stop offset="1" stopColor={GOLD.vineDark} />
-        </linearGradient>
-      </defs>
-      <g stroke={GOLD.line} strokeOpacity={GOLD.vineOpacity} strokeWidth={GOLD.lineWidth}>
-        <path
-          d={SPRIG_STEM}
-          fill="none"
-          stroke={GOLD.vineStem}
-          strokeOpacity="1"
-          strokeWidth="3.4"
-          strokeLinecap="round"
-        />
-        <path d={SPRIG_STEM} fill="none" strokeLinecap="round" {...THIN} />
-        {SPRIG.leaves.map((l, i) => (
-          <g key={i} transform={`translate(${l.x} ${l.y}) rotate(${l.a}) scale(${l.s})`}>
-            <path d={LEAF} fill="url(#vineG)" {...THIN} />
-            <path d={LEAF_VEIN} fill="none" strokeOpacity=".3" strokeWidth=".5" {...THIN} />
-          </g>
-        ))}
-        <g transform={`translate(${SPRIG.tip[0]} ${SPRIG.tip[1]}) rotate(${SPRIG.tipAngle}) scale(1.25)`}>
-          <path d={LEAF} fill="url(#vineG)" {...THIN} />
-          <path d={LEAF_VEIN} fill="none" strokeOpacity=".3" strokeWidth=".5" {...THIN} />
-        </g>
-        {SPRIG.berries.map((b, i) => (
-          <circle key={i} cx={b.x} cy={b.y} r="3.6" fill="url(#vineG)" {...THIN} />
-        ))}
-      </g>
+    <svg className={className} viewBox={`0 0 ${W} ${H}`} shapeRendering="crispEdges" aria-hidden>
+      <rect x={0} y={0} width={W} height={H} fill={LINING} />
+      <rect x={0} y={0} width={W} height={1} fill={DARK} />
+      <rect x={0} y={H - 1} width={W} height={1} fill={DARK} />
+      <rect x={0} y={0} width={1} height={H} fill={DARK} />
+      <rect x={W - 1} y={0} width={1} height={H} fill={DARK} />
     </svg>
   )
 }
 
-type DecorItem = { left: string; top: string; rot: number; k: number }
-
-const DECOR_LAND: DecorItem[] = [
-  { left: 'calc(var(--sw) * -0.1)', top: 'calc(var(--sw) * -1.45)', rot: 113, k: 1 },
-  { left: 'calc(100% - var(--sw) * 0.1)', top: 'calc(var(--sw) * -1.45)', rot: 203, k: 1 },
-  { left: 'calc(var(--sw) * -0.1)', top: 'calc(100% - var(--sw) * 1.45)', rot: 23, k: 1 },
-  { left: 'calc(100% - var(--sw) * 0.1)', top: 'calc(100% - var(--sw) * 1.45)', rot: 293, k: 1 },
-  { left: 'calc(var(--sw) * -0.1)', top: 'calc(62% - var(--sw) * 1.45)', rot: 68, k: 0.8 },
-  { left: 'calc(100% - var(--sw) * 0.1)', top: 'calc(38% - var(--sw) * 1.45)', rot: 248, k: 0.8 },
-]
-
-const DECOR_PORT: DecorItem[] = [
-  { left: 'calc(var(--sw) * -0.1)', top: 'calc(100% - var(--sw) * 1.45)', rot: 0, k: 1.1 },
-  { left: 'calc(100% - var(--sw) * 0.1)', top: 'calc(var(--sw) * -1.45)', rot: 180, k: 1.1 },
-  { left: 'calc(var(--sw) * -0.1)', top: 'calc(48% - var(--sw) * 1.45)', rot: 0, k: 0.85 },
-  { left: 'calc(100% - var(--sw) * 0.1)', top: 'calc(52% - var(--sw) * 1.45)', rot: 180, k: 0.85 },
-]
-
-function DecorLayer({ items, className }: { items: DecorItem[]; className: string }) {
+function EnvFront({ className }: { className?: string }) {
   return (
-    <div className={className}>
-      {items.map((it, i) => (
-        <Sprig
-          key={i}
-          style={
-            {
-              position: 'absolute',
-              ['--sw' as string]: `calc(var(--sw0) * ${it.k})`,
-              width: 'var(--sw)',
-              height: 'calc(var(--sw) * 1.5)',
-              left: it.left,
-              top: it.top,
-              transformOrigin: '10% 96.7%',
-              transform: `rotate(${it.rot}deg)`,
-            } as React.CSSProperties
-          }
-        />
+    <svg className={className} viewBox={`0 0 ${W} ${H}`} shapeRendering="crispEdges" aria-hidden>
+      {FRONT_FILLS.map((r, i) => (
+        <rect key={`f${i}`} x={r.x} y={r.y} width={r.w} height={1} fill={r.c} />
       ))}
-    </div>
-  )
-}
-
-// The same vine layer sits on every flap, so the pattern runs
-// continuously across the fold lines.
-function Decor() {
-  return (
-    <>
-      <DecorLayer items={DECOR_LAND} className="decor decor-land" />
-      <DecorLayer items={DECOR_PORT} className="decor decor-port" />
-    </>
-  )
-}
-
-/* ---------- Embossed flower spray (top & bottom flaps) ---------- */
-
-type Pt = [number, number]
-
-const bez = (P: Pt[], t: number): Pt => {
-  const u = 1 - t
-  return [0, 1].map(
-    k => u * u * u * P[0][k] + 3 * u * u * t * P[1][k] + 3 * u * t * t * P[2][k] + t * t * t * P[3][k]
-  ) as Pt
-}
-
-const bezDir = (P: Pt[], t: number): Pt => {
-  const u = 1 - t
-  return [0, 1].map(
-    k => 3 * u * u * (P[1][k] - P[0][k]) + 6 * u * t * (P[2][k] - P[1][k]) + 3 * t * t * (P[3][k] - P[2][k])
-  ) as Pt
-}
-
-const stemPath = (P: Pt[]) =>
-  `M${P[0][0]} ${P[0][1]} C${P[1][0]} ${P[1][1]} ${P[2][0]} ${P[2][1]} ${P[3][0]} ${P[3][1]}`
-
-const BRANCHES: { P: Pt[]; n: number; s: number }[] = [
-  {
-    P: [
-      [0, 0],
-      [80, 10],
-      [165, 38],
-      [252, 26],
-    ],
-    n: 9,
-    s: 1,
-  },
-  {
-    P: [
-      [0, 6],
-      [55, 42],
-      [105, 84],
-      [175, 96],
-    ],
-    n: 7,
-    s: 0.85,
-  },
-]
-
-const SPRAY_LEAVES = BRANCHES.flatMap(({ P, n, s }) =>
-  Array.from({ length: n }, (_, i) => {
-    const t = 0.2 + (i / (n - 1)) * 0.78
-    const [x, y] = bez(P, t)
-    const [dx, dy] = bezDir(P, t)
-    const side = i % 2 === 0 ? 1 : -1
-    const a = (Math.atan2(dy, dx) * 180) / Math.PI + side * 48
-    return { x, y, a, s: s * (1.25 - t * 0.55) }
-  })
-)
-
-const SPRAY_BERRIES = BRANCHES.flatMap(({ P }, bi) =>
-  [0.42, 0.66, 0.86].map((t, i) => {
-    const [x, y] = bez(P, t)
-    const [dx, dy] = bezDir(P, t)
-    const n = Math.atan2(dy, dx) + ((i + bi) % 2 ? 1 : -1) * (Math.PI / 2)
-    return { x: x + Math.cos(n) * 11, y: y + Math.sin(n) * 11 }
-  })
-)
-
-const PETAL = 'M0 0 C-17 -10 -21 -38 0 -62 C21 -38 17 -10 0 0 Z'
-const BUD = 'M0 0 C-8 -7 -8 -20 0 -30 C8 -20 8 -7 0 0 Z'
-const VEINS = ['M0 -10 C1 -26 1 -38 0 -52', 'M-5 -14 C-8 -28 -7 -40 -3 -50', 'M5 -14 C8 -28 7 -40 3 -50']
-
-function Petal({ opacity }: { opacity: string }) {
-  return (
-    <>
-      <path d={PETAL} fill="url(#petalG)" {...THIN} />
-      {VEINS.map((v, i) => (
-        <path key={i} d={v} fill="none" stroke={GOLD.vein} strokeOpacity={opacity} strokeWidth=".5" {...THIN} />
+      {ARMS.map((r, i) => (
+        <rect key={`a${i}`} x={r.x} y={r.y} width={r.w} height={1} fill={DARK} />
       ))}
-    </>
+      <rect x={0} y={0} width={1} height={H} fill={DARK} />
+      <rect x={W - 1} y={0} width={1} height={H} fill={DARK} />
+      <rect x={0} y={H - 1} width={W} height={1} fill={DARK} />
+    </svg>
   )
 }
 
-function Bloom({
-  x,
-  y,
-  s,
-  rot = 0,
-  dur = 7,
-  delay = 0,
-}: {
-  x: number
-  y: number
-  s: number
-  rot?: number
-  dur?: number
-  delay?: number
-}) {
-  const outer = Array.from({ length: 8 }, (_, i) => i * 45)
-  const mid = Array.from({ length: 7 }, (_, i) => i * (360 / 7) + 12)
-  const inner = Array.from({ length: 5 }, (_, i) => i * 72 + 20)
-  const dots = Array.from({ length: 9 }, (_, i) => (i / 9) * Math.PI * 2)
+function FlapFace({ className, fill, seal }: { className?: string; fill: string; seal?: boolean }) {
+  const arms = UPPER.concat(UPPER.map(mirrorRun))
   return (
-    <g transform={`translate(${x} ${y}) rotate(${rot}) scale(${s})`}>
-      <g className="bloom" style={{ animationDuration: `${dur}s`, animationDelay: `${delay}s` }}>
-        {outer.map(a => (
-          <g key={`o${a}`} transform={`rotate(${a})`}>
-            <Petal opacity=".28" />
-          </g>
-        ))}
-        {mid.map(a => (
-          <g key={`m${a}`} transform={`rotate(${a}) scale(.72)`}>
-            <Petal opacity=".25" />
-          </g>
-        ))}
-        {inner.map(a => (
-          <path key={`i${a}`} d={PETAL} transform={`rotate(${a}) scale(.46)`} fill="url(#petalG)" {...THIN} />
-        ))}
-        <circle r="6" fill={GOLD.center} {...THIN} />
-        {dots.map((a, i) => (
-          <circle
-            key={i}
-            cx={Math.cos(a) * 9.5}
-            cy={Math.sin(a) * 9.5}
-            r="1.2"
-            fill={GOLD.dots}
-            fillOpacity=".45"
-            stroke="none"
+    <svg className={className} viewBox={`0 0 ${W} ${ARM + 1}`} shapeRendering="crispEdges" aria-hidden>
+      {FLAP_FILLS.map((r, i) => (
+        <rect key={`f${i}`} x={r.x} y={r.y} width={r.w} height={1} fill={fill} />
+      ))}
+      {seal &&
+        SEAL_RECTS.map((r, i) => (
+          <rect
+            key={`s${i}`}
+            x={17 + r.x}
+            y={5 + r.y}
+            width={r.w}
+            height={1}
+            fill={r.ch === 'h' ? SEAL_HI : SEAL}
           />
         ))}
-      </g>
-    </g>
+      <rect x={0} y={0} width={W} height={1} fill={DARK} />
+      {arms.map((r, i) => (
+        <rect key={`a${i}`} x={r.x} y={r.y} width={r.w} height={1} fill={DARK} />
+      ))}
+    </svg>
   )
 }
 
-function Spray({ position }: { position: 'top' | 'bottom' }) {
+/* ---------- The pixel cat (22 x 14 pixels) ---------- */
+
+// Left half of the head; the right half is mirrored automatically
+const CAT_HALF = [
+  '..OO.......',
+  '.OPPO......',
+  '.OPPPO.....',
+  '.OPPPGOOOOO',
+  'OGGGGGGGGGG',
+  'OGGGGGGGGGG',
+  'OGGGGGGGGGG',
+  'OGGGGGGGGGG',
+  'OGGGGGGGGGG',
+  'OGGGGGGGGGG',
+  'OGGGGGGGGGG',
+  'OGGGGGGGGGG',
+  'OGGGGGGGGGG',
+  'OOOOOOOOOOO',
+]
+
+const CAT_GRID: string[][] = CAT_HALF.map(h => (h + reverseStr(h)).split(''))
+
+// Sets a pixel and its mirror image
+const put = (x: number, y: number, ch: string) => {
+  CAT_GRID[y][x] = ch
+  CAT_GRID[y][21 - x] = ch
+}
+
+// Muzzle
+for (let y = 9; y <= 11; y++) for (let x = 8; x <= 10; x++) put(x, y, 'L')
+put(9, 8, 'L')
+put(10, 8, 'L')
+// Forehead stripes
+put(10, 4, 'S')
+put(10, 5, 'S')
+put(8, 4, 'S')
+// Eyes (white part; the pupils move separately)
+for (let y = 6; y <= 7; y++) for (let x = 4; x <= 6; x++) put(x, y, 'W')
+// Blush and whiskers
+put(3, 8, 'B')
+put(4, 8, 'B')
+put(2, 9, 'H')
+put(3, 9, 'H')
+put(2, 11, 'H')
+put(3, 11, 'H')
+// Nose and mouth
+put(10, 9, 'N')
+put(9, 10, 'O')
+put(10, 11, 'O')
+
+const CAT_ROWS = CAT_GRID.map(r => r.join(''))
+
+const CAT_COLORS: Record<string, string> = {
+  O: DARK,
+  G: '#9b9ba6',
+  L: '#c3c3cc',
+  P: '#f4a3b8',
+  B: '#f4a3b8',
+  N: '#f08aa4',
+  W: '#f4f4f8',
+  S: '#5d5d6a',
+  H: '#6a6a77',
+}
+const CAT_RECTS = patternRects(CAT_ROWS, ch => ch in CAT_COLORS)
+
+function Cat() {
   return (
-    <svg viewBox="-300 -75 600 215" className={`spray spray-${position}`} aria-hidden>
-      <defs>
-        <linearGradient id="petalG" x1="0" y1="1" x2="0" y2="0">
-          <stop offset="0" stopColor={GOLD.petalDark} />
-          <stop offset="0.55" stopColor={GOLD.petalMid} />
-          <stop offset="1" stopColor={GOLD.petalLight} />
-        </linearGradient>
-      </defs>
-      <g stroke={GOLD.line} strokeOpacity={GOLD.lineOpacity} strokeWidth={GOLD.lineWidth}>
-        {[1, -1].map(m => (
-          <g key={m} transform={`scale(${m} 1)`}>
-            {BRANCHES.map((b, i) => (
-              <g key={i} fill="none" strokeLinecap="round">
-                <path d={stemPath(b.P)} stroke={GOLD.stem} strokeOpacity="1" strokeWidth="2.6" />
-                <path d={stemPath(b.P)} strokeWidth={GOLD.lineWidth} {...THIN} />
-              </g>
-            ))}
-            <g fill={GOLD.leaf}>
-              {SPRAY_LEAVES.map((l, i) => (
-                <path
-                  key={i}
-                  d={LEAF}
-                  transform={`translate(${l.x} ${l.y}) rotate(${l.a}) scale(${l.s})`}
-                  {...THIN}
-                />
-              ))}
-            </g>
-            <g fill={GOLD.berry}>
-              {SPRAY_BERRIES.map((b, i) => (
-                <circle key={i} cx={b.x} cy={b.y} r="3" {...THIN} />
-              ))}
-            </g>
-            <path d={BUD} transform="translate(68 60) rotate(155)" fill="url(#petalG)" {...THIN} />
-            <Bloom x={215} y={38} s={0.42} rot={m * 12} dur={6.2} delay={m * -0.8} />
-            <Bloom x={136} y={22} s={0.68} rot={m * 25} dur={7.4} delay={m * -1.6} />
-          </g>
-        ))}
-        <Bloom x={0} y={0} s={1} rot={22} dur={8.5} />
+    <svg viewBox="0 0 22 14" shapeRendering="crispEdges" aria-hidden>
+      {CAT_RECTS.map((r, i) => (
+        <rect key={i} x={r.x} y={r.y} width={r.w} height={1} fill={CAT_COLORS[r.ch]} />
+      ))}
+      <g className="px-pupils">
+        <rect x={5} y={6} width={1} height={2} fill="#22222c" />
+        <rect x={16} y={6} width={1} height={2} fill="#22222c" />
       </g>
     </svg>
   )
 }
 
-// Thin light line along a flap's folded edge (the paper catching the light)
-function FlapEdge({ points }: { points: string }) {
+/* ---------- Falling pixel hearts ---------- */
+
+const HEART_ROWS = ['XX..XX', 'XXXXXX', 'XXXXXX', '.XXXX.', '..XX..']
+const HEART_RECTS = patternRects(HEART_ROWS, ch => ch !== '.')
+
+function PixelHeart({ color, scale, style }: { color: string; scale: number; style: React.CSSProperties }) {
   return (
-    <svg className="edge" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden>
-      <polyline
-        points={points}
-        fill="none"
-        stroke="rgba(255,255,255,.14)"
-        strokeWidth="1.5"
-        vectorEffect="non-scaling-stroke"
-      />
+    <svg
+      className="px-heart"
+      width={6 * scale}
+      height={5 * scale}
+      viewBox="0 0 6 5"
+      shapeRendering="crispEdges"
+      style={style}
+    >
+      {HEART_RECTS.map((r, i) => (
+        <rect key={i} x={r.x} y={r.y} width={r.w} height={1} fill={color} />
+      ))}
     </svg>
   )
 }
 
-// The invitation paper that slides out of the envelope.
+/* ---------- The invitation paper that slides out of the envelope ---------- */
 // A text that is empty is not shown (the guest name always is).
 function Card({
   guestName,
@@ -445,100 +352,121 @@ function Card({
 }
 
 const css = `
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=Pinyon+Script&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=Pinyon+Script&family=Pixelify+Sans:wght@400;600&display=swap');
 
-.inv-root{position:fixed;inset:0;z-index:50;overflow:hidden;perspective:1800px;background:#050505;cursor:pointer;
-  --sw0:clamp(130px,42vmin,360px);
-  --spw:min(96vw,clamp(300px,74vmin,780px));
+/* --u is the size of one pixel. The envelope is 40 x 26 pixels, the cat 22 x 14. */
+.inv-root{position:fixed;inset:0;z-index:50;overflow:hidden;background:#1b1a2b;cursor:pointer;
+  --u:calc(min(88vw,560px,100vh) / 40);
+  --ew:calc(var(--u) * 40);
+  --eh:calc(var(--u) * 26);
+  --ey:64%;
   -webkit-tap-highlight-color:transparent;
   transition:opacity 1.2s ease,visibility 1.2s;}
+@supports (width: round(down,10.5px,1px)){
+  .inv-root{--u:round(down,calc(min(88vw,560px,100vh) / 40),1px);}
+}
 .inv-root.is-open{cursor:default;}
 .inv-root.is-card{cursor:pointer;}
 .inv-root.is-pull{cursor:default;}
 .inv-root.is-fade{opacity:0;visibility:hidden;pointer-events:none;}
 .inv-root:focus-visible{outline:none;}
 
-/* ---------- Inside of the envelope (a darker lining with a very faint pattern) ---------- */
-.env-back{position:absolute;inset:0;z-index:1;overflow:hidden;}
-.env-back::after{content:'';position:absolute;inset:0;pointer-events:none;
-  background:repeating-linear-gradient(135deg,rgba(184,152,90,.03) 0 1px,transparent 1px 16px);}
+/* ---------- Night sky with pixel stars ---------- */
+.px-bg{position:absolute;inset:0;z-index:0;
+  background:linear-gradient(#171527 0 25%,#1c1a30 25% 50%,#211e38 50% 75%,#26223f 75%);}
+.px-star{position:absolute;background:#d9d4ff;animation:pxTwinkle 3s steps(1,end) infinite;}
+@keyframes pxTwinkle{0%{opacity:.9}50%{opacity:.25}100%{opacity:.9}}
 
-/* The front of the envelope: left + right + bottom flaps (this group slides away when the card is pulled out) */
-.env-front{position:absolute;inset:0;z-index:3;}
+/* ---------- Envelope layers (all share the same box) ---------- */
+.px-svg{position:absolute;display:block;
+  left:calc(50% - var(--ew) / 2);top:calc(var(--ey) - var(--eh) / 2);
+  width:var(--ew);height:var(--eh);}
+.px-back{z-index:2;}
+.px-front{z-index:4;}
+.px-shadow{position:absolute;z-index:0;background:rgba(0,0,0,.35);
+  left:calc(50% - var(--ew) / 2 + var(--u) * 2);width:calc(var(--ew) - var(--u) * 4);
+  top:calc(var(--ey) + var(--eh) / 2);height:calc(var(--u) * 1.5);}
 
-/* ---------- Flaps ---------- */
-.flap{position:absolute;inset:0;backface-visibility:hidden;will-change:transform;}
-.flap-in{position:absolute;inset:0;overflow:hidden;}
-.flap-in::before{content:'';position:absolute;inset:0;pointer-events:none;z-index:2;}
-.edge{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:3;}
-.shade{position:absolute;inset:0;background:#000;opacity:0;pointer-events:none;z-index:4;}
-
-/* Side flaps: two big triangles folded in from the left and right, tips meeting at the center */
-.f-left{z-index:1;filter:drop-shadow(5px 0 9px rgba(0,0,0,.6));}
-.f-left .flap-in{clip-path:polygon(0 0,50% 54%,0 100%);}
-.f-left .flap-in::before{background:linear-gradient(120deg,rgba(255,255,255,.03),rgba(0,0,0,.34));}
-.f-right{z-index:1;filter:drop-shadow(-5px 0 9px rgba(0,0,0,.6));}
-.f-right .flap-in{clip-path:polygon(100% 0,50% 54%,100% 100%);}
-.f-right .flap-in::before{background:linear-gradient(240deg,rgba(255,255,255,.02),rgba(0,0,0,.4));}
-
-/* Bottom flap: tucked over the side flaps, peaked top edge */
-.f-bottom{z-index:2;filter:drop-shadow(0 -4px 8px rgba(0,0,0,.65));}
-.f-bottom .flap-in{clip-path:polygon(0 100%,100% 100%,100% 72%,50% 54%,0 72%);}
-.f-bottom .flap-in::before{background:linear-gradient(0deg,rgba(255,255,255,.02),rgba(0,0,0,.3));}
-
-/* Top flap: big V pointing down, covers everything and opens first */
-.f-top{z-index:6;transform-origin:50% 0;filter:drop-shadow(0 10px 14px rgba(0,0,0,.8));}
-.f-top .flap-in{clip-path:polygon(0 0,100% 0,100% 30%,50% 56%,0 30%);}
-.f-top .flap-in::before{background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(0,0,0,.3));}
-
-/* Raised relief (embossed paper): light on the top-left edge, shadow on the bottom-right */
-.decor{position:absolute;inset:0;pointer-events:none;
-  filter:drop-shadow(-1px -1px 0 rgba(255,255,255,.1)) drop-shadow(1.6px 2.2px 1.4px rgba(0,0,0,.95));}
-
-.decor-port{display:none;}
-@media (max-aspect-ratio:1/1){
-  .decor-land{display:none;}
-  .decor-port{display:block;}
-  .inv-root{--sw0:clamp(140px,50vw,300px);}
+/* ---------- The cat: pops up behind the envelope, peeks left and right, ducks down ---------- */
+.px-cat-box{position:absolute;z-index:1;
+  left:calc(50% - var(--u) * 11);top:calc(var(--ey) - var(--eh) / 2 - var(--u) * 12);
+  width:calc(var(--u) * 22);height:calc(var(--u) * 14);}
+.px-cat{width:100%;height:100%;animation:pxPeek 9s steps(1,end) infinite;}
+.px-cat svg{display:block;width:100%;height:100%;}
+@keyframes pxPeek{
+  0%{transform:translate(0,calc(var(--u) * 12))}
+  5%{transform:translate(0,calc(var(--u) * 9))}
+  10%{transform:translate(0,calc(var(--u) * 6))}
+  15%{transform:translate(0,calc(var(--u) * 3))}
+  20%{transform:translate(0,0)}
+  30%{transform:translate(calc(var(--u) * -2),0)}
+  42%{transform:translate(0,0)}
+  52%{transform:translate(calc(var(--u) * 2),0)}
+  64%{transform:translate(0,0)}
+  72%{transform:translate(0,calc(var(--u) * 3))}
+  78%{transform:translate(0,calc(var(--u) * 6))}
+  84%{transform:translate(0,calc(var(--u) * 9))}
+  90%{transform:translate(0,calc(var(--u) * 12))}
+  100%{transform:translate(0,calc(var(--u) * 12))}
 }
-
-.decor.rich{
-  filter:drop-shadow(-1px -1px 0 rgba(255,255,255,.1)) drop-shadow(1.6px 2.2px 1.4px rgba(0,0,0,.95));
-  animation:florIn 2s ease-out .2s both;}
-@keyframes florIn{0%{opacity:0}100%{opacity:1}}
-.spray{position:absolute;left:50%;width:var(--spw);height:auto;overflow:visible;}
-.spray-top{top:calc(var(--spw) * -.025);transform:translateX(-50%);}
-.spray-bottom{bottom:calc(var(--spw) * -.025);transform:translateX(-50%) rotate(180deg);}
-.bloom{transform-box:fill-box;transform-origin:center;animation:bloomSway 7s ease-in-out infinite;}
-@keyframes bloomSway{
-  0%,100%{transform:rotate(-3deg) scale(1)}
-  50%{transform:rotate(3deg) scale(1.035)}
+.px-pupils{animation:pxLook 9s steps(1,end) infinite;}
+@keyframes pxLook{
+  0%{transform:translateX(0)}
+  26%{transform:translateX(-1px)}
+  40%{transform:translateX(0)}
+  48%{transform:translateX(1px)}
+  62%{transform:translateX(0)}
+  100%{transform:translateX(0)}
 }
+.is-open .px-cat{animation:pxDuck .45s steps(4,end) forwards;}
+@keyframes pxDuck{from{transform:translate(0,0)}to{transform:translate(0,calc(var(--u) * 12))}}
 
-/* ---------- 1) Top flap swings open toward the viewer and up and out (one continuous motion, no fading) ---------- */
-.is-open .f-top{animation:openTop 1.7s cubic-bezier(.5,0,.2,1) forwards;}
-@keyframes openTop{from{transform:rotateX(0)}to{transform:rotateX(180deg)}}
-.is-open .f-top .shade{animation:shadeIn 1.7s ease-in forwards;}
-@keyframes shadeIn{from{opacity:0}to{opacity:.7}}
+/* ---------- Top flap: flips open in pixel-like steps ---------- */
+.px-flap-box{position:absolute;z-index:5;
+  left:calc(50% - var(--ew) / 2);top:calc(var(--ey) - var(--eh) / 2);
+  width:var(--ew);height:calc(var(--u) * 12);}
+.px-flap{position:absolute;inset:0;transform-origin:50% 0;}
+.px-face{position:absolute;inset:0;width:100%;height:100%;display:block;}
+.px-face-back{opacity:0;}
+.is-open .px-flap-box{animation:pxFlapZ 1.2s steps(1,end) forwards;}
+.is-open .px-flap{animation:pxFlip 1.2s steps(6,end) forwards;}
+.is-open .px-face-front{animation:pxFaceFront 1.2s steps(1,end) forwards;}
+.is-open .px-face-back{animation:pxFaceBack 1.2s steps(1,end) forwards;}
+@keyframes pxFlapZ{0%{z-index:5}50%{z-index:2}100%{z-index:2}}
+@keyframes pxFlip{
+  from{transform:perspective(700px) rotateX(0deg)}
+  to{transform:perspective(700px) rotateX(180deg)}
+}
+@keyframes pxFaceFront{0%{opacity:1}50%{opacity:0}100%{opacity:0}}
+@keyframes pxFaceBack{0%{opacity:0}50%{opacity:1}100%{opacity:1}}
 
-/* ---------- 2) The invitation paper rises out of the envelope ---------- */
-.card{position:absolute;left:50%;top:0;z-index:2;
+/* ---------- The invitation paper: clipped at the bottom of the envelope while it rises ---------- */
+.px-cardclip{position:absolute;inset:0;z-index:3;pointer-events:none;
+  clip-path:inset(0 0 calc(100% - (var(--ey) + var(--eh) / 2)) 0);}
+.card{position:absolute;left:50%;top:0;
   width:min(80vw,52vh);height:min(94vh,170vw);
-  transform:translate(-50%,86vh) scale(.88);transform-origin:50% 0;will-change:transform;}
-.is-open .card{animation:cardRise 1.5s cubic-bezier(.25,.7,.2,1) .9s forwards;}
+  transform:translate(-50%,calc(64vh - var(--eh) / 2 + var(--u) * 2)) scale(.88);
+  transform-origin:50% 0;will-change:transform;}
+.is-open .card{animation:cardRise 1.6s cubic-bezier(.25,.7,.2,1) 1s forwards;}
 @keyframes cardRise{
-  from{transform:translate(-50%,86vh) scale(.88)}
+  from{transform:translate(-50%,calc(64vh - var(--eh) / 2 + var(--u) * 2)) scale(.88)}
   to{transform:translate(-50%,3vh) scale(.88)}
 }
 
-/* ---------- 3) Guest taps: card is pulled out and grows, the envelope slides away ---------- */
+/* ---------- Guest taps again: card grows, the envelope slides away ---------- */
 .is-pull .card{animation:cardPull 1.6s cubic-bezier(.55,0,.2,1) forwards;}
 @keyframes cardPull{
   from{transform:translate(-50%,3vh) scale(.88)}
   to{transform:translate(-50%,2vh) scale(1)}
 }
-.is-pull .env-back,.is-pull .env-front{animation:envOut 1.5s cubic-bezier(.65,0,.25,1) forwards;}
-@keyframes envOut{from{transform:translateY(0)}to{transform:translateY(104%)}}
+.is-pull .px-cardclip{animation:pxClipOpen 1.3s ease-in forwards;}
+@keyframes pxClipOpen{
+  from{clip-path:inset(0 0 calc(100% - (var(--ey) + var(--eh) / 2)) 0)}
+  to{clip-path:inset(0 0 0 0)}
+}
+.is-pull .px-flap-box{z-index:2;}
+.is-pull .px-slide{animation:pxEnvOut 1.5s cubic-bezier(.65,0,.25,1) forwards;}
+@keyframes pxEnvOut{from{transform:translateY(0)}to{transform:translateY(120vh)}}
 
 /* ---------- Card look: dark paper, thin gold double frame (matches the invitation page) ---------- */
 .card-bob{position:absolute;inset:0;}
@@ -571,36 +499,29 @@ const css = `
 .card-end{white-space:nowrap;}
 .card-leaf{display:inline-block;width:1.7em;height:1.7em;margin-left:.45em;vertical-align:-.55em;}
 
-/* ---------- Tap hint on the closed envelope ---------- */
-.tap-hint{position:absolute;left:0;right:0;top:61%;z-index:10;text-align:center;pointer-events:none;
-  font-family:Georgia,'Times New Roman',serif;font-size:12px;letter-spacing:.3em;text-transform:uppercase;
-  color:rgba(200,196,188,.6);animation:hintPulse 3s ease-in-out infinite;}
-@keyframes hintPulse{0%,100%{opacity:.4}50%{opacity:.9}}
-.is-open .tap-hint{animation:none;opacity:0;transition:opacity .5s ease;}
+/* ---------- Tap hint under the envelope ---------- */
+.px-hint{position:absolute;left:0;right:0;z-index:6;text-align:center;pointer-events:none;
+  top:calc(var(--ey) + var(--eh) / 2 + var(--u) * 3);
+  font-family:'Pixelify Sans','Courier New',monospace;font-size:clamp(12px,calc(var(--u) * 1.6),18px);
+  letter-spacing:.12em;text-transform:uppercase;color:#f3c6d8;text-shadow:2px 2px 0 #12101f;
+  animation:pxBlink 1.6s steps(1,end) infinite;}
+@keyframes pxBlink{0%{opacity:1}50%{opacity:.35}100%{opacity:1}}
+.is-open .px-hint{animation:none;opacity:0;}
 
-/* ---------- Petals & dust ---------- */
-.petals{position:absolute;inset:0;pointer-events:none;z-index:11;overflow:hidden;}
-.petal{position:absolute;top:-30px;border-radius:150% 0 150% 0;opacity:.7;animation:petalFall linear infinite;
-  box-shadow:0 2px 6px rgba(120,80,60,.15);}
-@keyframes petalFall{
-  0%{transform:translate3d(0,-5vh,0) rotate(0deg)}
-  50%{transform:translate3d(calc(var(--dx) * .5),55vh,0) rotate(180deg)}
-  100%{transform:translate3d(var(--dx),110vh,0) rotate(360deg)}
-}
-.dust{position:absolute;border-radius:50%;opacity:0;
-  background:radial-gradient(circle,rgba(240,222,170,.95),rgba(240,222,170,0) 70%);
-  animation:dustFloat ease-in-out infinite;}
-@keyframes dustFloat{
-  0%{transform:translate3d(0,12px,0) scale(.6);opacity:0}
-  30%{opacity:.9}
-  70%{opacity:.5}
-  100%{transform:translate3d(10px,-40px,0) scale(1.1);opacity:0}
+/* ---------- Falling pixel hearts ---------- */
+.px-fx{position:absolute;inset:0;pointer-events:none;z-index:7;overflow:hidden;}
+.px-heart{position:absolute;top:-30px;display:block;opacity:.85;animation:pxFall steps(40,end) infinite;}
+@keyframes pxFall{
+  0%{transform:translate3d(0,-5vh,0)}
+  50%{transform:translate3d(calc(var(--dx) * .5),55vh,0)}
+  100%{transform:translate3d(var(--dx),110vh,0)}
 }
 
 @media (prefers-reduced-motion:reduce){
-  .tap-hint,.bloom{animation:none;}
+  .px-cat{animation:none;transform:none;}
+  .px-pupils,.px-star,.px-hint{animation:none;}
+  .px-heart{animation:none;opacity:0;}
   .is-card:not(.is-pull) .card-bob{animation:none;}
-  .petal,.dust{animation:none;opacity:0;}
 }
 `
 
@@ -640,8 +561,8 @@ export default function InvitationIntro({
         audio.play().catch(() => {})
       }
       setStage('opening')
-      // The card finishes rising at about 2.4s, then it can be pulled out
-      timers.current.push(setTimeout(() => setStage('card'), 2400))
+      // The card finishes rising at about 2.6s, then it can be pulled out
+      timers.current.push(setTimeout(() => setStage('card'), 2700))
       return
     }
 
@@ -673,8 +594,6 @@ export default function InvitationIntro({
     .filter(Boolean)
     .join(' ')
 
-  const paper = (gradient: string) => ({ backgroundImage: `${GRAIN}, ${gradient}` })
-
   return (
     <>
       <style>{css}</style>
@@ -705,88 +624,73 @@ export default function InvitationIntro({
           tabIndex={0}
           aria-label={`Open invitation for ${guestName}`}
         >
-          {/* Inside of the envelope */}
-          <div
-            className="env-back"
-            style={paper('radial-gradient(ellipse at 50% 30%,#0e0e0d 0%,#070707 75%,#040404 100%)')}
-          />
+          {/* Night sky */}
+          <div className="px-bg" aria-hidden>
+            {STARS.map((s, i) => (
+              <span
+                key={i}
+                className="px-star"
+                style={{
+                  left: `${s.left}%`,
+                  top: `${s.top}%`,
+                  width: s.size,
+                  height: s.size,
+                  animationDuration: `${s.duration}s`,
+                  animationDelay: `${s.delay}s`,
+                }}
+              />
+            ))}
+          </div>
 
-          {/* The invitation paper, tucked inside */}
-          <Card guestName={guestName} texts={envTexts} />
+          {/* Shadow under the envelope */}
+          <div className="px-slide px-shadow" aria-hidden />
 
-          {/* Front of the envelope: side flaps + bottom flap */}
-          <div className="env-front">
-            <div className="flap f-left">
-              <div className="flap-in" style={paper('linear-gradient(90deg,#131312,#0e0e0d)')}>
-                <Decor />
-                <FlapEdge points="0,0 50,54" />
-              </div>
-            </div>
-            <div className="flap f-right">
-              <div className="flap-in" style={paper('linear-gradient(270deg,#141413,#0e0e0d)')}>
-                <Decor />
-                <FlapEdge points="100,0 50,54" />
-              </div>
-            </div>
-            <div className="flap f-bottom">
-              <div className="flap-in" style={paper('linear-gradient(0deg,#10100f,#0c0c0b)')}>
-                <Decor />
-                <div className="decor rich">
-                  <Spray position="bottom" />
-                </div>
-                <FlapEdge points="0,72 50,54 100,72" />
-              </div>
+          {/* The cat, hiding behind the envelope */}
+          <div className="px-slide px-cat-box" aria-hidden>
+            <div className="px-cat">
+              <Cat />
             </div>
           </div>
 
-          {/* Top flap (big V pointing down): the one that opens first */}
-          <div className="flap f-top">
-            <div className="flap-in" style={paper('linear-gradient(180deg,#181817,#0e0e0d)')}>
-              <Decor />
-              <div className="decor rich">
-                <Spray position="top" />
-              </div>
-              <FlapEdge points="0,30 50,56 100,30" />
-              <div className="shade" />
+          {/* Inside of the envelope */}
+          <EnvBack className="px-slide px-svg px-back" />
+
+          {/* The invitation paper, tucked inside */}
+          <div className="px-cardclip">
+            <Card guestName={guestName} texts={envTexts} />
+          </div>
+
+          {/* Front of the envelope: side folds + bottom fold */}
+          <EnvFront className="px-slide px-svg px-front" />
+
+          {/* Top flap with the heart seal: the one that opens first */}
+          <div className="px-slide px-flap-box" aria-hidden>
+            <div className="px-flap">
+              <FlapFace className="px-face px-face-front" fill={FLAP} seal />
+              <FlapFace className="px-face px-face-back" fill={FLAP_BACK} />
             </div>
           </div>
 
           {tapHint && (
-            <div className="tap-hint" aria-hidden>
+            <div className="px-hint" aria-hidden>
               {tapHint}
             </div>
           )}
 
-          <div className="petals">
-            {PETALS.map((p, i) => (
-              <span
+          <div className="px-fx" aria-hidden>
+            {HEARTS.map((h, i) => (
+              <PixelHeart
                 key={i}
-                className="petal"
+                color={h.color}
+                scale={h.scale}
                 style={
                   {
-                    left: `${p.left}%`,
-                    width: p.size,
-                    height: p.size,
-                    background: p.color,
-                    animationDuration: `${p.duration}s`,
-                    animationDelay: `${p.delay}s`,
-                    ['--dx' as string]: `${p.dx}px`,
+                    left: `${h.left}%`,
+                    animationDuration: `${h.duration}s`,
+                    animationDelay: `${h.delay}s`,
+                    ['--dx' as string]: `${h.dx}px`,
                   } as React.CSSProperties
                 }
-              />
-            ))}
-            {DUST.map((d, i) => (
-              <span
-                key={`d${i}`}
-                className="dust"
-                style={{
-                  left: `${d.left}%`,
-                  top: `${d.top}%`,
-                  width: d.size,
-                  height: d.size,
-                  animationDuration: `${d.duration}s`,
-                  animationDelay: `${d.delay}s`,
-                }}
               />
             ))}
           </div>
