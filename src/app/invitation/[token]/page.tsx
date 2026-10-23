@@ -17,42 +17,47 @@ export const dynamic = 'force-dynamic'
 // Font for the groom and bride names
 const cinzel = Cinzel({ subsets: ['latin'], weight: ['500'] })
 
-const GOLD = '#d4b26e'
-const IVORY = '#f3ece0'
-const TITLE = '#e6d3a6'
-const MUTED = '#cdbfa8'
-const BODY = '#d9cdb8'
-const LINE = 'rgba(212,178,110,0.3)'
+// ===== Soft blue palette =====
+const ACCENT = '#4a90d9'   // main blue accent (icons, buttons, ampersand)
+const INK = '#23446b'      // deep navy for names and strong text
+const TITLE = '#2f5d8c'    // section titles
+const MUTED = '#5f82a8'    // small labels
+const BODY = '#35577f'     // body text
+const LINE = 'rgba(74,144,217,0.3)'
+const TEXT_GLOW = '0 1px 14px rgba(255,255,255,0.7)'
 
-// Same look as the hero: thin gold double frame on a dark background
+// Same look as the hero: thin blue double frame on a frosted white panel
 function LuxPanel({ children }: { children: React.ReactNode }) {
   return (
     <div
       className="relative w-full"
       style={{
-        color: IVORY,
-        textShadow: '0 2px 24px rgba(0,0,0,0.6)',
-        backgroundColor: 'rgba(12,10,8,0.35)',
+        color: INK,
+        textShadow: TEXT_GLOW,
+        backgroundColor: 'rgba(255,255,255,0.55)',
+        backdropFilter: 'blur(6px)',
+        WebkitBackdropFilter: 'blur(6px)',
+        boxShadow: '0 8px 30px rgba(74,144,217,0.15)',
       }}
     >
       <div
         className="absolute pointer-events-none"
-        style={{ inset: 0, border: '1px solid rgba(212,178,110,0.4)' }}
+        style={{ inset: 0, border: '1px solid rgba(74,144,217,0.5)' }}
       />
       <div
         className="absolute pointer-events-none"
-        style={{ inset: 6, border: '1px solid rgba(212,178,110,0.16)' }}
+        style={{ inset: 6, border: '1px solid rgba(74,144,217,0.2)' }}
       />
       <div className="relative">{children}</div>
     </div>
   )
 }
 
-function GoldLine() {
+function BlueLine() {
   return (
     <div
       className="mx-auto h-px w-28"
-      style={{ background: 'linear-gradient(90deg,transparent,#d4b26e,transparent)' }}
+      style={{ background: 'linear-gradient(90deg,transparent,#4a90d9,transparent)' }}
     />
   )
 }
@@ -69,14 +74,14 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 
 // ===== Pixel ornament for the top and bottom of the hero =====
 // Drawn pixel by pixel: every character below is one square pixel.
-// . = empty, P = pink, H = light pink, G = gold, g = dim gold, I = ivory, S = sparkle
+// . = empty, P = pink, H = light pink, G = blue, g = pale blue, I = ice white, S = sparkle
 const PX_COLORS: Record<string, string> = {
-  P: '#f4a0bf',
-  H: '#ffd6e4',
-  G: '#d4b26e',
-  g: '#8a7447',
-  I: '#fff1cf',
-  S: '#f0d9a0',
+  P: '#f59ab9',
+  H: '#ffd3e2',
+  G: '#4a90d9',
+  g: '#9cc3ea',
+  I: '#e6f3ff',
+  S: '#7fb2e5',
 }
 
 const PX_HEART = [
@@ -261,11 +266,11 @@ export default async function InvitationPage({ params }: { params: { token: stri
 
             <div
               className="absolute pointer-events-none"
-              style={{ inset: 14, border: '1px solid rgba(212,178,110,0.4)' }}
+              style={{ inset: 14, border: '1px solid rgba(74,144,217,0.5)' }}
             />
             <div
               className="absolute pointer-events-none"
-              style={{ inset: 20, border: '1px solid rgba(212,178,110,0.16)' }}
+              style={{ inset: 20, border: '1px solid rgba(74,144,217,0.2)' }}
             />
 
             {/* Pixel ornaments at the top and bottom of the frame */}
@@ -274,7 +279,7 @@ export default async function InvitationPage({ params }: { params: { token: stri
 
             <div
               className="relative w-full flex flex-col items-center"
-              style={{ color: IVORY, textShadow: '0 2px 24px rgba(0,0,0,0.6)' }}
+              style={{ color: INK, textShadow: TEXT_GLOW }}
             >
               {t.heroEyebrow && (
                 <p className="font-lux uppercase text-xs tracking-[0.5em] mb-5" style={{ color: MUTED }}>
@@ -288,7 +293,7 @@ export default async function InvitationPage({ params }: { params: { token: stri
               >
                 <AnimatedText text={groomFirst} startDelay={groomDelay} step={letterStep} />
                 {' '}
-                <span style={{ fontSize: '0.72em', color: GOLD }}>
+                <span style={{ fontSize: '0.72em', color: ACCENT }}>
                   <AnimatedText text="&" startDelay={ampDelay} step={letterStep} />
                 </span>
                 {' '}
@@ -297,7 +302,7 @@ export default async function InvitationPage({ params }: { params: { token: stri
 
               <div
                 className="mx-auto mt-8 h-px w-28"
-                style={{ background: 'linear-gradient(90deg,transparent,#d4b26e,transparent)' }}
+                style={{ background: 'linear-gradient(90deg,transparent,#4a90d9,transparent)' }}
               />
 
               {t.heroTagline && (
@@ -312,7 +317,7 @@ export default async function InvitationPage({ params }: { params: { token: stri
                       size={14}
                       strokeWidth={1.5}
                       fill="none"
-                      color={GOLD}
+                      color={ACCENT}
                       className="inline-block ml-1.5 align-middle"
                     />
                   </span>
@@ -334,12 +339,12 @@ export default async function InvitationPage({ params }: { params: { token: stri
                   </SectionTitle>
                 )}
 
-                <GoldLine />
+                <BlueLine />
 
                 <div className="relative px-8 py-8">
                   <h3
                     className={`${cinzel.className} text-2xl font-medium tracking-[0.08em] mb-3`}
-                    style={{ color: IVORY }}
+                    style={{ color: INK }}
                   >
                     <AnimatedText text={settings?.groomName || ''} startDelay={0.2} step={0.03} />
                   </h3>
@@ -353,14 +358,14 @@ export default async function InvitationPage({ params }: { params: { token: stri
                   </p>
                 </div>
 
-                <div className="relative text-3xl font-script" style={{ color: GOLD }}>
+                <div className="relative text-3xl font-script" style={{ color: ACCENT }}>
                   <AnimatedText text="&" startDelay={0.2} step={0.03} />
                 </div>
 
                 <div className="relative px-8 py-8 pb-12">
                   <h3
                     className={`${cinzel.className} text-2xl font-medium tracking-[0.08em] mb-3`}
-                    style={{ color: IVORY }}
+                    style={{ color: INK }}
                   >
                     <AnimatedText text={settings?.brideName || ''} startDelay={0.2} step={0.03} />
                   </h3>
@@ -387,30 +392,30 @@ export default async function InvitationPage({ params }: { params: { token: stri
                   </SectionTitle>
                 )}
 
-                <GoldLine />
+                <BlueLine />
 
                 <div className="relative px-8 py-8 pb-12">
                   {t.eventName && (
-                    <h3 className="font-lux uppercase text-2xl mb-5 text-center" style={{ color: IVORY, letterSpacing: '0.14em' }}>
+                    <h3 className="font-lux uppercase text-2xl mb-5 text-center" style={{ color: INK, letterSpacing: '0.14em' }}>
                       <AnimatedText text={t.eventName} startDelay={0.2} step={0.035} />
                     </h3>
                   )}
 
                   <div className="font-lux inline-flex flex-col items-start gap-2 text-base mb-7 text-left" style={{ color: BODY }}>
                     <div className="flex items-center gap-2">
-                      <Calendar size={16} className="shrink-0" style={{ color: GOLD }} />
+                      <Calendar size={16} className="shrink-0" style={{ color: ACCENT }} />
                       <span>
                         <AnimatedText text={settings?.weddingDate || ''} startDelay={0.5} step={0.025} />
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Clock size={16} className="shrink-0" style={{ color: GOLD }} />
+                      <Clock size={16} className="shrink-0" style={{ color: ACCENT }} />
                       <span>
                         <AnimatedText text={settings?.weddingTime || ''} startDelay={0.8} step={0.025} />
                       </span>
                     </div>
                     <div className="flex items-start gap-2">
-                      <MapPin size={16} className="shrink-0 mt-1" style={{ color: GOLD }} />
+                      <MapPin size={16} className="shrink-0 mt-1" style={{ color: ACCENT }} />
                       <span>
                         <AnimatedText text={settings?.weddingLocation || ''} startDelay={1.1} step={0.02} />
                       </span>
@@ -424,7 +429,12 @@ export default async function InvitationPage({ params }: { params: { token: stri
                         target="_blank"
                         rel="noopener noreferrer"
                         className="font-lux inline-flex items-center justify-center gap-2 px-6 py-2 text-sm rounded-full transition hover:opacity-90"
-                        style={{ backgroundColor: GOLD, color: '#1b1510', textShadow: 'none' }}
+                        style={{
+                          background: 'linear-gradient(180deg,#6fb1ec,#4a90d9)',
+                          color: '#ffffff',
+                          textShadow: 'none',
+                          boxShadow: '0 3px 10px rgba(74,144,217,0.35)',
+                        }}
                       >
                         <MapPin size={16} />
                         <AnimatedText text={t.mapsButton} startDelay={1.5} step={0.025} />
@@ -434,8 +444,8 @@ export default async function InvitationPage({ params }: { params: { token: stri
                       <a
                         href={icsHref}
                         download="Akad-Nikah.ics"
-                        className="font-lux inline-flex items-center justify-center gap-2 px-6 py-2 text-sm rounded-full border transition hover:bg-[#d4b26e] hover:text-[#1b1510]"
-                        style={{ borderColor: GOLD, color: GOLD, textShadow: 'none' }}
+                        className="font-lux inline-flex items-center justify-center gap-2 px-6 py-2 text-sm rounded-full border transition hover:bg-[#4a90d9] hover:text-white"
+                        style={{ borderColor: ACCENT, color: ACCENT, textShadow: 'none', backgroundColor: 'rgba(255,255,255,0.6)' }}
                       >
                         <CalendarPlus size={16} />
                         <AnimatedText text={t.calendarButton} startDelay={1.9} step={0.025} />
@@ -457,11 +467,11 @@ export default async function InvitationPage({ params }: { params: { token: stri
                   </SectionTitle>
                 )}
 
-                <GoldLine />
+                <BlueLine />
 
                 <div className="relative px-8 py-8 pb-12">
                   <div className="flex justify-center mb-4">
-                    <Gift size={32} className="float-soft" style={{ color: GOLD }} />
+                    <Gift size={32} className="float-soft" style={{ color: ACCENT }} />
                   </div>
 
                   <p className="font-lux italic text-base mb-8 leading-relaxed" style={{ color: BODY }}>
@@ -472,13 +482,13 @@ export default async function InvitationPage({ params }: { params: { token: stri
                     className="flex flex-col items-center justify-center text-sm pt-6"
                     style={{ borderTop: `1px solid ${LINE}` }}
                   >
-                    <div className="font-lux flex items-center gap-2 font-bold mb-2" style={{ color: IVORY }}>
-                      <CreditCard size={18} style={{ color: GOLD }} />
+                    <div className="font-lux flex items-center gap-2 font-bold mb-2" style={{ color: INK }}>
+                      <CreditCard size={18} style={{ color: ACCENT }} />
                       <span>
                         <AnimatedText text={settings?.bank1Name || ''} startDelay={1.5} step={0.03} />
                       </span>
                     </div>
-                    <p className="text-2xl font-mono tracking-widest mb-1" style={{ color: GOLD }}>
+                    <p className="text-2xl font-mono tracking-widest mb-1" style={{ color: ACCENT }}>
                       <AnimatedText text={settings?.bank1Number || ''} startDelay={1.8} step={0.03} />
                     </p>
                     <p className="font-lux" style={{ color: MUTED }}>
@@ -490,13 +500,13 @@ export default async function InvitationPage({ params }: { params: { token: stri
                     className="flex flex-col items-center justify-center text-sm pt-6 mt-6"
                     style={{ borderTop: `1px solid ${LINE}` }}
                   >
-                    <div className="font-lux flex items-center gap-2 font-bold mb-2" style={{ color: IVORY }}>
-                      <CreditCard size={18} style={{ color: GOLD }} />
+                    <div className="font-lux flex items-center gap-2 font-bold mb-2" style={{ color: INK }}>
+                      <CreditCard size={18} style={{ color: ACCENT }} />
                       <span>
                         <AnimatedText text={settings?.bank2Name || ''} startDelay={2.6} step={0.03} />
                       </span>
                     </div>
-                    <p className="text-2xl font-mono tracking-widest mb-1" style={{ color: GOLD }}>
+                    <p className="text-2xl font-mono tracking-widest mb-1" style={{ color: ACCENT }}>
                       <AnimatedText text={settings?.bank2Number || ''} startDelay={2.9} step={0.03} />
                     </p>
                     <p className="font-lux" style={{ color: MUTED }}>
@@ -518,7 +528,7 @@ export default async function InvitationPage({ params }: { params: { token: stri
                   </SectionTitle>
                 )}
 
-                <GoldLine />
+                <BlueLine />
 
                 <div className="relative px-8 py-8 pb-12">
                   <RsvpForm token={guest.token} initialRsvp={guest.rsvp} guestName={guest.name} />
@@ -546,7 +556,7 @@ export default async function InvitationPage({ params }: { params: { token: stri
                   </div>
                 )}
 
-                <GoldLine />
+                <BlueLine />
 
                 <div className="relative px-8 py-8 pb-12">
                   <WishForm token={guest.token} guestName={guest.name} />
@@ -560,9 +570,9 @@ export default async function InvitationPage({ params }: { params: { token: stri
                   <div
                     className="p-4 rounded-sm"
                     style={{
-                      backgroundColor: 'rgba(12,10,8,0.45)',
-                      border: '1px solid rgba(212,178,110,0.25)',
-                      color: IVORY,
+                      backgroundColor: 'rgba(255,255,255,0.65)',
+                      border: '1px solid rgba(74,144,217,0.3)',
+                      color: INK,
                     }}
                   >
                     <p className="font-lux font-semibold text-base" style={{ color: TITLE }}>
@@ -578,7 +588,7 @@ export default async function InvitationPage({ params }: { params: { token: stri
           </section>
 
           {footerText.trim() && (
-            <footer className="py-8 text-center text-xs bg-black/60 backdrop-blur-md text-stone-300">
+            <footer className="py-8 text-center text-xs bg-[#2f5d8c]/80 backdrop-blur-md text-white">
               <p className="font-lux tracking-widest">
                 <AnimatedText text={footerText} startDelay={0.1} step={0.02} />
               </p>

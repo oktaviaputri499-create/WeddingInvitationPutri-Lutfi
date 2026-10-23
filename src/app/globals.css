@@ -4,7 +4,9 @@
 
 @layer base {
   body {
-    @apply bg-cream text-dark-brown antialiased;
+    @apply antialiased;
+    background-color: #cfe6fb;
+    color: #23446b;
   }
 }
 
