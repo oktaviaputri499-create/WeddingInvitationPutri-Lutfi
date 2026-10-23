@@ -176,15 +176,19 @@ const coupleCss = `
 @keyframes cpTw{0%,100%{opacity:.15}50%{opacity:1}}
 @keyframes catTail{from{transform:rotate(-14deg)}to{transform:rotate(12deg)}}
 @keyframes catBlink{0%,90%,100%{transform:scaleY(1)}94%{transform:scaleY(.15)}}
+@keyframes catHop{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
 .cp-bob{animation:cpBob 2.2s ease-in-out infinite;}
 .cp-heart{animation:cpHeart 1.8s ease-in-out infinite;}
 .cp-tw{animation:cpTw 2.4s ease-in-out infinite;}
 .cat-tail{animation:catTail 1.1s ease-in-out infinite alternate;}
 .cat-eye{transform-box:fill-box;transform-origin:50% 50%;animation:catBlink 4.5s ease-in-out infinite;}
-@media (prefers-reduced-motion:reduce){.cp-bob,.cp-heart,.cp-tw,.cat-tail,.cat-eye{animation:none;}}
+.cat-btn{-webkit-tap-highlight-color:transparent;}
+.cat-btn:hover .cat-hop,.cat-btn:focus-visible .cat-hop{animation:catHop .5s ease-in-out infinite;}
+.cat-btn:focus-visible{outline:2px dashed #4a90d9;outline-offset:2px;}
+@media (prefers-reduced-motion:reduce){.cp-bob,.cp-heart,.cp-tw,.cat-tail,.cat-eye,.cat-btn:hover .cat-hop{animation:none;}}
 `
 
-function Couple() {
+function Couple({ onCatClick }: { onCatClick: () => void }) {
   return (
     <div
       className="relative mt-10 flex items-end justify-center gap-3"
@@ -208,21 +212,30 @@ function Couple() {
         <Sprite rows={BRIDE} />
       </div>
 
-      {/* The cat sits on the ground between the two */}
-      <div
-        className="absolute"
+      {/* The cat sits on the ground between the two. Tap it to play with Bubu */}
+      <button
+        type="button"
+        onClick={onCatClick}
+        aria-label="Play with Bubu"
+        title="Play with Bubu"
+        className="cat-btn absolute"
         style={{
           left: '50%',
-          marginLeft: -29,
-          bottom: 1,
-          width: 42,
-          zIndex: 2,
+          marginLeft: -35,
+          bottom: -5,
+          width: 54,
+          padding: 6,
+          zIndex: 5,
+          background: 'none',
+          border: 0,
+          cursor: 'pointer',
           animation: 'cpFade 1.2s ease-out 3.2s both',
         }}
-        aria-hidden
       >
-        <Cat />
-      </div>
+        <div className="cat-hop">
+          <Cat />
+        </div>
+      </button>
 
       {[
         { l: -14, t: 10, d: '0s' },
@@ -248,12 +261,13 @@ function Couple() {
 
 export default function OurStoryButton() {
   const [open, setOpen] = useState(false)
+  const [bubuOpen, setBubuOpen] = useState(false)
 
   return (
     <>
       <style>{PIXEL_CSS}</style>
 
-      <Couple />
+      <Couple onCatClick={() => setBubuOpen(true)} />
 
       <button
         type="button"
@@ -284,6 +298,22 @@ export default function OurStoryButton() {
               <X size={20} />
             </button>
             <iframe src="/our-story.html" title="Our Story" className="w-full h-full border-0" />
+          </div>,
+          document.body
+        )}
+
+      {bubuOpen &&
+        createPortal(
+          <div className="fixed inset-0 z-[100] bg-[#23446b]/80">
+            <button
+              type="button"
+              onClick={() => setBubuOpen(false)}
+              aria-label="Close"
+              className="absolute right-4 top-4 z-10 w-10 h-10 bg-white/90 text-[#23446b] flex items-center justify-center"
+            >
+              <X size={20} />
+            </button>
+            <iframe src="/bubu.html" title="Bubu's House" className="w-full h-full border-0" />
           </div>,
           document.body
         )}

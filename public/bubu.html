@@ -50,6 +50,7 @@ box-shadow:0 4px 0 #b9d6f5;cursor:pointer;touch-action:none}
 <p class="help">Walk with arrow keys or WASD. Press Space (or USE) next to an item, or tap any item and Bubu walks there. Tap Bubu for a meow. Every meal makes his belly rounder!</p>
 
 <script>
+if(self!==top)document.querySelector('.back').style.display='none';
 const NAME='Bubu';
 const $=id=>document.getElementById(id);
 const cv=$('c'),x=cv.getContext('2d'),W=640,H=480,K=1.5;
