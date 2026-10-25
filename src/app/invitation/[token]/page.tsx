@@ -51,8 +51,299 @@ const DRESS_COLORS = [
 ]
 const DRESS_AVOID = 'Kindly avoid wearing all white or all black.'
 
-// Same look as the hero: thin blue double frame on a frosted white panel
-function LuxPanel({ children }: { children: React.ReactNode }) {
+// ===== Pixel palette (shared by every pixel drawing below) =====
+// . = empty, P = pink, H = light pink, G = blue, g = pale blue, I = ice white,
+// S = sparkle blue, W = white, C = cloud shade, Y = yellow, y = gold
+const PX_COLORS: Record<string, string> = {
+  P: '#f59ab9',
+  H: '#ffd3e2',
+  G: '#4a90d9',
+  g: '#9cc3ea',
+  I: '#e6f3ff',
+  S: '#7fb2e5',
+  W: '#ffffff',
+  C: '#cfe4f8',
+  Y: '#ffd966',
+  y: '#e0a93a',
+}
+
+// Draws any pixel grid as crisp square pixels (one character = one pixel)
+function PixelRows({ rows, px = 3, twinkle = false }: { rows: string[]; px?: number; twinkle?: boolean }) {
+  const w = rows[0].length
+  const h = rows.length
+  return (
+    <svg
+      viewBox={`0 0 ${w} ${h}`}
+      width={w * px}
+      height={h * px}
+      shapeRendering="crispEdges"
+      aria-hidden
+      style={{ display: 'block' }}
+    >
+      {rows.map((row, y) =>
+        row.split('').map((c, x) =>
+          c === '.' ? null : (
+            <rect
+              key={`${x}-${y}`}
+              x={x}
+              y={y}
+              width={1}
+              height={1}
+              fill={PX_COLORS[c]}
+              className={twinkle && c === 'S' ? 'deco-tw' : undefined}
+            />
+          )
+        )
+      )}
+    </svg>
+  )
+}
+
+const PX_HEART = [
+  '.......',
+  '.HP.PP.',
+  'PPPPPPP',
+  'PPPPPPP',
+  '.PPPPP.',
+  '..PPP..',
+  '...P...',
+]
+
+const PX_DIAMOND = [
+  '.....',
+  '..G..',
+  '.GGG.',
+  'GGIGG',
+  '.GGG.',
+  '..G..',
+  '.....',
+]
+
+const PX_SPARKLE = [
+  '...',
+  '...',
+  '.S.',
+  'SSS',
+  '.S.',
+  '...',
+  '...',
+]
+
+const pxBlank = (w: number) => Array.from({ length: 7 }, () => '.'.repeat(w))
+const pxDashed = (s: string) =>
+  Array.from({ length: 7 }, (_, r) => (r === 3 ? s : '.'.repeat(s.length)))
+const pxJoin = (pieces: string[][]) =>
+  Array.from({ length: 7 }, (_, r) => pieces.map(p => p[r]).join(''))
+
+// ===== Pixel divider under every section title (heart - diamond - heart) =====
+const DIV_LEFT = 'g.g.G.'
+const DIV_RIGHT = DIV_LEFT.split('').reverse().join('')
+const PX_DIVIDER = pxJoin([
+  pxDashed(DIV_LEFT),
+  pxBlank(1),
+  PX_HEART,
+  pxBlank(1),
+  PX_DIAMOND,
+  pxBlank(1),
+  PX_HEART,
+  pxBlank(1),
+  pxDashed(DIV_RIGHT),
+])
+
+// Tiny ornament between two sections
+const PX_GAP = [
+  '..S...P...S..',
+  '.SSS.PPP.SSS.',
+  '..S...P...S..',
+]
+
+// Small pixel sparkle inside the panels
+const PX_TINY_SPARK = ['.S.', 'SSS', '.S.']
+
+// Little L-shaped bracket for the four corners of each panel
+const PX_CORNER = [
+  'GGGG.',
+  'G....',
+  'G.P..',
+  'G....',
+  '.....',
+]
+
+// Floating background pixels
+const PX_CLOUD = [
+  '....WWW.....',
+  '..WWWWWWW...',
+  '.WWWWWWWWWW.',
+  'WWWWWWWWWWWW',
+  '.CCCCCCCCCC.',
+]
+
+const PX_STAR = [
+  '..Y..',
+  '..Y..',
+  'YYIYY',
+  '..Y..',
+  '..Y..',
+]
+
+// ===== Pixel badges that sit on the top edge of each panel =====
+const PX_RING = [
+  '....I....',
+  '...IGI...',
+  '....G....',
+  '..YYYYY..',
+  '.Yy...yY.',
+  'Yy.....yY',
+  'Yy.....yY',
+  '.Yy...yY.',
+  '..YYYYY..',
+]
+
+const PX_BOOK = [
+  '.GGGG.GGGG.',
+  'GIIIIGIIIIG',
+  'GIPPIGIGGIG',
+  'GIIIIGIIIIG',
+  'GIGGIGIPPIG',
+  'GIIIIGIIIIG',
+  '.GGGG.GGGG.',
+]
+
+const PX_CALENDAR = [
+  '.G.....G.',
+  'GGGGGGGGG',
+  'GGGGGGGGG',
+  'GIGIGIGIG',
+  'GIIIIIIIG',
+  'GIGIPIGIG',
+  'GIIIIIIIG',
+  'GGGGGGGGG',
+]
+
+const PX_SHIRT = [
+  '.GGIIIGG.',
+  'GGGGIGGGG',
+  'GGGGGGGGG',
+  'GGgGGGgGG',
+  '.GGGGGGG.',
+  '.GGgGgGG.',
+  '.GGGGGGG.',
+  '.GGGGGGG.',
+]
+
+const PX_GIFT = [
+  '..PP.PP..',
+  '.P..P..P.',
+  '..PPPPP..',
+  'GGGGPGGGG',
+  'GgggPgggG',
+  'GGGGPGGGG',
+  'GgggPgggG',
+  'GgggPgggG',
+  'GGGGGGGGG',
+]
+
+const PX_MAIL = [
+  'GGGGGGGGG',
+  'GGIIIIIGG',
+  'GIGIIIGIG',
+  'GIIGIGIIG',
+  'GIIIGIIIG',
+  'GIIIIIIIG',
+  'GGGGGGGGG',
+]
+
+const PX_CHAT = [
+  'GGGGGGGGG',
+  'GIIIIIIIG',
+  'GIPIPIPIG',
+  'GIIIIIIIG',
+  'GGGGGGGGG',
+  '..GG.....',
+  '...G.....',
+]
+
+type BadgeName = 'ring' | 'heart' | 'book' | 'calendar' | 'shirt' | 'gift' | 'mail' | 'chat'
+
+const BADGES: Record<BadgeName, string[]> = {
+  ring: PX_RING,
+  heart: PX_HEART,
+  book: PX_BOOK,
+  calendar: PX_CALENDAR,
+  shirt: PX_SHIRT,
+  gift: PX_GIFT,
+  mail: PX_MAIL,
+  chat: PX_CHAT,
+}
+
+// ===== Floating pixels behind the panels (clouds, stars, hearts) =====
+// Edit this list to move / add / remove decorations. top is a % of the whole page.
+type Floater = {
+  rows: string[]
+  px: number
+  side: 'left' | 'right'
+  x: number
+  top: string
+  delay: string
+  cls: 'deco-float' | 'deco-tw'
+}
+
+const FLOATERS: Floater[] = [
+  { rows: PX_CLOUD, px: 3, side: 'right', x: -14, top: '21%', delay: '0s', cls: 'deco-float' },
+  { rows: PX_STAR, px: 3, side: 'left', x: 4, top: '27%', delay: '-0.6s', cls: 'deco-tw' },
+  { rows: PX_CLOUD, px: 3, side: 'left', x: -16, top: '36%', delay: '-2s', cls: 'deco-float' },
+  { rows: PX_HEART, px: 2, side: 'right', x: 6, top: '44%', delay: '-1s', cls: 'deco-float' },
+  { rows: PX_CLOUD, px: 3, side: 'right', x: -12, top: '55%', delay: '-3s', cls: 'deco-float' },
+  { rows: PX_STAR, px: 3, side: 'right', x: 4, top: '63%', delay: '-1.2s', cls: 'deco-tw' },
+  { rows: PX_HEART, px: 2, side: 'left', x: 6, top: '70%', delay: '-2.4s', cls: 'deco-float' },
+  { rows: PX_CLOUD, px: 3, side: 'left', x: -12, top: '80%', delay: '-1.5s', cls: 'deco-float' },
+  { rows: PX_STAR, px: 3, side: 'left', x: 8, top: '89%', delay: '-0.3s', cls: 'deco-tw' },
+  { rows: PX_HEART, px: 2, side: 'right', x: 8, top: '86%', delay: '-3.2s', cls: 'deco-float' },
+]
+
+const DECO_CSS = `
+@keyframes decoFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes decoBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+@keyframes decoTw{0%,100%{opacity:1}50%{opacity:.25}}
+.deco-float{animation:decoFloat 5s ease-in-out infinite}
+.deco-bob{animation:decoBob 2s steps(1,end) infinite}
+.deco-tw{animation:decoTw 1.8s steps(1,end) infinite}
+@media (prefers-reduced-motion:reduce){.deco-float,.deco-bob,.deco-tw{animation:none}}
+`
+
+function FloatingDeco() {
+  return (
+    <div aria-hidden className="absolute inset-0 pointer-events-none" style={{ zIndex: -1 }}>
+      {FLOATERS.map((f, i) => (
+        <div key={i} className="absolute" style={{ [f.side]: f.x, top: f.top, opacity: 0.9 }}>
+          <div className={f.cls} style={{ animationDelay: f.delay }}>
+            <PixelRows rows={f.rows} px={f.px} />
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// Small ornament placed between two sections
+function SectionGap() {
+  return (
+    <div aria-hidden className="flex justify-center pointer-events-none">
+      <PixelRows rows={PX_GAP} px={3} twinkle />
+    </div>
+  )
+}
+
+// Same look as the hero: thin blue double frame on a frosted white panel,
+// now with pixel corner brackets, tiny sparkles and an icon badge on the top edge
+function LuxPanel({ children, badge }: { children: React.ReactNode; badge?: BadgeName }) {
+  const corners: { pos: React.CSSProperties; flip: string }[] = [
+    { pos: { top: 14, left: 14 }, flip: 'none' },
+    { pos: { top: 14, right: 14 }, flip: 'scaleX(-1)' },
+    { pos: { bottom: 14, left: 14 }, flip: 'scaleY(-1)' },
+    { pos: { bottom: 14, right: 14 }, flip: 'scale(-1,-1)' },
+  ]
+
   return (
     <div
       className="relative w-full"
@@ -73,23 +364,64 @@ function LuxPanel({ children }: { children: React.ReactNode }) {
         className="absolute pointer-events-none"
         style={{ inset: 6, border: '1px solid rgba(74,144,217,0.2)' }}
       />
+
+      {/* Pixel corner brackets */}
+      {corners.map((c, i) => (
+        <div
+          key={i}
+          aria-hidden
+          className="absolute pointer-events-none"
+          style={{ ...c.pos, transform: c.flip }}
+        >
+          <PixelRows rows={PX_CORNER} px={3} />
+        </div>
+      ))}
+
+      {/* Tiny twinkling sparkles on the sides */}
+      <div aria-hidden className="absolute pointer-events-none deco-tw" style={{ top: '36%', left: 16 }}>
+        <PixelRows rows={PX_TINY_SPARK} px={3} twinkle />
+      </div>
+      <div aria-hidden className="absolute pointer-events-none deco-tw" style={{ top: '64%', right: 16, animationDelay: '-0.9s' }}>
+        <PixelRows rows={PX_TINY_SPARK} px={3} twinkle />
+      </div>
+
+      {/* Icon badge sitting on the top edge */}
+      {badge && (
+        <div
+          aria-hidden
+          className="absolute left-1/2 pointer-events-none"
+          style={{ top: -18, transform: 'translateX(-50%)', zIndex: 2 }}
+        >
+          <div
+            className="deco-bob"
+            style={{
+              padding: 5,
+              background: '#f2f9ff',
+              boxShadow: '0 0 0 3px #4a90d9, 4px 4px 0 3px rgba(74,144,217,0.25)',
+            }}
+          >
+            <PixelRows rows={BADGES[badge]} px={3} />
+          </div>
+        </div>
+      )}
+
       <div className="relative">{children}</div>
     </div>
   )
 }
 
+// Pixel divider (heart - diamond - heart) used under every section title
 function BlueLine() {
   return (
-    <div
-      className="mx-auto h-px w-28"
-      style={{ background: 'linear-gradient(90deg,transparent,#4a90d9,transparent)' }}
-    />
+    <div aria-hidden className="flex justify-center pointer-events-none">
+      <PixelRows rows={PX_DIVIDER} px={3} />
+    </div>
   )
 }
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative px-8 pt-12 pb-6">
+    <div className="relative px-8 pt-14 pb-5">
       <h2 className="font-script text-5xl leading-tight" style={{ color: TITLE }}>
         {children}
       </h2>
@@ -145,50 +477,6 @@ function PixelBubble({
 
 // ===== Pixel ornament for the top and bottom of the hero =====
 // Drawn pixel by pixel: every character below is one square pixel.
-// . = empty, P = pink, H = light pink, G = blue, g = pale blue, I = ice white, S = sparkle
-const PX_COLORS: Record<string, string> = {
-  P: '#f59ab9',
-  H: '#ffd3e2',
-  G: '#4a90d9',
-  g: '#9cc3ea',
-  I: '#e6f3ff',
-  S: '#7fb2e5',
-}
-
-const PX_HEART = [
-  '.......',
-  '.HP.PP.',
-  'PPPPPPP',
-  'PPPPPPP',
-  '.PPPPP.',
-  '..PPP..',
-  '...P...',
-]
-
-const PX_DIAMOND = [
-  '.....',
-  '..G..',
-  '.GGG.',
-  'GGIGG',
-  '.GGG.',
-  '..G..',
-  '.....',
-]
-
-const PX_SPARKLE = [
-  '...',
-  '...',
-  '.S.',
-  'SSS',
-  '.S.',
-  '...',
-  '...',
-]
-
-const pxBlank = (w: number) => Array.from({ length: 7 }, () => '.'.repeat(w))
-const pxDashed = (s: string) =>
-  Array.from({ length: 7 }, (_, r) => (r === 3 ? s : '.'.repeat(s.length)))
-
 const PX_LINE_LEFT = 'g.g.G.G.G.'
 const PX_LINE_RIGHT = PX_LINE_LEFT.split('').reverse().join('')
 
@@ -208,7 +496,7 @@ const PX_PIECES = [
   pxDashed(PX_LINE_RIGHT),
 ]
 
-const PX_ROWS = Array.from({ length: 7 }, (_, r) => PX_PIECES.map(p => p[r]).join(''))
+const PX_ROWS = pxJoin(PX_PIECES)
 const PX_COLS = PX_ROWS[0].length
 
 function PixelOrnament({ position }: { position: 'top' | 'bottom' }) {
@@ -430,6 +718,11 @@ export default async function InvitationPage({ params }: { params: { token: stri
 
         {/* Content wrapper */}
         <div className="relative z-10">
+          <style>{DECO_CSS}</style>
+
+          {/* Floating pixel clouds, stars and hearts behind the panels */}
+          <FloatingDeco />
+
           {/* Hero Section */}
           <section className="hero-section relative min-h-screen flex flex-col items-center justify-center px-8 py-16 text-center overflow-hidden">
             <style>{`
@@ -506,7 +799,7 @@ export default async function InvitationPage({ params }: { params: { token: stri
           <section className="py-12 px-6 text-center">
             <style>{BUBBLE_CSS}</style>
             <ScrollReveal>
-              <LuxPanel>
+              <LuxPanel badge="book">
                 <SectionTitle>
                   <AnimatedText text={STORY_TITLE} startDelay={0.1} step={0.035} />
                 </SectionTitle>
@@ -529,10 +822,12 @@ export default async function InvitationPage({ params }: { params: { token: stri
             </ScrollReveal>
           </section>
 
+          <SectionGap />
+
           {/* Couple Section */}
           <section className="py-12 px-6 text-center">
             <ScrollReveal>
-              <LuxPanel>
+              <LuxPanel badge="ring">
                 {t.coupleTitle && (
                   <SectionTitle>
                     <AnimatedText text={t.coupleTitle} startDelay={0.1} step={0.035} />
@@ -584,10 +879,12 @@ export default async function InvitationPage({ params }: { params: { token: stri
             </ScrollReveal>
           </section>
 
+          <SectionGap />
+
           {/* Event Details */}
           <section className="py-12 px-6 text-center">
             <ScrollReveal>
-              <LuxPanel>
+              <LuxPanel badge="calendar">
                 {t.eventTitle && (
                   <SectionTitle>
                     <AnimatedText text={t.eventTitle} startDelay={0.1} step={0.035} />
@@ -659,10 +956,12 @@ export default async function InvitationPage({ params }: { params: { token: stri
             </ScrollReveal>
           </section>
 
+          <SectionGap />
+
           {/* Dress Code */}
           <section className="py-12 px-6 text-center">
             <ScrollReveal>
-              <LuxPanel>
+              <LuxPanel badge="shirt">
                 <SectionTitle>
                   <AnimatedText text={DRESS_TITLE} startDelay={0.1} step={0.035} />
                 </SectionTitle>
@@ -710,10 +1009,12 @@ export default async function InvitationPage({ params }: { params: { token: stri
             </ScrollReveal>
           </section>
 
+          <SectionGap />
+
           {/* Wedding Gift Section */}
           <section className="py-12 px-6 text-center">
             <ScrollReveal>
-              <LuxPanel>
+              <LuxPanel badge="gift">
                 {t.giftTitle && (
                   <SectionTitle>
                     <AnimatedText text={t.giftTitle} startDelay={0.1} step={0.035} />
@@ -781,10 +1082,12 @@ export default async function InvitationPage({ params }: { params: { token: stri
             </ScrollReveal>
           </section>
 
+          <SectionGap />
+
           {/* RSVP */}
           <section className="py-12 px-6 text-center">
             <ScrollReveal>
-              <LuxPanel>
+              <LuxPanel badge="mail">
                 {t.rsvpTitle && (
                   <SectionTitle>
                     <AnimatedText text={t.rsvpTitle} startDelay={0.1} step={0.06} />
@@ -806,10 +1109,12 @@ export default async function InvitationPage({ params }: { params: { token: stri
             </ScrollReveal>
           </section>
 
+          <SectionGap />
+
           {/* Guestbook Wall */}
           <section className="py-12 px-6">
             <ScrollReveal>
-              <LuxPanel>
+              <LuxPanel badge="chat">
                 <div className="text-center">
                   <SectionTitle>
                     <AnimatedText text="Guestbook Wall" startDelay={0.1} step={0.035} />
@@ -831,7 +1136,8 @@ export default async function InvitationPage({ params }: { params: { token: stri
           </section>
 
           {footerText.trim() && (
-            <footer className="py-8 text-center text-xs bg-[#2f5d8c]/80 backdrop-blur-md text-white">
+            <footer className="py-8 text-center text-xs bg-[#2f5d8c]/80 backdrop-blur-md text-white flex flex-col items-center gap-3">
+              <PixelRows rows={PX_DIVIDER} px={2} />
               <p className="font-lux tracking-widest">
                 <AnimatedText text={footerText} startDelay={0.1} step={0.02} />
               </p>
