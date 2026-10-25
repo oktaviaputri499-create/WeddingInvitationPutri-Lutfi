@@ -32,6 +32,10 @@ const BODY = '#35577f'     // body text
 const LINE = 'rgba(74,144,217,0.3)'
 const TEXT_GLOW = '0 1px 14px rgba(255,255,255,0.7)'
 
+// ===== Our Story section (edit freely) =====
+const STORY_TITLE = 'Our Story'
+const STORY_NOTE = 'Every love story is beautiful. Come and read ours.'
+
 // ===== Dress code (edit these freely) =====
 const DRESS_TITLE = 'Dress Code'
 const DRESS_NOTE = 'We would be delighted to see you in soft blue and white tones to match our day.'
@@ -443,9 +447,30 @@ export default async function InvitationPage({ params }: { params: { token: stri
                 </p>
               )}
 
-              {/* Our Story button */}
+              {/* Pixel couple + Bubu the cat (the Our Story button now lives in its own section below) */}
               <OurStoryButton />
             </div>
+          </section>
+
+          {/* Our Story */}
+          <section className="py-12 px-6 text-center">
+            <ScrollReveal>
+              <LuxPanel>
+                <SectionTitle>
+                  <AnimatedText text={STORY_TITLE} startDelay={0.1} step={0.035} />
+                </SectionTitle>
+
+                <BlueLine />
+
+                <div className="relative px-8 py-8 pb-12">
+                  <p className="font-lux italic text-base mb-8 leading-relaxed" style={{ color: BODY }}>
+                    <AnimatedText text={STORY_NOTE} startDelay={0.4} step={0.02} />
+                  </p>
+
+                  <OurStoryButton part="button" />
+                </div>
+              </LuxPanel>
+            </ScrollReveal>
           </section>
 
           {/* Couple Section */}

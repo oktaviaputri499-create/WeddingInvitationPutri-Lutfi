@@ -259,27 +259,52 @@ function Couple({ onCatClick }: { onCatClick: () => void }) {
   )
 }
 
-export default function OurStoryButton() {
+/*
+  part="hero"   (default) -> pixel theme + couple + Bubu the cat (used on the first page)
+  part="button"           -> the "Our Story" button + story popup (used in its own section)
+*/
+export default function OurStoryButton({ part = 'hero' }: { part?: 'hero' | 'button' }) {
   const [open, setOpen] = useState(false)
   const [bubuOpen, setBubuOpen] = useState(false)
 
+  if (part === 'hero') {
+    return (
+      <>
+        <style>{PIXEL_CSS}</style>
+
+        <Couple onCatClick={() => setBubuOpen(true)} />
+
+        {bubuOpen &&
+          createPortal(
+            <div className="fixed inset-0 z-[100] bg-[#23446b]/80">
+              <button
+                type="button"
+                onClick={() => setBubuOpen(false)}
+                aria-label="Close"
+                className="absolute right-4 top-4 z-10 w-10 h-10 bg-white/90 text-[#23446b] flex items-center justify-center"
+              >
+                <X size={20} />
+              </button>
+              <iframe src="/bubu.html" title="Bubu's House" className="w-full h-full border-0" />
+            </div>,
+            document.body
+          )}
+      </>
+    )
+  }
+
   return (
     <>
-      <style>{PIXEL_CSS}</style>
-
-      <Couple onCatClick={() => setBubuOpen(true)} />
-
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="font-lux inline-flex items-center justify-center gap-2 px-7 py-2 mt-6 text-sm border-2 transition hover:bg-[#4a90d9] hover:text-white"
+        className="font-lux inline-flex items-center justify-center gap-2 px-7 py-2 text-sm border-2 transition hover:bg-[#4a90d9] hover:text-white"
         style={{
           borderColor: ACCENT,
           color: ACCENT,
           backgroundColor: 'rgba(255,255,255,0.7)',
           textShadow: 'none',
           boxShadow: '3px 3px 0 rgba(74,144,217,0.3)',
-          animation: 'heroFade 1.4s ease-out 3.2s both',
         }}
       >
         <BookOpen size={16} />
@@ -298,22 +323,6 @@ export default function OurStoryButton() {
               <X size={20} />
             </button>
             <iframe src="/our-story.html" title="Our Story" className="w-full h-full border-0" />
-          </div>,
-          document.body
-        )}
-
-      {bubuOpen &&
-        createPortal(
-          <div className="fixed inset-0 z-[100] bg-[#23446b]/80">
-            <button
-              type="button"
-              onClick={() => setBubuOpen(false)}
-              aria-label="Close"
-              className="absolute right-4 top-4 z-10 w-10 h-10 bg-white/90 text-[#23446b] flex items-center justify-center"
-            >
-              <X size={20} />
-            </button>
-            <iframe src="/bubu.html" title="Bubu's House" className="w-full h-full border-0" />
           </div>,
           document.body
         )}
