@@ -33,8 +33,12 @@ const LINE = 'rgba(74,144,217,0.3)'
 const TEXT_GLOW = '0 1px 14px rgba(255,255,255,0.7)'
 
 // ===== Our Story section (edit freely) =====
+// One sentence = one chat bubble
 const STORY_TITLE = 'Our Story'
-const STORY_NOTE = 'Every love story is beautiful. Come and read ours.'
+const STORY_LINES = [
+  'Every love story is beautiful.',
+  'Come and read ours.',
+]
 
 // ===== Dress code (edit these freely) =====
 const DRESS_TITLE = 'Dress Code'
@@ -89,6 +93,52 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
       <h2 className="font-script text-5xl leading-tight" style={{ color: TITLE }}>
         {children}
       </h2>
+    </div>
+  )
+}
+
+// ===== Pixel chat bubble =====
+// Square "stepped" corners and a little pixel tail, drawn with box-shadows (no images).
+const BUBBLE_CSS = `
+.px-bubble{
+  position:relative;
+  display:inline-block;
+  max-width:88%;
+  margin:4px 4px 16px;
+  padding:10px 16px;
+  background:#ffffff;
+  color:#23446b;
+  text-align:left;
+  text-shadow:none;
+  box-shadow:0 -4px 0 0 #4a90d9,0 4px 0 0 #4a90d9,-4px 0 0 0 #4a90d9,4px 0 0 0 #4a90d9,6px 8px 0 0 rgba(74,144,217,0.18);
+}
+.px-bubble::before{content:'';position:absolute;bottom:-4px;width:8px;height:4px;background:#ffffff;}
+.px-bubble::after{content:'';position:absolute;bottom:-8px;width:4px;height:4px;background:#ffffff;
+  box-shadow:-4px 0 0 0 #4a90d9,4px 0 0 0 #4a90d9,0 4px 0 0 #4a90d9;}
+.px-bubble.tail-left::before{left:16px;}
+.px-bubble.tail-left::after{left:20px;}
+.px-bubble.tail-right::before{right:16px;}
+.px-bubble.tail-right::after{right:20px;}
+@keyframes bubblePop{0%{opacity:0;transform:translateY(8px)}100%{opacity:1;transform:translateY(0)}}
+`
+
+function PixelBubble({
+  children,
+  tail,
+  delay = 0,
+}: {
+  children: React.ReactNode
+  tail: 'left' | 'right'
+  delay?: number
+}) {
+  return (
+    <div className={tail === 'left' ? 'flex justify-start' : 'flex justify-end'}>
+      <div
+        className={`px-bubble font-lux text-base leading-relaxed ${tail === 'left' ? 'tail-left' : 'tail-right'}`}
+        style={{ animation: `bubblePop 0.5s steps(5,end) ${delay}s both` }}
+      >
+        {children}
+      </div>
     </div>
   )
 }
@@ -447,13 +497,14 @@ export default async function InvitationPage({ params }: { params: { token: stri
                 </p>
               )}
 
-              {/* Pixel couple + Bubu the cat (the Our Story button now lives in its own section below) */}
+              {/* Pixel couple + Bubu the cat (the Our Story button lives in its own section below) */}
               <OurStoryButton />
             </div>
           </section>
 
           {/* Our Story */}
           <section className="py-12 px-6 text-center">
+            <style>{BUBBLE_CSS}</style>
             <ScrollReveal>
               <LuxPanel>
                 <SectionTitle>
@@ -463,9 +514,14 @@ export default async function InvitationPage({ params }: { params: { token: stri
                 <BlueLine />
 
                 <div className="relative px-8 py-8 pb-12">
-                  <p className="font-lux italic text-base mb-8 leading-relaxed" style={{ color: BODY }}>
-                    <AnimatedText text={STORY_NOTE} startDelay={0.4} step={0.02} />
-                  </p>
+                  {/* One sentence = one pixel chat bubble */}
+                  <div className="flex flex-col gap-3 mb-8">
+                    {STORY_LINES.map((line, i) => (
+                      <PixelBubble key={i} tail={i % 2 === 0 ? 'left' : 'right'} delay={0.3 + i * 0.9}>
+                        <AnimatedText text={line} startDelay={0.5 + i * 0.9} step={0.025} />
+                      </PixelBubble>
+                    ))}
+                  </div>
 
                   <OurStoryButton part="button" />
                 </div>
