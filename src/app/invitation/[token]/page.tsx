@@ -13,7 +13,7 @@ import CopyButton from './CopyButton'
 import GuestbookWall from './GuestbookWall'
 import DayNightToggle from './DayNightToggle'
 import { getTexts } from '@/lib/siteTexts'
-import { MapPin, Calendar, Clock, Gift, CreditCard, CalendarPlus, Heart } from 'lucide-react'
+import { MapPin, Calendar, Clock, Gift, CreditCard, CalendarPlus, Heart, Shirt } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
@@ -31,6 +31,17 @@ const MUTED = '#5f82a8'    // small labels
 const BODY = '#35577f'     // body text
 const LINE = 'rgba(74,144,217,0.3)'
 const TEXT_GLOW = '0 1px 14px rgba(255,255,255,0.7)'
+
+// ===== Dress code (edit these freely) =====
+const DRESS_TITLE = 'Dress Code'
+const DRESS_NOTE = 'We would be delighted to see you in soft blue and white tones to match our day.'
+const DRESS_COLORS = [
+  { name: 'Sky Blue', hex: '#9cc3ea' },
+  { name: 'Ice White', hex: '#e6f3ff' },
+  { name: 'Soft Navy', hex: '#2f5d8c' },
+  { name: 'Blush Pink', hex: '#ffd3e2' },
+]
+const DRESS_AVOID = 'Kindly avoid wearing all white or all black.'
 
 // Same look as the hero: thin blue double frame on a frosted white panel
 function LuxPanel({ children }: { children: React.ReactNode }) {
@@ -562,6 +573,57 @@ export default async function InvitationPage({ params }: { params: { token: stri
                       </a>
                     )}
                   </div>
+                </div>
+              </LuxPanel>
+            </ScrollReveal>
+          </section>
+
+          {/* Dress Code */}
+          <section className="py-12 px-6 text-center">
+            <ScrollReveal>
+              <LuxPanel>
+                <SectionTitle>
+                  <AnimatedText text={DRESS_TITLE} startDelay={0.1} step={0.035} />
+                </SectionTitle>
+
+                <BlueLine />
+
+                <div className="relative px-8 py-8 pb-12">
+                  <div className="flex justify-center mb-4">
+                    <Shirt size={32} className="float-soft" style={{ color: ACCENT }} />
+                  </div>
+
+                  <p className="font-lux italic text-base mb-8 leading-relaxed" style={{ color: BODY }}>
+                    <AnimatedText text={DRESS_NOTE} startDelay={0.4} step={0.012} />
+                  </p>
+
+                  {/* Color palette: square pixel-style swatches to match the theme */}
+                  <div className="flex justify-center gap-4 mb-8 flex-wrap">
+                    {DRESS_COLORS.map(c => (
+                      <div key={c.hex} className="flex flex-col items-center gap-2">
+                        <div
+                          aria-hidden
+                          style={{
+                            width: 48,
+                            height: 48,
+                            backgroundColor: c.hex,
+                            border: '3px solid rgba(74,144,217,0.55)',
+                            boxShadow: '0 0 0 3px rgba(74,144,217,0.15), 0 3px 8px rgba(74,144,217,0.2)',
+                          }}
+                        />
+                        <span className="font-lux text-xs" style={{ color: MUTED }}>{c.name}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {DRESS_AVOID && (
+                    <p
+                      className="font-lux text-sm pt-6"
+                      style={{ color: MUTED, borderTop: `1px solid ${LINE}` }}
+                    >
+                      {DRESS_AVOID}
+                    </p>
+                  )}
                 </div>
               </LuxPanel>
             </ScrollReveal>
