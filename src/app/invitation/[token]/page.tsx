@@ -713,14 +713,13 @@ export default async function InvitationPage({ params }: { params: { token: stri
                 <BlueLine />
 
                 <div className="relative px-8 py-8 pb-12">
-                  <RsvpForm token={guest.token} initialRsvp={guest.rsvp} guestName={guest.name} />
-
-                  {/* QR code entry pass: only shown after the guest confirms attendance */}
-                  {guest.rsvp?.status === 'attending' && (
-                    <div className="mt-8 pt-8" style={{ borderTop: `1px solid ${LINE}` }}>
-                      <GuestQrCode token={guest.token} guestName={guest.name} />
-                    </div>
-                  )}
+                  {/* The QR ticket is passed into the form, so it appears instantly after confirming */}
+                  <RsvpForm
+                    token={guest.token}
+                    initialRsvp={guest.rsvp}
+                    guestName={guest.name}
+                    qr={<GuestQrCode token={guest.token} guestName={guest.name} />}
+                  />
                 </div>
               </LuxPanel>
             </ScrollReveal>
