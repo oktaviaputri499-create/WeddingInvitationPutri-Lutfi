@@ -15,8 +15,8 @@ export default function RsvpForm({ token, initialRsvp, guestName }: { token: str
   const [guests, setGuests] = useState(initialRsvp?.numberOfGuests || 1)
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
-  // Status that was actually saved (so the thank-you message matches the answer)
   const [savedStatus, setSavedStatus] = useState<string>('')
+  const [gaveUp, setGaveUp] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -24,6 +24,7 @@ export default function RsvpForm({ token, initialRsvp, guestName }: { token: str
     try {
       await submitRsvp(token, status, status === 'attending' ? guests : 0)
       setSavedStatus(status)
+      setGaveUp(false)
       setSuccess(true)
     } catch (err) {
       alert("Terjadi kesalahan. Silakan coba lagi.")
@@ -31,13 +32,27 @@ export default function RsvpForm({ token, initialRsvp, guestName }: { token: str
     setLoading(false)
   }
 
-  // After confirming attendance, reload the server data so the QR ticket appears below
+  // The QR code is rendered by the page once the server data says "attending".
+  // So the notice is only needed while the page still has the old data.
+  const qrReady = initialRsvp?.status === 'attending'
+  const waitingForQr = success && savedStatus === 'attending' && !qrReady && !gaveUp
+
+  // Keep refreshing the server data until the QR code shows up (max ~20 seconds)
   useEffect(() => {
-    if (success && savedStatus === 'attending') {
-      const timer = setTimeout(() => router.refresh(), 1800)
-      return () => clearTimeout(timer)
-    }
-  }, [success, savedStatus, router])
+    if (!waitingForQr) return
+    let tries = 0
+    router.refresh()
+    const timer = setInterval(() => {
+      tries += 1
+      if (tries >= 10) {
+        clearInterval(timer)
+        setGaveUp(true)
+        return
+      }
+      router.refresh()
+    }, 2000)
+    return () => clearInterval(timer)
+  }, [waitingForQr, router])
 
   if (success) {
     const attending = savedStatus === 'attending'
@@ -53,33 +68,23 @@ export default function RsvpForm({ token, initialRsvp, guestName }: { token: str
             : 'Konfirmasi Anda telah kami terima. Kami sangat menghargai kabar dari Anda.'}
         </p>
 
-        {attending && (
-          <div
-            className="mt-6 px-4 py-4 rounded-md"
-            style={{
-              backgroundColor: 'rgba(74,144,217,0.1)',
-              border: '1px solid rgba(74,144,217,0.35)',
-            }}
-          >
+        {waitingForQr && (
+          <div className="mt-5 flex items-center justify-center gap-3">
             <style>{`@keyframes rsvpSpin{to{transform:rotate(360deg)}}`}</style>
             <div
               aria-hidden
-              className="mx-auto mb-3"
+              className="shrink-0"
               style={{
-                width: 22,
-                height: 22,
+                width: 18,
+                height: 18,
                 border: '3px solid rgba(74,144,217,0.25)',
                 borderTopColor: ACCENT,
                 borderRadius: '50%',
                 animation: 'rsvpSpin 0.9s linear infinite',
               }}
             />
-            <p className="text-base font-semibold mb-1" style={{ color: INK }}>
-              Mohon tunggu sebentar...
-            </p>
-            <p className="text-sm leading-relaxed" style={{ color: BODY }}>
-              QR code tiket masuk Anda sedang disiapkan dan akan muncul di bawah ini.
-              Mohon simpan dan tunjukkan QR code tersebut kepada penerima tamu pada hari pernikahan.
+            <p className="text-sm font-semibold" style={{ color: INK }}>
+              Preparing your entry QR code ticket. Please wait...
             </p>
           </div>
         )}
