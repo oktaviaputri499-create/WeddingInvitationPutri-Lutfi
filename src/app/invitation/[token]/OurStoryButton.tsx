@@ -101,9 +101,9 @@ function Cat() {
   )
 }
 
-/* ---------- Pixel hand pointer (shown under the Our Story button) ---------- */
+/* ---------- Small pixel hand pointer (shown under the Our Story button) ---------- */
 
-const HAND_COLORS: Record<string, string> = { O: '#23446b', W: '#ffffff' }
+const HAND_COLORS: Record<string, string> = { O: '#2f5d8c', W: '#ffffff' }
 
 const HAND = [
   '....OO......',
@@ -134,7 +134,7 @@ function PixelHand() {
     }
   })
   return (
-    <svg viewBox="0 0 12 15" width={30} height={38} shapeRendering="crispEdges" aria-hidden style={{ display: 'block' }}>
+    <svg viewBox="0 0 12 15" width={16} height={20} shapeRendering="crispEdges" aria-hidden style={{ display: 'block' }}>
       {rects}
     </svg>
   )
@@ -298,59 +298,39 @@ function Couple({ onCatClick }: { onCatClick: () => void }) {
   )
 }
 
-/* ---------- Chunky 3D pixel button ("Play Our Story") ---------- */
+/* ---------- Compact pixel button ("Play Our Story") ---------- */
 
 const STORY_BTN_CSS = `
-@keyframes storyBounce{0%,49%{transform:translateY(0)}50%,100%{transform:translateY(-4px)}}
-@keyframes storyTap{0%,49%{transform:translateY(0)}50%,100%{transform:translateY(-5px)}}
-@keyframes storyBlink{0%,49%{opacity:1}50%,100%{opacity:.25}}
+@keyframes storyGlow{0%,100%{box-shadow:inset 0 2px 0 rgba(255,255,255,.55),0 0 0 3px #2f5d8c,0 5px 0 3px #2f5d8c,0 8px 14px rgba(74,144,217,.25)}50%{box-shadow:inset 0 2px 0 rgba(255,255,255,.55),0 0 0 3px #2f5d8c,0 5px 0 3px #2f5d8c,0 8px 20px rgba(74,144,217,.55)}}
+@keyframes storyTap{0%,100%{transform:translate(0,0)}50%{transform:translate(-2px,-3px)}}
+@keyframes storyFade{0%,100%{opacity:.55}50%{opacity:1}}
 
 .story-btn{
   position:relative;
-  display:inline-flex;align-items:center;justify-content:center;gap:10px;
-  padding:14px 30px;
-  font-size:19px;font-weight:600;letter-spacing:.05em;
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:8px 20px;
+  font-size:15px;font-weight:600;letter-spacing:.04em;
   color:#ffffff;
-  text-shadow:0 2px 0 rgba(35,68,107,.55) !important;
-  background:linear-gradient(180deg,#7dbdf2 0%,#4a90d9 100%);
+  text-shadow:0 1px 0 rgba(35,68,107,.45) !important;
+  background:linear-gradient(180deg,#6fb1ec 0%,#4a90d9 100%);
   border:0;border-radius:0;
   cursor:pointer;
   -webkit-tap-highlight-color:transparent;
-  /* pixel outline + highlight on top + thick 3D ledge below */
-  box-shadow:
-    inset 0 4px 0 0 rgba(255,255,255,.5),
-    inset 0 -4px 0 0 rgba(35,68,107,.22),
-    0 -4px 0 0 #23446b,
-    -4px 0 0 0 #23446b,
-    4px 0 0 0 #23446b,
-    0 4px 0 0 #23446b,
-    0 8px 0 0 #2f5d8c,
-    -4px 8px 0 0 #23446b,
-    4px 8px 0 0 #23446b,
-    0 12px 0 0 #23446b;
-  margin-bottom:12px;
-  animation:storyBounce 1.2s steps(1,end) infinite;
+  margin-bottom:8px;
+  transition:transform .15s ease,filter .15s ease;
+  animation:storyGlow 2.4s ease-in-out infinite;
 }
-.story-btn:hover{filter:brightness(1.08);animation:none;transform:translateY(-3px);}
+.story-btn:hover{filter:brightness(1.07);transform:translateY(-2px);}
 .story-btn:active{
   animation:none;
-  transform:translateY(6px);
-  box-shadow:
-    inset 0 4px 0 0 rgba(255,255,255,.35),
-    inset 0 -4px 0 0 rgba(35,68,107,.22),
-    0 -4px 0 0 #23446b,
-    -4px 0 0 0 #23446b,
-    4px 0 0 0 #23446b,
-    0 4px 0 0 #23446b,
-    0 6px 0 0 #2f5d8c,
-    -4px 6px 0 0 #23446b,
-    4px 6px 0 0 #23446b,
-    0 10px 0 0 #23446b;
+  transform:translateY(4px);
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.4),0 0 0 3px #2f5d8c,0 1px 0 3px #2f5d8c;
 }
-.story-btn:focus-visible{outline:3px dashed #23446b;outline-offset:10px;}
-.story-hint{display:flex;align-items:center;gap:8px;margin-top:6px;}
-.story-hand{animation:storyTap 1.2s steps(1,end) infinite;}
-.story-hint-text{font-size:13px;letter-spacing:.18em;text-transform:uppercase;color:#2f5d8c;text-shadow:none !important;animation:storyBlink 1.2s steps(1,end) infinite;}
+.story-btn:focus-visible{outline:2px dashed #2f5d8c;outline-offset:8px;}
+
+.story-hint{display:flex;align-items:center;gap:6px;margin-top:4px;}
+.story-hand{animation:storyTap 1.6s ease-in-out infinite;}
+.story-hint-text{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#4a7bb0;text-shadow:none !important;animation:storyFade 1.6s ease-in-out infinite;}
 @media (prefers-reduced-motion:reduce){.story-btn,.story-hand,.story-hint-text{animation:none;}}
 `
 
@@ -399,11 +379,11 @@ export default function OurStoryButton({ part = 'hero' }: { part?: 'hero' | 'but
           className="story-btn font-lux"
           aria-label="Play Our Story"
         >
-          <Play size={18} fill="currentColor" strokeWidth={0} />
+          <Play size={13} fill="currentColor" strokeWidth={0} />
           Play Our Story
         </button>
 
-        {/* Pixel hand + blinking hint so people know it can be tapped */}
+        {/* Small pixel hand + soft pulsing hint so people know it can be tapped */}
         <div className="story-hint" aria-hidden>
           <div className="story-hand">
             <PixelHand />
