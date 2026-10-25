@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
-import { BookOpen, X } from 'lucide-react'
+import { Play, X } from 'lucide-react'
 
 const ACCENT = '#4a90d9'
 
@@ -97,6 +97,45 @@ function Cat() {
       {/* Eyes (blink) */}
       <rect className="cat-eye" x={3} y={4} width={1.02} height={2.04} fill="#1f2a44" />
       <rect className="cat-eye" x={9} y={4} width={1.02} height={2.04} fill="#1f2a44" />
+    </svg>
+  )
+}
+
+/* ---------- Pixel hand pointer (shown under the Our Story button) ---------- */
+
+const HAND_COLORS: Record<string, string> = { O: '#23446b', W: '#ffffff' }
+
+const HAND = [
+  '....OO......',
+  '...OWWO.....',
+  '...OWWO.....',
+  '...OWWO.....',
+  '...OWWOOO...',
+  '...OWWOWWOO.',
+  '.OOOWWOWWOWO',
+  'OWWOWWWWWWWO',
+  'OWWWWWWWWWWO',
+  '.OWWWWWWWWWO',
+  '.OWWWWWWWWO.',
+  '..OWWWWWWWO.',
+  '..OWWWWWWO..',
+  '...OWWWWWO..',
+  '...OOOOOOO..',
+]
+
+function PixelHand() {
+  const rects: React.ReactNode[] = []
+  HAND.forEach((row, y) => {
+    for (let x = 0; x < row.length; x++) {
+      const c = row.charAt(x)
+      if (c in HAND_COLORS) {
+        rects.push(<rect key={`${x}-${y}`} x={x} y={y} width={1.02} height={1.02} fill={HAND_COLORS[c]} />)
+      }
+    }
+  })
+  return (
+    <svg viewBox="0 0 12 15" width={30} height={38} shapeRendering="crispEdges" aria-hidden style={{ display: 'block' }}>
+      {rects}
     </svg>
   )
 }
@@ -259,9 +298,65 @@ function Couple({ onCatClick }: { onCatClick: () => void }) {
   )
 }
 
+/* ---------- Chunky 3D pixel button ("Play Our Story") ---------- */
+
+const STORY_BTN_CSS = `
+@keyframes storyBounce{0%,49%{transform:translateY(0)}50%,100%{transform:translateY(-4px)}}
+@keyframes storyTap{0%,49%{transform:translateY(0)}50%,100%{transform:translateY(-5px)}}
+@keyframes storyBlink{0%,49%{opacity:1}50%,100%{opacity:.25}}
+
+.story-btn{
+  position:relative;
+  display:inline-flex;align-items:center;justify-content:center;gap:10px;
+  padding:14px 30px;
+  font-size:19px;font-weight:600;letter-spacing:.05em;
+  color:#ffffff;
+  text-shadow:0 2px 0 rgba(35,68,107,.55) !important;
+  background:linear-gradient(180deg,#7dbdf2 0%,#4a90d9 100%);
+  border:0;border-radius:0;
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+  /* pixel outline + highlight on top + thick 3D ledge below */
+  box-shadow:
+    inset 0 4px 0 0 rgba(255,255,255,.5),
+    inset 0 -4px 0 0 rgba(35,68,107,.22),
+    0 -4px 0 0 #23446b,
+    -4px 0 0 0 #23446b,
+    4px 0 0 0 #23446b,
+    0 4px 0 0 #23446b,
+    0 8px 0 0 #2f5d8c,
+    -4px 8px 0 0 #23446b,
+    4px 8px 0 0 #23446b,
+    0 12px 0 0 #23446b;
+  margin-bottom:12px;
+  animation:storyBounce 1.2s steps(1,end) infinite;
+}
+.story-btn:hover{filter:brightness(1.08);animation:none;transform:translateY(-3px);}
+.story-btn:active{
+  animation:none;
+  transform:translateY(6px);
+  box-shadow:
+    inset 0 4px 0 0 rgba(255,255,255,.35),
+    inset 0 -4px 0 0 rgba(35,68,107,.22),
+    0 -4px 0 0 #23446b,
+    -4px 0 0 0 #23446b,
+    4px 0 0 0 #23446b,
+    0 4px 0 0 #23446b,
+    0 6px 0 0 #2f5d8c,
+    -4px 6px 0 0 #23446b,
+    4px 6px 0 0 #23446b,
+    0 10px 0 0 #23446b;
+}
+.story-btn:focus-visible{outline:3px dashed #23446b;outline-offset:10px;}
+.story-hint{display:flex;align-items:center;gap:8px;margin-top:6px;}
+.story-hand{animation:storyTap 1.2s steps(1,end) infinite;}
+.story-hint-text{font-size:13px;letter-spacing:.18em;text-transform:uppercase;color:#2f5d8c;text-shadow:none !important;animation:storyBlink 1.2s steps(1,end) infinite;}
+@media (prefers-reduced-motion:reduce){.story-btn,.story-hand,.story-hint-text{animation:none;}}
+`
+
 /*
   part="hero"   (default) -> pixel theme + couple + Bubu the cat (used on the first page)
-  part="button"           -> the "Our Story" button + story popup (used in its own section)
+  part="button"           -> the "Play Our Story" button + story popup (used in its own section)
 */
 export default function OurStoryButton({ part = 'hero' }: { part?: 'hero' | 'button' }) {
   const [open, setOpen] = useState(false)
@@ -295,21 +390,27 @@ export default function OurStoryButton({ part = 'hero' }: { part?: 'hero' | 'but
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="font-lux inline-flex items-center justify-center gap-2 px-7 py-2 text-sm border-2 transition hover:bg-[#4a90d9] hover:text-white"
-        style={{
-          borderColor: ACCENT,
-          color: ACCENT,
-          backgroundColor: 'rgba(255,255,255,0.7)',
-          textShadow: 'none',
-          boxShadow: '3px 3px 0 rgba(74,144,217,0.3)',
-        }}
-      >
-        <BookOpen size={16} />
-        Our Story
-      </button>
+      <style>{STORY_BTN_CSS}</style>
+
+      <div className="inline-flex flex-col items-center">
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="story-btn font-lux"
+          aria-label="Play Our Story"
+        >
+          <Play size={18} fill="currentColor" strokeWidth={0} />
+          Play Our Story
+        </button>
+
+        {/* Pixel hand + blinking hint so people know it can be tapped */}
+        <div className="story-hint" aria-hidden>
+          <div className="story-hand">
+            <PixelHand />
+          </div>
+          <span className="story-hint-text font-lux">Tap to read</span>
+        </div>
+      </div>
 
       {open &&
         createPortal(
