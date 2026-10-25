@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { submitRsvp } from '@/actions/guest'
 
 const ACCENT = '#4a90d9'
@@ -9,16 +10,20 @@ const TITLE = '#2f5d8c'
 const BODY = '#35577f'
 
 export default function RsvpForm({ token, initialRsvp, guestName }: { token: string, initialRsvp: any, guestName: string }) {
+  const router = useRouter()
   const [status, setStatus] = useState(initialRsvp?.status || 'pending')
   const [guests, setGuests] = useState(initialRsvp?.numberOfGuests || 1)
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
+  // Status that was actually saved (so the thank-you message matches the answer)
+  const [savedStatus, setSavedStatus] = useState<string>('')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     try {
       await submitRsvp(token, status, status === 'attending' ? guests : 0)
+      setSavedStatus(status)
       setSuccess(true)
     } catch (err) {
       alert("Terjadi kesalahan. Silakan coba lagi.")
@@ -26,15 +31,59 @@ export default function RsvpForm({ token, initialRsvp, guestName }: { token: str
     setLoading(false)
   }
 
+  // After confirming attendance, reload the server data so the QR ticket appears below
+  useEffect(() => {
+    if (success && savedStatus === 'attending') {
+      const timer = setTimeout(() => router.refresh(), 1800)
+      return () => clearTimeout(timer)
+    }
+  }, [success, savedStatus, router])
+
   if (success) {
+    const attending = savedStatus === 'attending'
+
     return (
       <div className="font-lux text-center">
         <h3 className="font-semibold text-xl mb-2" style={{ color: TITLE }}>
           Terima kasih, {guestName}.
         </h3>
         <p className="text-base italic" style={{ color: BODY }}>
-          Konfirmasi kehadiran Anda telah berhasil disimpan.
+          {attending
+            ? 'Konfirmasi kehadiran Anda telah berhasil disimpan.'
+            : 'Konfirmasi Anda telah kami terima. Kami sangat menghargai kabar dari Anda.'}
         </p>
+
+        {attending && (
+          <div
+            className="mt-6 px-4 py-4 rounded-md"
+            style={{
+              backgroundColor: 'rgba(74,144,217,0.1)',
+              border: '1px solid rgba(74,144,217,0.35)',
+            }}
+          >
+            <style>{`@keyframes rsvpSpin{to{transform:rotate(360deg)}}`}</style>
+            <div
+              aria-hidden
+              className="mx-auto mb-3"
+              style={{
+                width: 22,
+                height: 22,
+                border: '3px solid rgba(74,144,217,0.25)',
+                borderTopColor: ACCENT,
+                borderRadius: '50%',
+                animation: 'rsvpSpin 0.9s linear infinite',
+              }}
+            />
+            <p className="text-base font-semibold mb-1" style={{ color: INK }}>
+              Mohon tunggu sebentar...
+            </p>
+            <p className="text-sm leading-relaxed" style={{ color: BODY }}>
+              QR code tiket masuk Anda sedang disiapkan dan akan muncul di bawah ini.
+              Mohon simpan dan tunjukkan QR code tersebut kepada penerima tamu pada hari pernikahan.
+            </p>
+          </div>
+        )}
+
         <button
           onClick={() => setSuccess(false)}
           className="text-sm mt-4 underline underline-offset-4 hover:opacity-80 transition"
